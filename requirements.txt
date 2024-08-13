@@ -1,0 +1,12 @@
+pandas
+transformers
+torch
+tensorflow
+sentencepiece
+python-pptx
+flask
+python-docx
+celery
+torch
+faiss-cpu
+pdf2docx

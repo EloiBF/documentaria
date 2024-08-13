@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progreso de Traducción</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function checkStatus() {
+            fetch("{{ url_for('check_status', filename=filename) }}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "completed") {
+                    window.location.href = "{{ url_for('result', filename=filename) }}";
+                } else {
+                    setTimeout(checkStatus, 3000);  // Revisa cada 3 segundos
+                }
+            });
+        }
+        checkStatus();
+    </script>
+</head>
+<body>
+    <div class="container progress-container">
+        <h1>Traduciendo Documento</h1>
+        <div class="spinner"></div>
+        <p>Por favor, espera mientras tu documento está siendo procesado. Esto puede tardar unos minutos.</p>
+    </div>
+</body>
+</html>
