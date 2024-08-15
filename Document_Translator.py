@@ -38,8 +38,11 @@ def generate_numeric_code(counter):
 
 # Función para no enviar a traducir textos de un color concreto, y mantenerlos como están
 def color_to_rgb(color_hex): 
+    if not color_hex:  # Verificar si es None, vacío, o False
+        return None
     color_hex = color_hex.lstrip('#')
     return RGBColor(int(color_hex[:2], 16), int(color_hex[2:4], 16), int(color_hex[4:], 16))
+
 
 # Funciones para seleccionar textos relevantes y separar el texto en bloques para enviar a traducir
 def filtrar_textos_relevantes(textos):  # Quita textos que son solo espacios, numeros, etc
@@ -149,12 +152,24 @@ def modelo_traduccion_bloques(bloques, origin_language, destination_language):
     return bloques_traducidos
 
 
-
-
 def join_blocks(bloques_traducidos):
+    # Unir todos los bloques en un solo texto
     traduccion_completa = "".join(bloques_traducidos)
-    translated_texts = re.findall(r"\(_CDTR_([A-Za-z0-9]{6})\)(.*?)(?=\(_CDTR_[A-Za-z0-9]{6}\)|$)", traduccion_completa, re.DOTALL)
-    return {code: text for code, text in translated_texts}
+    
+    # Buscar todas las coincidencias de códigos y textos asociados
+    matches = re.findall(r"\(_CDTR_([A-Za-z0-9]{6})\)(.*?)(?=\(_CDTR_[A-Za-z0-9]{6}\)|$)", traduccion_completa, re.DOTALL)
+    
+    # Crear un diccionario para almacenar los textos por código
+    resultado = {}
+    
+    for code, text in matches:
+        if code in resultado:
+            resultado[code] += text  # Concatenar el texto si el código se repite
+        else:
+            resultado[code] = text  # Añadir nuevo código al diccionario
+    
+    return resultado
+
 
 # Funciones para limpiar el texto traducido
 def eliminar_codigos(diccionario):
