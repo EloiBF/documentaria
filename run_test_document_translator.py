@@ -1,5 +1,5 @@
 from pathlib import Path
-from document_translator import traducir_doc
+from doc_translator import traducir_doc
 
 
 # VARIABLES:

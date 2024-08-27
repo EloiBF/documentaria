@@ -1,4 +1,3 @@
-print('Ejecuta')
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from docx import Document

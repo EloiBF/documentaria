@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import threading
 import time
-from document_translator import traducir_doc
+from doc_translator import traducir_doc
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'docs/uploads'
