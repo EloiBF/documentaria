@@ -1,47 +1,29 @@
 print('Ejecuta')
-import os
-import sys
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from docx import Document
 from docx.shared import RGBColor
 from pdf2docx import Converter
-from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
-import time
+from transformers import MarianMTModel, MarianTokenizer
 import re
-from pathlib import Path
+import os
+from groq import Groq 
 
-# VARIABLES:
-nombre_fichero = 'PRUEBA 1.pptx' # Debe incluir la extensión al final (.pptx, .docx o .pdf)
-origin_language = "es"
-destination_language = "ca"
-color_to_exclude = "#FF00FF"
-# Configuración Embedding: Idiomas disponibles: CAS, CAT, FRA, ALE, ING
-idioma_original = "CAS"
-idioma_traducir = "CAT"
-delimitadores = r'[.!?\n:]'
-texto_minimo = 5
 
-# Rutas de documentos a traducir y devolución
-input_path = f'test/in/{nombre_fichero}'
-output_path = f'test/out/Traducido_{destination_language}_{nombre_fichero}'
-extension = Path(nombre_fichero).suffix
-
-# Cargar el modelo y el tokenizador
-model_path = "models/facebook_m2m100_418M"
-tokenizer = M2M100Tokenizer.from_pretrained(model_path)
-model = M2M100ForConditionalGeneration.from_pretrained(model_path)
 
 # Funciones para asignar un código a cada parte del texto con formato distinto
 def generate_numeric_code(counter):
     return f"{counter:06d}"
 
 # Función para no enviar a traducir textos de un color concreto, y mantenerlos como están
-def color_to_rgb(color_hex): 
-    if not color_hex:  # Verificar si es None, vacío, o False
+def color_to_rgb(color_to_exclude):
+    # Verificar si color_hex es None o está vacío
+    if color_to_exclude is None or len(color_to_exclude) != 7 or not color_to_exclude.startswith('#'):
         return None
-    color_hex = color_hex.lstrip('#')
-    return RGBColor(int(color_hex[:2], 16), int(color_hex[2:4], 16), int(color_hex[4:], 16))
+    else:
+        # Si pasa la validación, convertir el color hexadecimal a RGB
+        color_to_exclude = color_to_exclude.lstrip('#')
+        return RGBColor(int(color_to_exclude[:2], 16), int(color_to_exclude[2:4], 16), int(color_to_exclude[4:], 16))
 
 
 # Funciones para seleccionar textos relevantes y separar el texto en bloques para enviar a traducir
@@ -77,106 +59,131 @@ def unir_textos_fragmentados(textos):  # Hay casos en que una palabra tiene letr
 
     return nuevo_textos, texto_separador
 
-def separar_texto_bloques(textos, max_block_size):
-    def split_text_into_blocks(textos, max_block_size): # Separamos el texto en bloques, asegurando no cortar ningún code ni texto por la mitad
+def separar_texto_bloques(textos, max_block_size=500, placeholder='<CD_TR>'):
+    def split_text_into_blocks(joined_text, max_block_size):
         blocks = []
         current_block = ""
         current_size = 0
 
-        pattern = re.compile(r'\(_CDTR\d{6}\)')
+        # Dividir el texto en partes usando el placeholder
+        parts = joined_text.split(placeholder)
 
-        parts = re.split(f'({pattern.pattern})', textos)
-        for i in range(0, len(parts), 2):
-            code = parts[i]
-            if i + 1 < len(parts):
-                text_part = parts[i + 1]
+        for part in parts:
+            part_size = len(part) + len(placeholder)  # Considerar el placeholder en el tamaño
+            if current_size + part_size > max_block_size:
+                blocks.append(current_block.strip(placeholder))
+                current_block = part + placeholder
+                current_size = len(part) + len(placeholder)
             else:
-                text_part = ""
-
-            if current_size + len(code) + len(text_part) > max_block_size:
-                blocks.append(current_block)
-                current_block = code + text_part
-                current_size = len(code) + len(text_part)
-            else:
-                current_block += code + text_part
-                current_size += len(code) + len(text_part)
+                current_block += part + placeholder
+                current_size += part_size
 
         if current_block:
-            blocks.append(current_block)
+            blocks.append(current_block.strip(placeholder))
 
         return blocks
-      
-    joined_texts = "".join([f"(_CDTR_{code}){text}" for code, text in textos.items()])
+
+    # Unir los textos usando el placeholder
+    joined_texts = placeholder.join(textos.values())
 
     if not joined_texts.strip():
         print("Sin texto, manteniendo original")
-        return {code: text for code, text in textos.items()}
+        return textos
 
     if re.fullmatch(r'[\s\W\d]+', joined_texts):
-        print("No traducir (espacio, simbolo o numeros), manteniendo original")
-        return {code: text for code, text in textos.items()}
+        print("No traducir (espacio, símbolo o números), manteniendo original")
+        return textos
 
-    bloques =split_text_into_blocks(joined_texts, max_block_size) # Generamos los bloques
+    bloques = split_text_into_blocks(joined_texts, max_block_size)
     return bloques
-
-
 
 
 # PODRÍAMOS INCLUIR FUNCIONES DE EMBEDDING AQUÍ
 
 
 # APLICACIÓN DEL MODELO IA DE TRADUCCIÓN -- Entran bloques y salen bloques traducidos
-def modelo_traduccion_bloques(bloques, origin_language, destination_language):
+def modelo_traduccion_bloques(bloques, origin_language, destination_language, placeholder='<CD_TR>', numintentos=3):
     
+    def verificar_placeholders(placeholder, original_text, translated_text):
+        placeholders_originales = re.findall(re.escape(placeholder), original_text)
+        placeholders_traducidos = re.findall(re.escape(placeholder), translated_text)
+        return len(placeholders_originales) == len(placeholders_traducidos)
+    
+    def limpiar_placeholders(traduccion):
+        return re.sub(r'\s*' + re.escape(placeholder) + r'\s*', placeholder, traduccion)
+    
+    # Inicializar el cliente de Groq
+    with open('API_KEY.txt', 'r') as fichero:
+        api_key = fichero.read().strip()
+
+    client = Groq(api_key=api_key)
+
     bloques_traducidos = []
 
     for bloque in bloques:
-        # Configurar el idioma fuente y destino
-        tokenizer.src_lang = origin_language
-        tokenizer.tgt_lang = destination_language
-
-        # Preparar el contexto (más estructurado)
-        contexto = f"Eres un traductor de textos que ignora los códigos CDTR y los mantiene una vez traducido el texto. Texto a traducir de español a catalan: {bloque}"
-        
-        # Tokenizar el texto con contexto
-        tokens = tokenizer(contexto, return_tensors='pt', padding=True, truncation=True)
-        
-        # Generar la traducción
-        translated_tokens = model.generate(**tokens)
-        traduccion = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
-        
-        bloques_traducidos.append(traduccion)
-        print(f'Bloque original: {bloque}')
-        print(f'Bloque traducido: {traduccion}')
+        reintentos = 0
+        while reintentos < numintentos:
+            try:
+                # Crear el mensaje de prompt
+                prompt = f"""You are a useful translator specialized in modern Catalan language.
+                Translate text ignoring placeholders <CD_TR>, but maintain them in the same position. 
+                Never add any comments or annotations other than translation. I don't want your feedback, only the translation.
+                Always use correct catalan gramatical constructions, specially focus in the correct use of ' in articles or pronouns.    
+                Translate text from {origin_language} to {destination_language}:\n\n{bloque}"""
+                
+                # Llamar al modelo a través de la API de Groq
+                chat_completion = client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt,
+                        }
+                    ],
+                    model="llama3-8b-8192",
+                )
+                
+                # Obtener la traducción desde la respuesta
+                traduccion = chat_completion.choices[0].message.content.strip()
+                
+                # Limpiar y verificar los placeholders en la traducción
+                traduccion = limpiar_placeholders(traduccion)
+                
+                if verificar_placeholders(placeholder, bloque, traduccion):
+                    bloques_traducidos.append(traduccion)
+                    print(f'Bloque original: {bloque}')
+                    print(f'Bloque traducido: {traduccion}')
+                    break
+                else:
+                    print(f'Bloque original ERROR: {bloque}')
+                    print(f'Bloque traducido ERROR: {traduccion}')
+                    print('Error en la traducción del bloque, los placeholders no están intactos. Reintentando...')
+            except Exception as e:
+                print(f'Error en la traducción del bloque: {e}. Reintentando...')
+            reintentos += 1
+        else:
+            print(f'No se pudo traducir correctamente el bloque después de {numintentos} intentos')
+            bloques_traducidos.append(bloque)  # Mantener bloque original si falla la traducción
 
     return bloques_traducidos
 
 
-def join_blocks(bloques_traducidos):
-    # Unir todos los bloques en un solo texto
-    traduccion_completa = "".join(bloques_traducidos)
-    
-    # Buscar todas las coincidencias de códigos y textos asociados
-    matches = re.findall(r"\(_CDTR_([A-Za-z0-9]{6})\)(.*?)(?=\(_CDTR_[A-Za-z0-9]{6}\)|$)", traduccion_completa, re.DOTALL)
-    
-    # Crear un diccionario para almacenar los textos por código
-    resultado = {}
-    
-    for code, text in matches:
-        if code in resultado:
-            resultado[code] += text  # Concatenar el texto si el código se repite
-        else:
-            resultado[code] = text  # Añadir nuevo código al diccionario
-    
-    return resultado
+def join_blocks(bloques_traducidos, textos_originales, placeholder='<CD_TR>'):
+# Inicializar el diccionario traducido
+    textos_traducidos = {}
+    # Unir los bloques traducidos en un solo texto
+    traduccion_completa = placeholder.join(bloques_traducidos)
+    # Dividir la traducción completa usando el mismo placeholder
+    partes_traducidas = traduccion_completa.split(placeholder)
+    # Asegurarse de que el número de partes traducidas coincide con el número de textos originales
+    if len(partes_traducidas) != len(textos_originales):
+        raise ValueError("El número de bloques traducidos no coincide con el número de textos originales.")
+    # Crear un iterador sobre las claves originales
+    claves_originales = list(textos_originales.keys())
+    # Asignar las partes traducidas al diccionario resultante
+    for clave, texto_traducido in zip(claves_originales, partes_traducidas):
+        textos_traducidos[clave] = texto_traducido.strip()
+    return textos_traducidos
 
-
-# Funciones para limpiar el texto traducido
-def eliminar_codigos(diccionario):
-    # Expresión regular para eliminar códigos con o sin paréntesis, con una o dos barras bajas, y con cualquier cantidad de cifras o letras
-    patron = r"\(?_?CDTR[_A-Za-z0-9]{1,}\)?|\(?__?CDTR[_A-Za-z0-9]{1,}\)?|CDTR[_A-Za-z0-9]{1,}"
-    # Aplica la eliminación de códigos a cada valor en el diccionario
-    return {key: re.sub(patron, "", value) for key, value in diccionario.items()}
 
 # Limpiamos espacios y puntos que ha añadido de más la traducción
 def ajuste_post_traduccion(textos_originales, textos_traducidos):
@@ -245,7 +252,7 @@ def separar_palabras_fragmentadas(textos_traducidos, texto_separador, textos_ori
 
 
 # Lectura/Reemplazo de PPTX
-def procesar_ppt(input_path, textos_originales, textos_traducidos_final, action): 
+def procesar_ppt(input_path, textos_originales, color_to_exclude, textos_traducidos_final, action): 
     doc = Presentation(input_path)
 
     exclude_color_rgb = color_to_rgb(color_to_exclude)
@@ -318,7 +325,7 @@ def procesar_ppt(input_path, textos_originales, textos_traducidos_final, action)
         return doc
 
 # Lectura/Reemplazo DOCX
-def procesar_docx(input_path, textos_originales, textos_traducidos_final, action): 
+def procesar_docx(input_path, textos_originales, color_to_exclude, textos_traducidos_final, action): 
     doc = Document(input_path)
 
     exclude_color_rgb = color_to_rgb(color_to_exclude)
@@ -371,7 +378,7 @@ def procesar_docx(input_path, textos_originales, textos_traducidos_final, action
         return doc
 
 # Lectura/Reemplazo PDF
-def procesar_pdf(input_path, textos_originales, textos_traducidos_final, action): 
+def procesar_pdf(input_path, textos_originales, color_to_exclude, textos_traducidos_final, action): 
     # Conversor de PDF a WORD
     def pdf_to_word(input_path, word_path):
         # Convertir el PDF a Word
@@ -435,26 +442,20 @@ def procesar_pdf(input_path, textos_originales, textos_traducidos_final, action)
 
 
 # Procesar documento según si es PPT, DOCX o PDF
-def procesar_documento(input_path, textos_originales, textos_traducidos_final, action):
+def procesar_documento(extension, input_path, textos_originales, color_to_exclude, textos_traducidos_final, action):
     if extension == ".pptx":
-        return procesar_ppt(input_path, textos_originales, textos_traducidos_final, action)
+        return procesar_ppt(input_path, textos_originales, color_to_exclude, textos_traducidos_final, action)
     elif extension == ".docx":
-        return procesar_docx(input_path, textos_originales, textos_traducidos_final, action)
+        return procesar_docx(input_path, textos_originales, color_to_exclude, textos_traducidos_final, action)
     elif extension == ".pdf":
-        return procesar_pdf(input_path, textos_originales, textos_traducidos_final, action) 
-
-
-
-
-
-
+        return procesar_pdf(input_path, textos_originales, color_to_exclude, textos_traducidos_final, action) 
 
 
 # Función final que lee el documento y realiza la traducción. Genera el diccionario original, lo ajusta, recibe el traducido, lo ajusta y reemplaza los textos con los valores del traducido final
-def traducir_doc(input_path, output_path):
+def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude):
     
     textos_originales = {}
-    textos_originales = procesar_documento(input_path, textos_originales, textos_traducidos_final=None, action ="leer") 
+    textos_originales = procesar_documento(extension, input_path, textos_originales, color_to_exclude, textos_traducidos_final=None, action ="leer") 
 
     print("Diccionario textos_originales")
     print(textos_originales)
@@ -468,20 +469,19 @@ def traducir_doc(input_path, output_path):
 
     # Generación de bloques
 
-    bloques = separar_texto_bloques(textos_para_traducir,max_block_size=500)
+    bloques = separar_texto_bloques(textos_para_traducir)
 
     # Traducción de bloques con el modelo
     bloques_traducidos = modelo_traduccion_bloques(bloques, origin_language, destination_language)
 
     # Traducir los textos recopilados en bloques --> Obtenemos un diccionario con los textos traducidos
-    textos_traducidos = join_blocks(bloques_traducidos)
+    textos_traducidos = join_blocks(bloques_traducidos,textos_para_traducir)
 
     print("Diccionario textos_traducidos")
     print(textos_traducidos)
 
     # Limpiar el texto traducido y separar las palabras fragmentadas
-    textos_traducidos_final = eliminar_codigos(textos_traducidos)
-    textos_traducidos_final = ajuste_post_traduccion(textos_para_traducir,textos_traducidos_final)
+    textos_traducidos_final = ajuste_post_traduccion(textos_para_traducir,textos_traducidos)
 
     # Separar los textos traducidos --> Generamos el diccionario con los textos que se han traducido y su código, separando las palabras igual que en origen (si venían palabras divididas en varios textos)
     textos_traducidos_final = separar_palabras_fragmentadas(textos_traducidos_final, texto_separador, textos_originales)
@@ -491,7 +491,7 @@ def traducir_doc(input_path, output_path):
 
     # Generar documento traducido
 
-    doc_traducido = procesar_documento(input_path, textos_originales, textos_traducidos_final, action ="reemplazar") 
+    doc_traducido = procesar_documento(extension, input_path, textos_originales, color_to_exclude, textos_traducidos_final, action ="reemplazar") 
 
     # Guardar documento traducido (si es pdf se guarda como docx)
     word_save_path = output_path.replace('.pdf', '.docx')
@@ -500,7 +500,3 @@ def traducir_doc(input_path, output_path):
     else:
         doc_traducido.save(output_path)
     print(f'Se ha dejado el documento traducido en la ruta especificada: {output_path}')
-
-# Ejecutar la traducción del documento
-traducir_doc(input_path, output_path)
-

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>{% block title %}Traductor de Documentos{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="{{ url_for('upload_file') }}">Traductor de Documentos</a></h1>
+            <nav>
+                <a href="{{ url_for('login') }}">Iniciar sesión</a>
+                <a href="{{ url_for('pricing') }}">Precios</a>
+                <a href="{{ url_for('about_us') }}">Sobre Nosotros</a>
+            </nav>
+        </div>
+    </header>
+    {% block content %}{% endblock %}
+    <footer>
+        <p>&copy; 2024 Traductor de Documentos. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>
