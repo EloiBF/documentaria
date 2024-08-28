@@ -3,7 +3,7 @@ from doc_translator import traducir_doc
 
 
 # VARIABLES:
-nombre_fichero = 'PRUEBA 2.pptx' # Debe incluir la extensión al final (.pptx, .docx o .pdf)
+nombre_fichero = 'test.docx' # Debe incluir la extensión al final (.pptx, .docx o .pdf)
 origin_language = "es"
 destination_language = "ca"
 color_to_exclude = '#FF0000' # poner en formato #F00000

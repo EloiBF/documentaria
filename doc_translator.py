@@ -9,7 +9,6 @@ import os
 from groq import Groq 
 
 
-
 # Funciones para asignar un código a cada parte del texto con formato distinto
 def generate_numeric_code(counter):
     return f"{counter:06d}"
@@ -58,7 +57,7 @@ def unir_textos_fragmentados(textos):  # Hay casos en que una palabra tiene letr
 
     return nuevo_textos, texto_separador
 
-def separar_texto_bloques(textos, max_block_size=500, placeholder='<CD_TR>'):
+def separar_texto_bloques(textos, max_block_size=200, placeholder='<CD_TR>'):
     def split_text_into_blocks(joined_text, max_block_size):
         blocks = []
         current_block = ""
@@ -97,10 +96,10 @@ def separar_texto_bloques(textos, max_block_size=500, placeholder='<CD_TR>'):
     return bloques
 
 
-# PODRÍAMOS INCLUIR FUNCIONES DE EMBEDDING AQUÍ
 
 
-# APLICACIÓN DEL MODELO IA DE TRADUCCIÓN -- Entran bloques y salen bloques traducidos
+
+# APLICACIÓN DEL MODELO IA DE TRADUCCIÓN -- Entran bloques y salen bloques traducidos    # PODRÍAMOS INCLUIR FUNCIONES DE EMBEDDING AQUÍ
 def modelo_traduccion_bloques(bloques, origin_language, destination_language, placeholder='<CD_TR>', numintentos=3):
     
     def verificar_placeholders(placeholder, original_text, translated_text):
@@ -125,9 +124,10 @@ def modelo_traduccion_bloques(bloques, origin_language, destination_language, pl
             try:
                 # Crear el mensaje de prompt
                 prompt = f"""You are a useful translator specialized in modern Catalan language.
-                Translate text ignoring placeholders <CD_TR>, but maintain them in the same position. 
+                Translate text ignoring placeholders <CD_TR>, but it is crucial that you maintain them in the same position, even if it is at the start or end of text. 
                 Do not add any comments or annotations other than translation. I don't want your feedback. Return only the translation.
-                Always use correct catalan gramatical constructions, specially focus in the correct use of ' in articles or pronouns.    
+                Always use correct catalan gramatical constructions, specially focus in the correct use of ' in articles or pronouns.
+                Words that start by capital letter sould also be translated, except if you detect it could be a name.    
                 Translate text from {origin_language} to {destination_language}:\n\n{bloque}"""
                 
                 # Llamar al modelo a través de la API de Groq
@@ -166,6 +166,10 @@ def modelo_traduccion_bloques(bloques, origin_language, destination_language, pl
             bloques_traducidos.append(bloque)  # Mantener bloque original si falla la traducción
 
     return bloques_traducidos
+
+
+
+
 
 
 def join_blocks(bloques_traducidos, textos_originales, placeholder='<CD_TR>'):
@@ -270,7 +274,7 @@ def procesar_ppt(input_path, textos_originales, color_to_exclude, textos_traduci
                     for run in paragraph.runs:
                         if run.text: # Verificamos que existe la figura
                             if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                                if run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
+                                if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
                                     code = generate_numeric_code(counter) # Volvemos a generar un código para cada texto para cruzar el formato con la traducción
                                     counter += 1
                                     if action == "leer":
@@ -286,7 +290,7 @@ def procesar_ppt(input_path, textos_originales, color_to_exclude, textos_traduci
                             for run in paragraph.runs:
                                 if run.text: # Verificamos que existe la figura
                                     if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                                        if run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
+                                        if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
                                             code = generate_numeric_code(counter)
                                             counter += 1
                                             if action == "leer":
@@ -339,13 +343,15 @@ def procesar_docx(input_path, textos_originales, color_to_exclude, textos_traduc
         for run in para.runs:
             if run.text: # Verificamos que existe la figura
                 if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                    if run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
+                    if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
                         code = generate_numeric_code(counter) # Volvemos a generar un código para cada texto para cruzar el formato con la traducción
                         counter += 1
                         if action == "leer":
                             textos_originales[code] = run.text
+                            print(run.text)
                         elif action == "reemplazar" and code in textos_traducidos_final:
                             run.text = textos_traducidos_final[code]
+                            
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
@@ -353,7 +359,7 @@ def procesar_docx(input_path, textos_originales, color_to_exclude, textos_traduc
                     for run in para.runs:
                         if run.text: # Verificamos que existe la figura
                             if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                                if run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
+                                if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
                                     code = generate_numeric_code(counter)
                                     counter += 1
                                     if action == "leer":
@@ -366,7 +372,7 @@ def procesar_docx(input_path, textos_originales, color_to_exclude, textos_traduc
                 for run in para.runs:
                     if run.text:  # Verificamos que existe la figura
                         if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                            if  run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb: # Verificamos el color del texto
+                            if  exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb: # Verificamos el color del texto
                                 code = generate_numeric_code(counter)
                                 counter += 1
                                 if action == "leer":
@@ -402,7 +408,7 @@ def procesar_pdf(input_path, textos_originales, color_to_exclude, textos_traduci
         for run in para.runs:
             if run.text: # Verificamos que existe la figura
                 if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                    if run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
+                    if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
                         code = generate_numeric_code(counter) # Volvemos a generar un código para cada texto para cruzar el formato con la traducción
                         counter += 1
                         if action == "leer":
@@ -416,7 +422,7 @@ def procesar_pdf(input_path, textos_originales, color_to_exclude, textos_traduci
                     for run in para.runs:
                         if run.text: # Verificamos que existe la figura
                             if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                                if run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
+                                if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
                                     code = generate_numeric_code(counter)
                                     counter += 1
                                     if action == "leer":
@@ -429,7 +435,7 @@ def procesar_pdf(input_path, textos_originales, color_to_exclude, textos_traduci
                 for run in para.runs:
                     if run.text:  # Verificamos que existe la figura
                         if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                            if  run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb: # Verificamos el color del texto
+                            if  exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb: # Verificamos el color del texto
                                 code = generate_numeric_code(counter)
                                 counter += 1
                                 if action == "leer":
@@ -454,10 +460,12 @@ def procesar_documento(extension, input_path, textos_originales, color_to_exclud
 
 # Función final que lee el documento y realiza la traducción. Genera el diccionario original, lo ajusta, recibe el traducido, lo ajusta y reemplaza los textos con los valores del traducido final
 def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude):
-    
+    print(f"Starting translation process for {input_path}")
+
     textos_originales = {}
     textos_originales = procesar_documento(extension, input_path, textos_originales, color_to_exclude, textos_traducidos_final=None, action ="leer") 
 
+    print(extension)
     print("Diccionario textos_originales")
     print(textos_originales)
 

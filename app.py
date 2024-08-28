@@ -17,13 +17,24 @@ def allowed_file(filename):
 
 def process_translation(filename, language, origin_language, color_to_exclude):
     try:
+        # Define las rutas de entrada y salida
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         result_filename = f"translated_{filename}"
         result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
+        # Verifica si el archivo de salida ya existe y lo elimina si es necesario
         if os.path.exists(result_file_path):
+            print(f"Archivo existente encontrado y eliminado: {result_file_path}")
             os.remove(result_file_path)
 
+        # Verifica la existencia del archivo de entrada antes de proceder
+        if not os.path.exists(file_path):
+            print(f"Archivo de entrada no encontrado: {file_path}")
+            return None
+
+        print(f"Iniciando traducción del archivo: {file_path}")
+        
+        # Llama a la función de traducción
         traducir_doc(
             input_path=file_path,
             output_path=result_file_path,
@@ -33,13 +44,19 @@ def process_translation(filename, language, origin_language, color_to_exclude):
             color_to_exclude=color_to_exclude
         )
 
+        # Verifica si el archivo de resultado fue creado
         if os.path.exists(result_file_path):
+            print(f"Traducción exitosa, archivo guardado en: {result_file_path}")
             return result_filename
         else:
+            print(f"Traducción fallida, archivo de resultado no encontrado: {result_file_path}")
             return None
+
     except Exception as e:
-        print(f"Error durante la traducción: {e}")
+        # Captura y muestra detalles de cualquier excepción
+        print(f"Error durante la traducción del archivo {filename}: {str(e)}")
         return None
+
 
 def background_translation(filename, language, origin_language, color_to_exclude):
     translated_filename = process_translation(filename, language, origin_language, color_to_exclude)
@@ -61,9 +78,11 @@ def schedule_file_removal(file_path):
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
     max_file_size = app.config['MAX_CONTENT_LENGTH']
+    error_message = None
     if request.method == 'POST':
         if 'file' not in request.files or 'language' not in request.form or 'origin_language' not in request.form:
-            return "Faltan parámetros", 400
+            error_message = "Faltan parámetros"
+            return render_template('home.html', max_file_size=max_file_size, error_message=error_message)
 
         file = request.files.get('file')
         language = request.form.get('language')
@@ -71,14 +90,17 @@ def upload_file():
         color_to_exclude = request.form.get('color_to_exclude', None)
 
         if not file or not language or not origin_language:
-            return "Faltan parámetros", 400
+            error_message = "Faltan parámetros"
+            return render_template('home.html', max_file_size=max_file_size, error_message=error_message)
 
         if file.filename == '':
-            return "No se seleccionó ningún archivo", 400
+            error_message = "No se seleccionó ningún archivo"
+            return render_template('home.html', max_file_size=max_file_size, error_message=error_message)
 
         if file and allowed_file(file.filename):
             if file.content_length > max_file_size:
-                return "Archivo demasiado grande", 413
+                error_message = "Archivo demasiado grande"
+                return render_template('home.html', max_file_size=max_file_size, error_message=error_message)
 
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -88,7 +110,7 @@ def upload_file():
             thread.start()
 
             return redirect(url_for('show_progress', filename=filename))
-    return render_template('home.html', max_file_size=max_file_size)
+    return render_template('home.html', max_file_size=max_file_size, error_message=error_message)
 
 @app.route('/progress/<filename>')
 def show_progress(filename):
@@ -130,16 +152,6 @@ def check_status(filename):
         return jsonify({"status": "completed"})
     else:
         return jsonify({"status": "processing"})
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        # Aquí deberías manejar la autenticación del usuario
-        username = request.form['username']
-        password = request.form['password']
-        # Implementar la lógica de autenticación aquí
-        return redirect(url_for('upload_file'))
-    return render_template('login.html')
 
 @app.route('/pricing')
 def pricing():
