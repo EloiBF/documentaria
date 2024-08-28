@@ -2,19 +2,16 @@
 
 {% block content %}
 <main>
-    <div class="progress-container">
-        <h2>Progreso de la Traducción</h2>
-        <div class="progress-circle"></div>
-        <p id="status-message">Estamos trabajando en tu traducción. Por favor, espera...</p>
-        <div id="progress-wrapper">
-            <div id="progress-bar"></div>
+    <div class="card">
+        <div class="progress-container">
+            <h2>Traducció en curs...</h2>
+            <div class="progress-circle"></div>
+            <p id="status-message">Estem traduïnt el teu document. Pot trigar uns minuts...</p>
         </div>
     </div>
 
     <script>
         const filename = "{{ filename }}";
-        const progressWrapper = document.getElementById('progress-wrapper');
-        const progressBar = document.getElementById('progress-bar');
         const statusMessage = document.getElementById('status-message');
 
         function checkStatus() {
@@ -24,8 +21,7 @@
                     if (data.status === 'completed') {
                         window.location.href = `/result/${filename}`;
                     } else {
-                        // Update progress bar or display a message if needed
-                        progressBar.style.width = '100%'; // Example static width; adjust as needed
+                        // Simulate progress or update UI if needed
                         setTimeout(checkStatus, 5000); // Check status every 5 seconds
                     }
                 });

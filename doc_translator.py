@@ -126,7 +126,7 @@ def modelo_traduccion_bloques(bloques, origin_language, destination_language, pl
                 # Crear el mensaje de prompt
                 prompt = f"""You are a useful translator specialized in modern Catalan language.
                 Translate text ignoring placeholders <CD_TR>, but maintain them in the same position. 
-                Never add any comments or annotations other than translation. I don't want your feedback, only the translation.
+                Do not add any comments or annotations other than translation. I don't want your feedback. Return only the translation.
                 Always use correct catalan gramatical constructions, specially focus in the correct use of ' in articles or pronouns.    
                 Translate text from {origin_language} to {destination_language}:\n\n{bloque}"""
                 
@@ -138,7 +138,9 @@ def modelo_traduccion_bloques(bloques, origin_language, destination_language, pl
                             "content": prompt,
                         }
                     ],
-                    model="llama3-8b-8192",
+                    #model = 'llama3-8b-8192',
+                    model = 'llama3-70b-8192' # Aquest model funciona molt bé!
+                    #model = 'mixtral-8x7b-32768'
                 )
                 
                 # Obtener la traducción desde la respuesta

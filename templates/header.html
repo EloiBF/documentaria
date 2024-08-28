@@ -1,25 +1,38 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <title>{% block title %}Traductor de Documentos{% endblock %}</title>
+    <title>{% block title %}Traductor de Documents{% endblock %}</title>
+    <!-- Script per a l'scroll suau -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('nav a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
 </head>
 <body>
     <header>
         <div class="container">
-            <h1><a href="{{ url_for('upload_file') }}">Traductor de Documentos</a></h1>
+            <h1><a href="/">FabrIA</a></h1> <!-- Enlace a la página principal -->
             <nav>
-                <a href="{{ url_for('login') }}">Iniciar sesión</a>
-                <a href="{{ url_for('pricing') }}">Precios</a>
-                <a href="{{ url_for('about_us') }}">Sobre Nosotros</a>
+                <a href="#pricing">Preus</a>
+                <a href="#about-us">Qui som?</a>
             </nav>
         </div>
     </header>
     {% block content %}{% endblock %}
     <footer>
-        <p>&copy; 2024 Traductor de Documentos. Todos los derechos reservados.</p>
+        <p>&copy; 2024 FabrIA: Traductor de Documents. Tots els drets reservats.</p>
     </footer>
 </body>
 </html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Traductor de Documents</title>
+    <!-- Script per a l'scroll suau -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('nav a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Script per a actualitzar l'estat de càrrega
+            document.getElementById('file-input').addEventListener('change', function(event) {
+                const fileInput = event.target;
+                const uploadArea = document.getElementById('upload-area');
+                const fileInfo = document.getElementById('file-info');
+                
+                if (fileInput.files.length > 0) {
+                    // Simular una càrrega exitosa de fitxer
+                    uploadArea.classList.add('file-loaded');
+                    fileInfo.textContent = 'Arxiu pujat amb èxit';
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="#translation">FabrIA</a></h1>
+            <nav>
+                <a href="#translation">Traduir Documents</a>
+                <a href="#pricing">Preus</a>
+                <a href="#about-us">Qui som?</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <!-- Secció de traducció -->
+        <section id="translation">
+            <div class="header-section">
+                <h1>Traducció de documents amb IA</h1>
+                <h3>Tradueix fitxers .pptx .docx i .pdf en un instant!</h3>
+            </div>
+
+            <!-- Contenedor del formulario -->
+            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                <div class="form-container">
+                    <!-- Sección de carga de archivos -->
+                    <div class="upload-container">
+                        <h2>Carrega el teu document</h2>
+                        <div class="upload-area" id="upload-area">
+                            <input type="file" name="file" id="file-input" required>
+                            <label for="file-input" class="upload-label">Arrossega el teu arxiu aquí o fes clic per seleccionar-lo</label>
+                            <div class="file-info" id="file-info"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <div class="form-group">
+                            <label for="language">Traduir a:</label>
+                            <select name="language" id="language" required>
+                                <option value="ca" selected>Català</option>
+                                <option value="es">Espanyol</option>
+                                <option value="en">Anglès</option>
+                                <!-- Afegir més opcions segons sigui necessari -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="origin_language">Idioma original:</label>
+                            <select name="origin_language" id="origin_language" required>
+                                <option value="ca" selected>Català</option>
+                                <option value="es">Espanyol</option>
+                                <option value="en">Anglès</option>
+                                <!-- Afegir més opcions segons sigui necessari -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="color_to_exclude">Color a excloure (opcional):</label>
+                            <input type="text" name="color_to_exclude" id="color_to_exclude" placeholder="Exemple: #ff0000">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-button">Traduir Document</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Secció de preus -->
+        <section id="pricing">
+            <div class="pricing-container">
+                <h2>Preus</h2>
+                <div class="pricing-card">
+                    <h3>Bàsic</h3>
+                    <p>€50 per document</p>
+                    <p>Inclou fins a 10 pàgines.</p>
+                    <p>Ideal per documents curts o amb poc contingut.</p>
+                    <button type="button">Selecciona</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>Professional</h3>
+                    <p>€100 per document</p>
+                    <p>Inclou fins a 30 pàgines.</p>
+                    <p>Perfecte per documents més extensos o tècnics.</p>
+                    <button type="button">Selecciona</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>Premium</h3>
+                    <p>€200 per document</p>
+                    <p>Inclou més de 30 pàgines.</p>
+                    <p>Per a grans projectes amb traducció especialitzada.</p>
+                    <button type="button">Selecciona</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Secció sobre nosaltres -->
+        <section id="about-us">
+            <div class="about-us-container">
+                <h2>Qui som?</h2>
+                <p>Som especialistes en l'aplicació de models IA per tractar text i àudio en català. La nostra missió és proporcionar traduccions de la més alta qualitat que capturin la precisió i el matís del teu contingut original.</p>
+                <p>FabrIA utilitza els models de IA més avançats i entrenats específicament amb la llengua catalana, per aconseguir traduccions més ràpides i precises.</p>
+                <p>Garantitzem que es mantindrà la major part del format del document amb la traducció. Pot ser necessària la intervenció humana per revisar el resultat, pero serà mínima gràcies a FabrIA.</p>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 FabrIA: Traductor de Documents. Tots els drets reservats.</p>
+    </footer>
+</body>
+</html>

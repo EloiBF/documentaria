@@ -88,7 +88,7 @@ def upload_file():
             thread.start()
 
             return redirect(url_for('show_progress', filename=filename))
-    return render_template('upload.html', max_file_size=max_file_size)
+    return render_template('home.html', max_file_size=max_file_size)
 
 @app.route('/progress/<filename>')
 def show_progress(filename):

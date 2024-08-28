@@ -1,137 +1,391 @@
-body {
-    font-family: Arial, sans-serif;
+/* Estils generals */
+html, body {
+    height: 100%; /* Asegura que el body ocupe el 100% de la altura de la ventana */
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+body {
+    display: flex;
+    flex-direction: column; /* Apila el contenido verticalmente */
+    font-family: Arial, sans-serif;
+}
+
+/* Capçalera */
 header {
+    background-color: #a51919;
+    color: #fff;
+    padding: 5px 0;
+    position: static;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000; /* Asegura que el header esté encima de otros elementos */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Opcional: agrega sombra para mayor visibilidad */
+}
+
+/* Ajustar el espacio del contenedor principal */
+main {
+    flex: 1; /* Permite que el main ocupe el espacio disponible */
+    padding-top: 20px; /* Ajusta esto según la altura del header */
+    padding-bottom: 20px; /* Espacio suficiente para el footer */
+    background-color: #f5f5f5;
+}
+
+/* Peu de pàgina */
+footer {
     background-color: #333;
     color: #fff;
+    text-align: center;
     padding: 10px;
+    position: relative; /* Asegura que el footer se mantenga al final del contenido */
+    width: 100%;
+}
+
+/* Secció de capçalera */
+.header-section {
+    display: flex;
+    flex-direction: column; /* Para alinear el texto verticalmente */
+    align-items: center; /* Centra el contenido horizontalmente */
+    justify-content: center; /* Centra el contenido verticalmente */
+    height: 10vh; /* Ajusta la altura del contenedor si es necesario */
+    text-align: center; /* Centra el texto dentro del contenedor */
+    padding: 20px; /* Ajusta el padding según sea necesario */
+    font-size: 20px;
+    line-height: 1.5;
+}
+
+.header-section h1 {
+    margin: 0; /* Opcional: elimina márgenes para evitar espacios adicionales */
+}
+
+.header-section h3 {
+    margin: 0; /* Opcional: elimina márgenes para evitar espacios adicionales */
+    font-style: normal;
+    color: #666;
+    font-size: 16px;
 }
 
 header .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
 header h1 a {
     color: #fff;
     text-decoration: none;
+    font-size: 24px;
+}
+
+nav {
+    display: flex;
 }
 
 nav a {
     color: #fff;
     text-decoration: none;
-    margin: 0 10px;
+    margin: 0 15px;
+    font-size: 16px;
 }
 
 nav a:hover {
     text-decoration: underline;
 }
 
-.upload-container, .progress-container, .result-container, .login-container, .pricing-container, .about-us-container {
+/* Contenidors de contingut */
+.upload-container,
+.progress-container,
+.result-container,
+.login-container,
+.pricing-container,
+.about-us-container {
     padding: 20px;
+    line-height: 1.5;
 }
 
+/* Estil de la secció de traducció */
+.form-container {
+    display: flex;
+    flex-direction: column; /* Apilar verticalmente los elementos */
+    align-items: center; /* Centrar los elementos horizontalmente */
+    padding: 10px;
+    background-color: #ffffff; /* Color de fondo para un buen contraste */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra sutil para profundidad */
+    max-width: 800px; /* Ancho máximo del contenedor */
+    margin: 0 auto; /* Centrar el contenedor en la página */
+}
+
+.upload-container {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px; /* Espacio inferior entre secciones */
+}
+
+/* Contenidor de càrrega */
+.upload-container {
+    width: 100%;
+    padding: 20px;
+    background-color: #ffffff; /* Fondo blanco */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+    text-align: center; /* Centrar el contenido */
+}
+
+/* Àrea de càrrega */
 .upload-area {
-    border: 2px dashed #333;
+    border: 2px dashed #007bff; /* Color del borde inicial */
     padding: 20px;
     text-align: center;
+    border-radius: 8px;
+    background-color: #fafafa; /* Fondo gris claro */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+    transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
-.upload-area p {
-    margin: 0;
+/* Estil quan s'ha carregat un fitxer */
+.upload-area.file-loaded {
+    border-color: #28a745; /* Color del borde cuando se carga el archivo */
+    background-color: #c9f3db; /* Fondo verde claro */
+}
+
+/* Informació del fitxer */
+.file-info {
+    margin-top: 20px;
     font-size: 16px;
-    color: #666;
+    color: #333;
+    font-weight: bold;
 }
 
+.upload-label {
+    display: block;
+    color: #007bff;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+input[type="file"] {
+    display: none; /* Oculta el input real */
+}
+
+.form-options {
+    width: 100%; /* Ajusta al 100% del contenedor */
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px; /* Espacio entre los grupos de formulario */
+}
+
+.form-group label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.form-group select, 
+.form-group input[type="text"] {
+    width: 100%; /* Ajustar al 100% del contenedor */
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px; /* Bordes redondeados */
+}
+
+.submit-button {
+    background-color: #007bff; /* Color de fondo del botón */
+    color: #fff; /* Color del texto del botón */
+    border: none;
+    padding: 12px 20px; /* Padding del botón */
+    border-radius: 4px; /* Bordes redondeados */
+    font-size: 16px; /* Tamaño del texto del botón */
+    cursor: pointer; /* Cursor de mano */
+    display: block; /* Bloque para centrarlo */
+    margin: 20px auto 0; /* Espacio superior e inferior */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+.submit-button:hover {
+    background-color: #0056b3; /* Color de fondo cuando se pasa el ratón */
+}
+
+/* Estils dels botons */
 button {
     background-color: #007bff;
     color: #fff;
     border: none;
     padding: 10px 20px;
     cursor: pointer;
+    font-size: 16px; /* Coherència de mida de lletra */
+    margin-top: 10px;
 }
 
 button:hover {
     background-color: #0056b3;
 }
 
-.progress-circle {
-    border: 4px solid #007bff;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    border-top: 4px solid #fff;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
+
+/* Estil del contenidor de la targeta */
+.card {
+    padding: 20px;
+    background-color: #ffffff; /* Fons blanc per a la targeta */
+    border-radius: 8px; /* Arrodonir les cantonades de la targeta */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombratge per donar profunditat */
+    max-width: 600px; /* Amplada màxima per a la targeta */
+    margin: 20px auto; /* Margin automàtic per centrar la targeta */
+    text-align: center; /* Centrar el text dins de la targeta */
 }
 
+/* Estil del contenidor de progrés */
+.progress-container {
+    padding: 20px;
+}
+
+/* Estil del cercle de progrés */
+.progress-circle {
+    width: 100px; /* Amplada del cercle */
+    height: 100px; /* Alçada del cercle */
+    border: 10px solid #007bff; /* Color del borde del cercle */
+    border-radius: 50%; /* Fer el cercle */
+    border-top: 10px solid transparent; /* Crear l'efecte de rotació */
+    animation: spin 1s linear infinite; /* Animació de rotació */
+    margin: 0 auto 20px auto; /* Centrar el cercle horizontalment */
+}
+
+/* Animació de rotació del cercle */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-.pricing-container {
-    display: flex;
-    justify-content: space-around;
-    padding: 20px;
-}
-
-.pricing-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    width: 30%;
-    text-align: center;
-}
-
-.pricing-card h3 {
-    margin-top: 0;
-}
-
-footer {
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    padding: 10px;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-}
-
-
-/* Estilo para la barra de progreso */
-#progress-wrapper {
-    width: 100%;
-    background-color: #ddd;
-    border-radius: 10px;
-    overflow: hidden;
+/* Estil del missatge de l'estat */
+#status-message {
     margin-top: 20px;
+    font-size: 16px;
+    color: #666;
 }
 
-#progress-bar {
-    height: 20px;
-    width: 0; /* Se actualizará con JS */
-    background-color: #007bff;
-    transition: width 0.5s ease;
+/* Estil del contenidor del progrés */
+#progress-wrapper {
+    margin-top: 20px;
+    height: 20px; /* Alçada del contenidor del progrés */
+    background-color: #f5f5f5; /* Fons del contenidor del progrés */
+    border-radius: 10px; /* Bordes arrodonits */
+    position: relative; /* Posicionar el progress-bar de manera absoluta dins del contenidor */
 }
 
-/* Estilo para el círculo de progreso */
-.progress-circle {
-    border: 4px solid #007bff;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    border-top: 4px solid #fff;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
+/* Contenidor de preus */
+.pricing-container {
+    text-align: center; /* Centra el títol i les targetes horitzontalment */
+    padding: 20px; /* Ajusta el padding segons sigui necessari */
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+/* Títol de la secció de preus */
+.pricing-container h2 {
+    margin-bottom: 40px; /* Espai entre el títol i les targetes */
+    font-size: 2em; /* Ajusta la mida del text segons sigui necessari */
+    color: #333; /* Ajusta el color del text si cal */
+}
+
+/* Targetes de preus */
+.pricing-card {
+    display: inline-block; /* Permet que les targetes estiguin en línia una al costat de l'altra */
+    width: 300px; /* Ajusta la mida de les targetes segons sigui necessari */
+    padding: 20px;
+    background-color: #f9f9f9;
+    margin: 10px; /* Espai entre les targetes */
+    border: 1px solid #ddd; /* Bord de les targetes */
+    border-radius: 8px; /* Arrodoneix les cantonades */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Ombratge per donar profunditat */
+    text-align: center; /* Centra el text dins de la targeta */
+}
+
+/* Estil dels botons dins de les targetes */
+.pricing-card button {
+    margin-top: 20px; /* Espai per sobre del botó */
+    padding: 10px 20px; /* Ajusta el padding del botó */
+    border: none;
+    background-color: #a51919; /* Color de fons del botó */
+    color: #fff; /* Color del text del botó */
+    border-radius: 5px; /* Arrodoneix les cantonades del botó */
+    cursor: pointer; /* Canvia el cursor quan passa sobre el botó */
+    font-size: 1em; /* Ajusta la mida del text del botó */
+}
+
+.pricing-card button:hover {
+    background-color: #b71c1c; /* Canvia el color de fons quan el botó es passa per sobre */
+}
+
+/* Secció sobre nosaltres */
+.about-us-container {
+    padding: 20px;
+    background-color: #f4f4f4;
+    text-align: center;
+}
+
+.about-us-container h2 {
+    margin-bottom: 20px;
+    font-size: 2em;
+    color: #333;
+}
+
+.about-us-container p {
+    font-size: 16px;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* Contenidors de contingut */
+.result-container {
+    text-align: center; /* Centra el text dins del contenidor */
+    padding: 40px;
+    background-color: #f9f9f9; /* Fons lleugerament diferent per destacar la secció */
+    border-radius: 8px; /* Arrodonir les cantonades */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombratge per donar profunditat */
+    margin: 20px auto; /* Margin automàtic per centrar el contenidor */
+    max-width: 600px; /* Amplada màxima per contenidor */
+}
+
+.result-container h2 {
+    font-size: 2em; /* Mida del text del títol */
+    color: #333; /* Color del text del títol */
+    margin-bottom: 20px; /* Espai per sota del títol */
+}
+
+.result-container p {
+    font-size: 16px; /* Mida del text del paràgraf */
+    color: #666; /* Color del text del paràgraf */
+    margin-bottom: 30px; /* Espai per sota del paràgraf */
+    line-height: 1;
+}
+
+/* Estil del botó de descàrrega */
+.download-button {
+    background-color: #007bff; /* Color de fons del botó */
+    color: #fff; /* Color del text del botó */
+    border: none;
+    padding: 12px 24px; /* Padding per fer el botó més gran */
+    border-radius: 5px; /* Arrodonir les cantonades del botó */
+    text-decoration: none; /* Eliminació de subratllat */
+    font-size: 16px; /* Mida del text del botó */
+    display: inline-block; /* Mostrar el botó com a element en línia amb marges */
+    cursor: pointer; /* Canviar el cursor a mà quan passa sobre el botó */
+    transition: background-color 0.3s ease; /* Transició suau per al canvi de color */
+}
+
+.download-button:hover {
+    background-color: #0056b3; /* Canvia el color del botó quan es passa per sobre */
+}
+
+
+
+/* Asegúrate de que el scroll no oculta el contenido detrás del header */
+.scroll-margin {
+    scroll-margin-top: 1000px; /* Ajusta esta altura al tamaño del header */
 }
