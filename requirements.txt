@@ -11,4 +11,7 @@ celery
 torch
 faiss-cpu
 pdf2docx
+pypandoc
 groq
+pdfplumber
+reportlab

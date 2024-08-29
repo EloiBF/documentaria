@@ -3,9 +3,9 @@ from doc_translator import traducir_doc
 
 
 # VARIABLES:
-nombre_fichero = 'test.docx' # Debe incluir la extensión al final (.pptx, .docx o .pdf)
-origin_language = "es"
-destination_language = "ca"
+nombre_fichero = 'TEST.pdf' # Debe incluir la extensión al final (.pptx, .docx o .pdf)
+origin_language = "Spanish"
+destination_language = "Catalan"
 color_to_exclude = '#FF0000' # poner en formato #F00000
 
 # Rutas de documentos a traducir y devolución

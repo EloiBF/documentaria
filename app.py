@@ -7,34 +7,43 @@ import time
 from doc_translator import traducir_doc
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'docs/uploads'
-app.config['RESULT_FOLDER'] = 'docs/translated'
+app.config['UPLOAD_FOLDER'] = os.path.abspath('docs/uploads')
+app.config['RESULT_FOLDER'] = os.path.abspath('docs/translated')
 app.config['ALLOWED_EXTENSIONS'] = {'docx', 'pptx', 'pdf'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+
+def get_result_filename(filename):
+    """
+    Esta función toma el nombre del archivo original y retorna el nombre esperado del archivo traducido.
+    Si el archivo es un PDF, el archivo resultante será un DOCX, de lo contrario, mantendrá la misma extensión.
+    """
+    file_ext = os.path.splitext(filename)[1].lower()
+    result_filename = f"translated_{os.path.splitext(filename)[0]}.docx" if file_ext == '.pdf' else f"translated_{filename}"
+    return result_filename
+
+
 def process_translation(filename, language, origin_language, color_to_exclude):
     try:
-        # Define las rutas de entrada y salida
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        result_filename = f"translated_{filename}"
+        result_filename = get_result_filename(filename)
         result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
+        
+        # Ruta para el archivo temporal si es un PDF
+        temp_file_path = None
+        if filename.lower().endswith('.pdf'):
+            temp_file_path = file_path.rsplit('.', 1)[0] + '.docx'
 
-        # Verifica si el archivo de salida ya existe y lo elimina si es necesario
         if os.path.exists(result_file_path):
-            print(f"Archivo existente encontrado y eliminado: {result_file_path}")
             os.remove(result_file_path)
 
-        # Verifica la existencia del archivo de entrada antes de proceder
         if not os.path.exists(file_path):
             print(f"Archivo de entrada no encontrado: {file_path}")
-            return None
+            return None, temp_file_path
 
-        print(f"Iniciando traducción del archivo: {file_path}")
-        
-        # Llama a la función de traducción
         traducir_doc(
             input_path=file_path,
             output_path=result_file_path,
@@ -44,46 +53,54 @@ def process_translation(filename, language, origin_language, color_to_exclude):
             color_to_exclude=color_to_exclude
         )
 
-        # Verifica si el archivo de resultado fue creado
-        if os.path.exists(result_file_path):
-            print(f"Traducción exitosa, archivo guardado en: {result_file_path}")
-            return result_filename
-        else:
-            print(f"Traducción fallida, archivo de resultado no encontrado: {result_file_path}")
-            return None
-
-    except Exception as e:
-        # Captura y muestra detalles de cualquier excepción
-        print(f"Error durante la traducción del archivo {filename}: {str(e)}")
-        return None
-
-
-def background_translation(filename, language, origin_language, color_to_exclude):
-    translated_filename = process_translation(filename, language, origin_language, color_to_exclude)
-    if translated_filename:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        # Elimina el archivo original después de la traducción
         if os.path.exists(file_path):
             os.remove(file_path)
 
-        result_file_path = os.path.join(app.config['RESULT_FOLDER'], translated_filename)
-        threading.Thread(target=schedule_file_removal, args=(result_file_path,)).start()
-    else:
+        return result_filename, temp_file_path
+
+    except Exception as e:
+        print(f"Error durante la traducción del archivo {filename}: {str(e)}")
+
+        # Asegura la eliminación del archivo original y temporal si ocurre un error
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+            
+        return None, temp_file_path
+    
+
+def background_translation(filename, language, origin_language, color_to_exclude):
+    # Procesa la traducción del archivo
+    translated_filename, temp_file_path = process_translation(filename, language, origin_language, color_to_exclude)
+    # Inicia un hilo para eliminar el archivo traducido y los archivos temporales después de un tiempo
+    result_file_path = os.path.join(app.config['RESULT_FOLDER'], translated_filename) if translated_filename else None
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    threading.Thread(target=schedule_file_removal, args=(result_file_path, file_path, temp_file_path)).start()
+    if not translated_filename:
         print(f"Falló la traducción para {filename}")
 
-def schedule_file_removal(file_path):
-    time.sleep(30)
-    if os.path.exists(file_path):
+
+def schedule_file_removal(result_file_path, file_path, temp_file_path):
+    # Espera 10 minutos antes de eliminar los archivos
+    time.sleep(10)
+    # Elimina el archivo traducido si existe
+    if result_file_path and os.path.exists(result_file_path):
+        os.remove(result_file_path)
+    # Elimina el archivo original si existe
+    if file_path and os.path.exists(file_path):
         os.remove(file_path)
+    # Elimina el archivo temporal si existe
+    if temp_file_path and os.path.exists(temp_file_path):
+        os.remove(temp_file_path)
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
     max_file_size = app.config['MAX_CONTENT_LENGTH']
-    error_message = None
     if request.method == 'POST':
-        if 'file' not in request.files or 'language' not in request.form or 'origin_language' not in request.form:
-            error_message = "Faltan parámetros"
-            return render_template('home.html', max_file_size=max_file_size, error_message=error_message)
-
         file = request.files.get('file')
         language = request.form.get('language')
         origin_language = request.form.get('origin_language')
@@ -106,37 +123,39 @@ def upload_file():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
 
-            thread = threading.Thread(target=background_translation, args=(filename, language, origin_language, color_to_exclude))
-            thread.start()
-
+            threading.Thread(target=background_translation, args=(filename, language, origin_language, color_to_exclude)).start()
             return redirect(url_for('show_progress', filename=filename))
-    return render_template('home.html', max_file_size=max_file_size, error_message=error_message)
+    
+    return render_template('home.html', max_file_size=max_file_size)
 
 @app.route('/progress/<filename>')
 def show_progress(filename):
-    result_filename = f"translated_{filename}"
+    result_filename = get_result_filename(filename)
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
     if os.path.exists(result_file_path):
-        return redirect(url_for('result', filename=filename))
-
+        return redirect(url_for('result', filename=result_filename))
+    
     return render_template('progress.html', filename=filename)
+
 
 @app.route('/download/<filename>')
 def download_file(filename):
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], filename)
 
     if not os.path.exists(result_file_path):
+        print(f"Archivo no encontrado en la ruta: {result_file_path}")
         abort(404, description="Archivo no encontrado")
 
-    # Iniciar un hilo para eliminar el archivo después de 10 segundos
-    threading.Thread(target=schedule_file_removal, args=(result_file_path, 10)).start()
+    print(f"Enviando archivo: {filename} desde {result_file_path}")
+    threading.Thread(target=schedule_file_removal, args=(result_file_path,)).start()
 
     return send_from_directory(app.config['RESULT_FOLDER'], filename, as_attachment=True)
 
+
 @app.route('/result/<filename>')
 def result(filename):
-    result_filename = f"translated_{filename}"
+    result_filename = get_result_filename(filename)
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
     if os.path.exists(result_file_path):
@@ -144,14 +163,13 @@ def result(filename):
     else:
         return redirect(url_for('show_progress', filename=filename))
 
+
 @app.route('/check_status/<filename>')
 def check_status(filename):
-    result_filename = f"translated_{filename}"
+    result_filename = get_result_filename(filename)
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
-    if os.path.exists(result_file_path):
-        return jsonify({"status": "completed"})
-    else:
-        return jsonify({"status": "processing"})
+
+    return jsonify({"status": "completed" if os.path.exists(result_file_path) else "processing"})
 
 @app.route('/pricing')
 def pricing():
