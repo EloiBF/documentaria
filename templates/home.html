@@ -51,7 +51,6 @@
                 <h1>Traducció de documents amb IA</h1>
                 <h3>Tradueix fitxers .pptx .docx i .pdf en un instant!</h3>
             </div>
-
             <!-- Contenedor del formulario -->
             <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
                 <div class="form-container">
@@ -67,26 +66,34 @@
 
                     <div class="form-options">
                         <div class="form-group">
-                            <label for="language">Traduir a:</label>
-                            <select name="language" id="language" required>
-                                <option value="ca" selected>Català</option>
-                                <option value="es">Espanyol</option>
-                                <option value="en">Anglès</option>
+                            <label for="source_language">Idioma original:</label>
+                            <select name="source_language" id="source_language" required>
+                                <option value="auto" selected>Detecció automàtica</option>
+                                <option value="catalan">Català</option>
+                                <option value="spanish">Espanyol</option>
+                                <option value="english">Anglès</option>
                                 <!-- Afegir més opcions segons sigui necessari -->
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="origin_language">Idioma original:</label>
-                            <select name="origin_language" id="origin_language" required>
-                                <option value="ca" selected>Català</option>
-                                <option value="es">Espanyol</option>
-                                <option value="en">Anglès</option>
+                            <label for="target_language">Traduir a:</label>
+                            <select name="target_language" id="target_language" required>
+                                <option value="catalan" selected>Català</option>
+                                <option value="spanish">Espanyol</option>
+                                <option value="english">Anglès</option>
                                 <!-- Afegir més opcions segons sigui necessari -->
                             </select>
+                        </div>
+                    </div>
+
+                    <div class="additional-options">
+                        <div class="form-group">
+                            <label for="add_prompt">Afegeix context a la traducció (opcional):</label>
+                            <textarea name="add_prompt" id="add_prompt" placeholder="Exemple: Tradueix un condicionat d'una assegurança de cotxe, utilitza el vocabulari adequat"></textarea>
                         </div>
                         <div class="form-group">
                             <label for="color_to_exclude">Color a excloure (opcional):</label>
-                            <input type="text" name="color_to_exclude" id="color_to_exclude" placeholder="Exemple: #ff0000">
+                            <input type="text" name="color_to_exclude" id="color_to_exclude" placeholder="Exemple: #ff0000" class="small-input">
                         </div>
                     </div>
 
@@ -94,6 +101,7 @@
                 </div>
             </form>
         </section>
+
 
         <!-- Secció de preus -->
         <section id="pricing">

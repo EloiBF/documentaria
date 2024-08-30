@@ -25,8 +25,17 @@ def get_result_filename(filename):
     result_filename = f"translated_{os.path.splitext(filename)[0]}.docx" if file_ext == '.pdf' else f"translated_{filename}"
     return result_filename
 
+def background_translation(filename, language, origin_language, color_to_exclude, add_prompt):
+    # Procesa la traducción del archivo
+    translated_filename, temp_file_path = process_translation(filename, language, origin_language, color_to_exclude, add_prompt)
+    # Inicia un hilo para eliminar el archivo traducido y los archivos temporales después de un tiempo
+    result_file_path = os.path.join(app.config['RESULT_FOLDER'], translated_filename) if translated_filename else None
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    threading.Thread(target=schedule_file_removal, args=(result_file_path, file_path, temp_file_path)).start()
+    if not translated_filename:
+        print(f"Falló la traducción para {filename}")
 
-def process_translation(filename, language, origin_language, color_to_exclude):
+def process_translation(filename, language, origin_language, color_to_exclude, add_prompt):
     try:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         result_filename = get_result_filename(filename)
@@ -50,7 +59,8 @@ def process_translation(filename, language, origin_language, color_to_exclude):
             origin_language=origin_language,
             destination_language=language,
             extension=os.path.splitext(filename)[1].lower(),
-            color_to_exclude=color_to_exclude
+            color_to_exclude=color_to_exclude,
+            add_prompt=add_prompt 
         )
 
         # Elimina el archivo original después de la traducción
@@ -69,22 +79,11 @@ def process_translation(filename, language, origin_language, color_to_exclude):
             os.remove(temp_file_path)
             
         return None, temp_file_path
-    
-
-def background_translation(filename, language, origin_language, color_to_exclude):
-    # Procesa la traducción del archivo
-    translated_filename, temp_file_path = process_translation(filename, language, origin_language, color_to_exclude)
-    # Inicia un hilo para eliminar el archivo traducido y los archivos temporales después de un tiempo
-    result_file_path = os.path.join(app.config['RESULT_FOLDER'], translated_filename) if translated_filename else None
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    threading.Thread(target=schedule_file_removal, args=(result_file_path, file_path, temp_file_path)).start()
-    if not translated_filename:
-        print(f"Falló la traducción para {filename}")
 
 
 def schedule_file_removal(result_file_path, file_path, temp_file_path):
     # Espera 10 minutos antes de eliminar los archivos
-    time.sleep(10)
+    time.sleep(20)
     # Elimina el archivo traducido si existe
     if result_file_path and os.path.exists(result_file_path):
         os.remove(result_file_path)
@@ -96,15 +95,15 @@ def schedule_file_removal(result_file_path, file_path, temp_file_path):
         os.remove(temp_file_path)
 
 
-
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
     max_file_size = app.config['MAX_CONTENT_LENGTH']
     if request.method == 'POST':
         file = request.files.get('file')
-        language = request.form.get('language')
-        origin_language = request.form.get('origin_language')
+        language = request.form.get('target_language')
+        origin_language = request.form.get('source_language')
         color_to_exclude = request.form.get('color_to_exclude', None)
+        add_prompt = request.form.get('add_prompt', '')  # Recoger add_prompt
 
         if not file or not language or not origin_language:
             error_message = "Faltan parámetros"
@@ -123,10 +122,11 @@ def upload_file():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
 
-            threading.Thread(target=background_translation, args=(filename, language, origin_language, color_to_exclude)).start()
+            threading.Thread(target=background_translation, args=(filename, language, origin_language, color_to_exclude, add_prompt)).start()
             return redirect(url_for('show_progress', filename=filename))
     
     return render_template('home.html', max_file_size=max_file_size)
+
 
 @app.route('/progress/<filename>')
 def show_progress(filename):

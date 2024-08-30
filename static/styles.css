@@ -111,40 +111,90 @@ nav a:hover {
 /* Estil de la secció de traducció */
 .form-container {
     display: flex;
-    flex-direction: column; /* Apilar verticalmente los elementos */
-    align-items: center; /* Centrar los elementos horizontalmente */
-    padding: 10px;
-    background-color: #ffffff; /* Color de fondo para un buen contraste */
-    border-radius: 8px; /* Bordes redondeados */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra sutil para profundidad */
-    max-width: 800px; /* Ancho máximo del contenedor */
-    margin: 0 auto; /* Centrar el contenedor en la página */
-}
-
-.upload-container {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 20px; /* Espacio inferior entre secciones */
-}
-
-/* Contenidor de càrrega */
-.upload-container {
-    width: 100%;
+    flex-direction: column; /* Apilar verticalment els elements */
+    align-items: normal; /* Centrar els elements horizontalment */
     padding: 20px;
-    background-color: #ffffff; /* Fondo blanco */
-    border-radius: 8px; /* Bordes redondeados */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
-    text-align: center; /* Centrar el contenido */
+    background-color: #ffffff; /* Color de fons per un bon contrast */
+    border-radius: 8px; /* Bordes arrodonits */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombra subtil per profunditat */
+    max-width: 800px; /* Ample màxim del contenidor */
+    margin: 0 auto; /* Centrar el contenidor en la pàgina */
+}
+
+/* Estilitzar els selectors per mostrar-los de costat */
+.form-options {
+    display: flex;
+    gap: 20px; /* Espai entre els selectors, ajusta segons sigui necessari */
+    margin-bottom: 10px; /* Espai entre els selectors i els camps següents */
+    width: 100%; /* Assegura que ocupa tota l'amplada */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.form-options {
+    width: 100%; /* Ajusta al 100% del contenedor */
+}
+
+.form-group label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.form-group select, 
+.form-group input[type="text"] {
+    width: 100%; /* Ajustar al 100% del contenedor */
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px; /* Bordes redondeados */
+}
+
+
+/* Estilitzar els selectors */
+select {
+    width: 100%;
+    padding: 0px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Feu que l'entrada de text per al color sigui més petita horitzontalment */
+input#color_to_exclude.small-input {
+    width: 100px; /* Ajusta la mida horitzontal segons sigui necessari */
+    box-sizing: border-box;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Estilitzar el textarea per fer-lo més gran */
+textarea#add_prompt {
+    width: 100%; /* Assegura que ocupa tota l'amplada del contenidor */
+    height: 100px; /* Ajusta l'alçada segons sigui necessari */
+    box-sizing: border-box; /* Inclou el padding i border en el width i height totals */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Afegir espai al voltant del botó */
+.submit-button {
+    margin-top: 30px;
 }
 
 /* Àrea de càrrega */
 .upload-area {
     border: 2px dashed #007bff; /* Color del borde inicial */
-    padding: 20px;
+    padding: 15px;
     text-align: center;
     border-radius: 8px;
-    background-color: #fafafa; /* Fondo gris claro */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+    background-color: #fafafa; /* Fons gris clar */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombra subtil */
     transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
@@ -174,35 +224,13 @@ input[type="file"] {
     display: none; /* Oculta el input real */
 }
 
-.form-options {
-    width: 100%; /* Ajusta al 100% del contenedor */
-    padding: 20px;
-}
 
-.form-group {
-    margin-bottom: 15px; /* Espacio entre los grupos de formulario */
-}
-
-.form-group label {
-    display: block;
-    font-size: 16px;
-    margin-bottom: 5px;
-}
-
-.form-group select, 
-.form-group input[type="text"] {
-    width: 100%; /* Ajustar al 100% del contenedor */
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px; /* Bordes redondeados */
-}
 
 .submit-button {
     background-color: #007bff; /* Color de fondo del botón */
     color: #fff; /* Color del texto del botón */
     border: none;
-    padding: 12px 20px; /* Padding del botón */
+    padding: 10px 20px; /* Padding del botón */
     border-radius: 4px; /* Bordes redondeados */
     font-size: 16px; /* Tamaño del texto del botón */
     cursor: pointer; /* Cursor de mano */

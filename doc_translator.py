@@ -100,7 +100,7 @@ def separar_texto_bloques(textos, max_keys_per_block=10):
     return bloques_texto
 
 # APLICACIÓN DEL MODELO IA DE TRADUCCIÓN -- Entran bloques y salen bloques traducidos    # PODRÍAMOS INCLUIR FUNCIONES DE EMBEDDING AQUÍ
-def modelo_traduccion_bloques(bloques, origin_language, destination_language, numintentos=10):
+def modelo_traduccion_bloques(bloques, origin_language, destination_language, add_prompt, numintentos=10):
     def verificar_codigos(original, traducido):
         """Verifica que todos los códigos en el texto original estén presentes en el texto traducido.
         No verifica si hay códigos adicionales en la traducción."""
@@ -133,21 +133,30 @@ def modelo_traduccion_bloques(bloques, origin_language, destination_language, nu
 
     bloques_traducidos = []
 
+    # Construir la parte fija del prompt
+    base_prompt = """
+    Follow this rules:
+    - Your task is to translate text while strictly preserving codes (_CDTR_00000) in their exact positions, including at the start or end of the text. 
+    - Provide only the translated text without any additional comments or annotations. I don't want your feedback, only the pure translation.
+    - Ensure that the translation is grammatically correct in {destination_language}, with special attention to the correct use of apostrophes in articles and pronouns.
+    - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
+    Text to translate:
+    """
+
     for bloque in bloques:
         reintentos = 0
         while reintentos < numintentos:
             try:
                 # Crear el mensaje de prompt
-                prompt = f"""
-                Translate text from {origin_language} to {destination_language}.
-                Follow this rules:
-                - Your task is to translate text while strictly preserving codes (_CDTR_00000) in their exact positions, including at the start or end of the text. 
-                - Provide only the translated text without any additional comments or annotations. I don't want your feedback, only the pure translation.
-                - Ensure that the translation is grammatically correct in Catalan, with special attention to the correct use of apostrophes in articles and pronouns.
-                - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
-                Text to translate:
-                {bloque}
-                """
+                if origin_language == "auto":
+                    prompt = f"Translate text to {destination_language}.\n{base_prompt.format(destination_language=destination_language)}{bloque}"
+                else:
+                    prompt = f"Translate text from {origin_language} to {destination_language}.\n{base_prompt.format(destination_language=destination_language)}{bloque}"
+
+                # Incluye las instrucciones adicionales proporcionadas por el usuario, si existen
+                if add_prompt:
+                    prompt += f"\nAdditional instructions: {add_prompt}"
+
                 
                 # Llamar al modelo a través de la API de Groq
                 chat_completion = client.chat.completions.create(
@@ -465,7 +474,7 @@ def procesar_documento(extension, input_path ,output_path, textos_originales, co
     elif extension == ".pdf":
         return procesar_pdf(input_path, output_path, textos_originales, color_to_exclude, textos_traducidos_final, action) 
 
-def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude):
+def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt):
     print(f"Starting translation process for {input_path}")
 
     # Procesar el documento para obtener textos originales
@@ -488,7 +497,7 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
     bloques = separar_texto_bloques(textos_para_traducir)
 
     # Traducción de bloques con el modelo
-    bloques_traducidos = modelo_traduccion_bloques(bloques, origin_language, destination_language)
+    bloques_traducidos = modelo_traduccion_bloques(bloques, origin_language, destination_language, add_prompt)
 
     # Traducir los textos recopilados en bloques
     textos_traducidos = join_blocks(bloques_traducidos)

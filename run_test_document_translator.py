@@ -20,5 +20,6 @@ traducir_doc(
             origin_language,
             destination_language,
             extension,
-            color_to_exclude
+            color_to_exclude,
+            None
         )
