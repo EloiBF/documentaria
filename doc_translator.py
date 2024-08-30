@@ -3,16 +3,8 @@ from pptx.dml.color import RGBColor
 from docx import Document
 from docx.shared import RGBColor
 from pdf2docx import Converter
-import pypandoc
-from transformers import MarianMTModel, MarianTokenizer
 import re
-import os
 from groq import Groq 
-import pdfplumber
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 
 
 # Funciones para asignar un código a cada parte del texto con formato distinto

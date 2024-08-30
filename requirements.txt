@@ -1,17 +1,6 @@
-pandas
-transformers
-torch
-tensorflow
-sentencepiece
 python-pptx
 flask
 flask-login
 python-docx
-celery
-torch
-faiss-cpu
 pdf2docx
-pypandoc
 groq
-pdfplumber
-reportlab
