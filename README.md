@@ -5,15 +5,16 @@ TRADUCCIÓ, EDICIÓ I TRANSCRIPCIÓ AMB IA
 
 Utilitza Llama 3, a través d'un servidor inference gratuit (limitat) amb Groq.
 
-!!!! S'HA D'AFEGIR A la carpeta ARREL DEL PROJECTE UN TXT QUE ES DIU API_KEY.txt amb la clau de la API de groq, es pot aconseguir aquí gratis: https://console.groq.com/keys
+!!!! S'HA D'AFEGIR A la carpeta ARREL DEL PROJECTE UN TXT QUE ES DIGUI API_KEY.txt amb la clau de la API de groq, es pot aconseguir la clau aquí gratis: https://console.groq.com/keys
 
 
-Es pot provar amb els document de test/in (tant a través de la web app.py com amb el run_tet_document_translator)
-
+Es pot provar la web amb els document de test/in
+Per engegar la web, fem run al app.py
 
 
 A futur
 
+- Incloure traducció i edició de TXT (easy) 
 - Millora disseny web
 - Muntar servidor
 - Millorar traducció en word i pdf. PPT es perfecta.
