@@ -12,7 +12,7 @@ from doc_editor import editar_doc
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.abspath('docs/uploads')
 app.config['RESULT_FOLDER'] = os.path.abspath('docs/downloads')
-app.config['ALLOWED_EXTENSIONS'] = {'docx', 'pptx', 'pdf', 'm4a', 'wav', 'mp3'}
+app.config['ALLOWED_EXTENSIONS'] = {'docx', 'pptx', 'pdf','txt','html', 'm4a', 'wav', 'mp3'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
 
 

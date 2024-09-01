@@ -4,6 +4,8 @@ from docx import Document
 from docx.shared import RGBColor
 from pdf2docx import Converter
 import re
+from bs4 import BeautifulSoup
+import chardet
 from model_prompting import prompt_text
 
 
@@ -110,14 +112,14 @@ def verificar_codigos(original, traducido):
     return True
 
 
-def modelo_edición_bloques(bloques, add_prompt, numintentos=10):
+def modelo_edición_bloques(bloques, add_prompt, extension, numintentos=10):
     bloques_traducidos = []
 
     for bloque in bloques:
         reintentos = 0
         while reintentos < numintentos:
             try:
-                traduccion = prompt_text(bloque, add_prompt)
+                traduccion = prompt_text(bloque, add_prompt, extension)
                 
                 if verificar_codigos(bloque, traduccion):
                     print(f'Bloque original: {bloque}')
@@ -411,6 +413,82 @@ def procesar_pdf(input_path, output_path, textos_originales, color_to_exclude, t
         output_path = output_path.replace('.pdf', '.docx')
         return doc.save(output_path)
 
+def procesar_txt(input_path, output_path, action, textos_traducidos_final=None):
+    """Leer un archivo TXT, detectar su codificación, y dividir el texto en bloques de 10 palabras."""
+    textos_originales = {}
+    
+    # Detectar la codificación del archivo
+    with open(input_path, 'rb') as file:
+        raw_data = file.read()
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
+    
+    # Leer el archivo usando la codificación detectada
+    with open(input_path, 'r', encoding=encoding) as file:
+        text = file.read()
+    
+    words = text.split()
+    num_words = len(words)
+    counter = 1
+    
+    # Dividir el texto en bloques de 10 palabras
+    for i in range(0, num_words, 10):
+        block = ' '.join(words[i:i+10])
+        code = generate_numeric_code(counter)
+        counter += 1
+        if action == "leer":
+            textos_originales[code] = block
+        elif action == "reemplazar" and textos_traducidos_final and code in textos_traducidos_final:
+            text = text.replace(block, textos_traducidos_final[code])
+    
+    # Guardar el archivo modificado si la acción es reemplazar
+    if action == "reemplazar":
+        with open(output_path, 'w', encoding=encoding) as file:
+            file.write(text)
+    
+    # Retornar el diccionario de textos originales si la acción es leer
+    return textos_originales if action == "leer" else None
+
+
+def procesar_html(input_path, output_path, action, textos_traducidos_final=None):
+    """Leer un archivo HTML, extraer el texto, y reemplazarlo si es necesario."""
+    textos_originales = {}
+
+    # Detectar la codificación del archivo
+    with open(input_path, 'rb') as file:
+        raw_data = file.read()
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
+
+    # Leer el archivo HTML usando la codificación detectada
+    with open(input_path, 'r', encoding=encoding) as file:
+        soup = BeautifulSoup(file, 'html.parser')
+
+    counter = 1
+
+    # Iterar sobre los elementos del HTML y procesar el texto
+    for element in soup.find_all(text=True):
+        text = element.strip()
+        if text:
+            code = generate_numeric_code(counter)
+            counter += 1
+            if action == "leer":
+                textos_originales[code] = text
+            elif action == "reemplazar":
+                # Buscar el texto traducido usando el código generado
+                if code in textos_traducidos_final:
+                    new_text = textos_traducidos_final[code]
+                    element.replace_with(new_text)
+
+    # Guardar el archivo modificado si la acción es reemplazar
+    if action == "reemplazar":
+        with open(output_path, 'w', encoding=encoding) as file:
+            file.write(str(soup))
+
+    # Retornar el diccionario de textos originales si la acción es leer
+    return textos_originales if action == "leer" else None
+
+
 # Procesar documento según si es PPT, DOCX o PDF
 def procesar_documento(extension, input_path ,output_path, textos_originales, color_to_exclude, textos_traducidos_final, action):
     if extension == ".pptx":
@@ -419,6 +497,10 @@ def procesar_documento(extension, input_path ,output_path, textos_originales, co
         return procesar_docx(input_path, output_path, textos_originales, color_to_exclude, textos_traducidos_final, action)
     elif extension == ".pdf":
         return procesar_pdf(input_path, output_path, textos_originales, color_to_exclude, textos_traducidos_final, action) 
+    elif extension in ['.txt']:
+        return procesar_txt(input_path, output_path, action, textos_traducidos_final) 
+    elif extension in ['.html']:
+        return procesar_html(input_path, output_path, action, textos_traducidos_final) 
 
 def editar_doc(input_path, output_path, extension, color_to_exclude, add_prompt):
     print(f"Starting translation process for {input_path}")
@@ -443,7 +525,7 @@ def editar_doc(input_path, output_path, extension, color_to_exclude, add_prompt)
     bloques = separar_texto_bloques(textos_para_traducir)
 
     # Traducción de bloques con el modelo
-    bloques_traducidos = modelo_edición_bloques(bloques, add_prompt)
+    bloques_traducidos = modelo_edición_bloques(bloques, add_prompt, extension)
 
     # Traducir los textos recopilados en bloques
     textos_traducidos = join_blocks(bloques_traducidos)
