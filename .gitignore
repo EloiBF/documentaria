@@ -3,3 +3,4 @@ models/
 __pycache__/
 _pycache_/
 API_KEY.txt
+*.mp3

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}FabrIA - Traductor de Documents{% endblock %}
+
+{% block content %}
+<main>
+    <!-- Secció d'inici -->
+    <section id="home" class="hero-section">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Benvingut a FabrIA</h1>
+                <p>Automatització amb models de IA, amb especial cura pel català</p>
+            </div>
+            <div class="hero-group-button">
+            </div>
+        </div>
+    </section>
+
+    <!-- Secció de serveis -->
+    <section id="services">
+        <div class="services-title">
+            <h1>Els nostres serveis</h1>
+            <p>Prova els nostres serveis de forma gratuïta!</p>
+        </div>
+        <div class="service-container">
+            <div class="service-item">
+                <img src="{{ url_for('static', filename='images/translate.png') }}" alt="Traducció de documents">
+                <div class="service-content">
+                    <h2>Traducció de Documents</h2>
+                    <p>Traduïm fitxers .pptx, .docx i .pdf amb la millor qualitat i rapidesa. Perfecte per a qualsevol tipus de document.</p>
+                    <a href="{{ url_for('upload_translate') }}" class="cta-button">Vull traduir</a>
+                </div>
+            </div>
+            <div class="service-item">
+                <img src="{{ url_for('static', filename='images/editing.png') }}" alt="Edició de documents">
+                <div class="service-content">
+                    <h2>Edició de Documents</h2>
+                    <p>Transforma i ajusta els teus documents per aconseguir una presentació impecable. Ideal per a presentacions i informes.</p>
+                    <a href="{{ url_for('upload_edit') }}" class="cta-button">Vull editar</a>
+                </div>
+            </div>
+            <div class="service-item">
+                <img src="{{ url_for('static', filename='images/transcription.png') }}" alt="Transcripció de veu">
+                <div class="service-content">
+                    <h2>Transcripció de Veu</h2>
+                    <p>Converteix enregistraments d'àudio en text amb alta precisió. Ideal per a reunions i conferències.</p>
+                    <a href="{{ url_for('upload_transcribe') }}" class="cta-button">Vull trascriure</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Secció sobre nosaltres -->
+    <section id="about-us">
+        <div class="about-us-container">
+            <h2>Qui som?</h2>
+            <p>Som especialistes en l'aplicació de models IA per tractar text i àudio en català. La nostra missió és proporcionar traduccions de la més alta qualitat que capturin la precisió i el matís del teu contingut original.</p>
+            <p>FabrIA utilitza els models de IA més avançats i entrenats específicament amb la llengua catalana, per aconseguir traduccions més ràpides i precises.</p>
+            <p>Garantitzem que es mantindrà la major part del format del document amb la traducció. Pot ser necessària la intervenció humana per revisar el resultat, pero serà mínima gràcies a FabrIA.</p>
+        </div>
+    </section>
+
+    <!-- Secció de contacte -->
+    <section id="contact">
+        <div class="contact-container">
+            <h2>Contacte</h2>
+            <p>Per qualsevol consulta o suport, si us plau, contacta'ns mitjançant el següent formulari:</p>
+            <form action="{{ url_for('contact') }}" method="post">
+                <div class="form-group">
+                    <label for="name">Nom:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Correu electrònic:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Missatge:</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+                <button type="submit" class="submit-button">Enviar</button>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

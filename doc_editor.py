@@ -4,7 +4,7 @@ from docx import Document
 from docx.shared import RGBColor
 from pdf2docx import Converter
 import re
-from model_translator import translate_text
+from model_prompting import prompt_text
 
 
 # Funciones para asignar un código a cada parte del texto con formato distinto
@@ -110,14 +110,14 @@ def verificar_codigos(original, traducido):
     return True
 
 
-def modelo_traduccion_bloques(bloques, origin_language, destination_language, add_prompt="", numintentos=10):
+def modelo_edición_bloques(bloques, add_prompt, numintentos=10):
     bloques_traducidos = []
 
     for bloque in bloques:
         reintentos = 0
         while reintentos < numintentos:
             try:
-                traduccion = translate_text(bloque, origin_language, destination_language, add_prompt)
+                traduccion = prompt_text(bloque, add_prompt)
                 
                 if verificar_codigos(bloque, traduccion):
                     print(f'Bloque original: {bloque}')
@@ -420,7 +420,7 @@ def procesar_documento(extension, input_path ,output_path, textos_originales, co
     elif extension == ".pdf":
         return procesar_pdf(input_path, output_path, textos_originales, color_to_exclude, textos_traducidos_final, action) 
 
-def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt):
+def editar_doc(input_path, output_path, extension, color_to_exclude, add_prompt):
     print(f"Starting translation process for {input_path}")
 
     # Procesar el documento para obtener textos originales
@@ -443,7 +443,7 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
     bloques = separar_texto_bloques(textos_para_traducir)
 
     # Traducción de bloques con el modelo
-    bloques_traducidos = modelo_traduccion_bloques(bloques, origin_language, destination_language, add_prompt)
+    bloques_traducidos = modelo_edición_bloques(bloques, add_prompt)
 
     # Traducir los textos recopilados en bloques
     textos_traducidos = join_blocks(bloques_traducidos)

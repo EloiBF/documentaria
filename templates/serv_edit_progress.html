@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Edició en curs{% endblock %}
+
+{% block content %}
+<main>
+    <div class="card">
+        <div class="progress-container">
+            <h2>Edició en curs...</h2>
+            <div class="progress-circle"></div>
+            <p id="status-message">Estem editant el teu document. Pot trigar uns minuts...</p>
+        </div>
+    </div>
+
+    <script>
+        const filename = "{{ filename }}";
+        const statusMessage = document.getElementById('status-message');
+
+        function checkStatus() {
+            fetch(`/check_status/${filename}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        window.location.href = `/result_edit/${filename}`;
+                    } else {
+                        setTimeout(checkStatus, 5000); // Comprova l'estat cada 5 segons
+                    }
+                });
+        }
+
+        checkStatus();
+    </script>
+</main>
+{% endblock %}
