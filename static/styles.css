@@ -12,6 +12,9 @@
     --shadow-color: rgba(0, 0, 0, 0.1); /* Color de l'ombra */
 }
 
+/* Importar la fuente desde Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
 
 /* Estils generals */
 html, body {
@@ -19,14 +22,13 @@ html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: Arial, sans-serif;
 }
 
 body {
     display: flex;
     flex-direction: column;
     min-height: 100%; /* Assegura que el body ocupi almenys tota l'alçada de la finestra */
-
+    font-family: 'Montserrat', sans-serif;
 }
 
 main {
@@ -121,13 +123,13 @@ footer {
 .hero-section {
     display: flex;
     align-items: center;
-    justify-content: left;
+    justify-content: center;
     height: 30vh;
-    background: url('/static/images/hero-background.jpg') no-repeat center center;
-    background-size: cover;
-    color: var(--text-color-dark);
-    text-align: left;
-    padding-left: 10%;
+    background: var(--secondary-color);
+    background-size: contain;
+    color: var(--text-color-light);
+    text-align: center;
+    padding-left: 0%;
 }
 
 .hero-container {
@@ -138,7 +140,7 @@ footer {
 }
 
 .hero-content {
-    max-width: 600px;
+    max-width: 800px;
     padding: 20px;
     flex: 1;
 }
@@ -146,11 +148,13 @@ footer {
 .hero-content h1 {
     font-size: 3.5em;
     margin-bottom: 20px;
+    color: var(--text-color-light);
 }
 
-.hero-content p {
-    font-size: 1.5em;
+.hero-content h3 {
+    font-size: 2.5em;
     margin-bottom: 30px;
+    color: #dbdbdb;
 }
 
 .hero-group-button {
@@ -174,14 +178,23 @@ footer {
 
 
 /* Estil dels contenidors de contingut */
-.upload-container,
+.upload-container
+{   align-items: normal;
+    padding: 10px;
+    line-height: 1.5;
+    max-width: 100%;
+    margin-bottom: 40px;
+    background-color: var(--background-color);
+}
+
+
 .progress-container,
 .result-container
-{
+{   align-items: normal;
     padding: 20px;
     line-height: 1.5;
     max-width: 800px;
-    margin: 50px auto;
+    margin: 50px;
     background-color: var(--background-color);
     border-radius: 8px;
     box-shadow: 0 4px 8px var(--shadow-color);
@@ -297,54 +310,68 @@ button:hover, .submit-button:hover, .download-button:hover, .pricing-card button
 }
 /* Estil de la secció de serveis */
 #services {
-    padding: 50px 20px; /* Ajusta el padding segons el teu disseny */
+    padding: 80px 10%; /* Aumenta el padding para mayor espacio */
     background-color: var(--background-color); /* Color de fons opcional */
     display: flex; /* Coloca el contenido en filas */
-    gap: 40px; /* Espai entre les dues columnes */
-    margin-left: 10%;
-
+    gap: 60px; /* Más espacio entre las dos columnas */
+    flex-wrap: wrap; /* Permite que las columnas se envuelvan si es necesario */
+    justify-content: center; /* Centra el contenido horizontalmente */
 }
 
 /* Columna esquerra per al títol i la explicació general */
 .services-info {
-    flex: 1; /* Ocupa l'espai necessari a l'esquerra */
+    flex: 1 1 40%; /* Ocupa un 40% del ancho, permitiendo flexibilidad */
     text-align: left; /* Alinea el text a l'esquerra */
+    max-width: 500px; /* Limita el ancho máximo */
+    margin-bottom: 40px; /* Espacio inferior en dispositivos pequeños */
 }
 
 .services-info .services-title {
-    font-size: 2em; /* Mida del títol */
+    font-size: 3em; /* Aumenta la mida del títol */
     color: var(--text-color-dark); /* Color del títol */
-    margin-bottom: 20px; /* Espai entre el títol i el contingut */
+    margin-bottom: 30px; /* Más espacio entre el títol i el contingut */
+    font-weight: bold; /* Añade negrita al título */
 }
 
 .services-info .services-description {
     font-size: 1.2em; /* Mida de la descripció */
     color: var(--text-color); /* Color del text */
-    margin-bottom: 40px; /* Espai entre la descripció i els serveis */
+    line-height: 1.6; /* Mejora la legibilidad */
+    margin-bottom: 50px; /* Más espacio entre la descripció i els serveis */
 }
 
 /* Columna dreta per a la llista de serveis */
 .services-list {
-    flex: 2; /* Ocupa l'espai necessari a la dreta */
+    flex: 2 1 60%; /* Ocupa un 60% del ancho, permitiendo flexibilidad */
     display: flex;
     flex-direction: column;
-    gap: 30px; /* Espai entre els serveis */
+    gap: 30px; /* Más espacio entre els serveis */
 }
 
+/* Estilo para cada servicio */
 .service-item {
     display: flex;
     align-items: center; /* Centra verticalment el contingut del servei */
-    background-color: var(--background-color); /* Fons opcional per als elements de servei */
+    background-color: var(--background-light-color); /* Fons més clar per als elements de servei */
     border: 1px solid var(--border-color); /* Borde opcional */
-    border-radius: 8px; /* Esquerres arrodonides */
-    padding: 20px; /* Espai interior */
-    box-shadow: 0 4px 8px var(--shadow-color); /* Ombra opcional */
+    border-radius: 12px; /* Esquerres més arrodonides */
+    padding: 20px; /* Más espai interior */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Sombra suave y sutil */
+    transition: transform 0.3s, box-shadow 0.3s; /* Añade transiciones para hover */
+    margin-bottom: 20px; /* Añadir espacio inferior entre servicios */
+
+}
+
+.service-item:hover {
+    transform: translateY(-10px); /* Efecto de elevación en hover */
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada en hover */
 }
 
 .service-item img {
     max-width: 100px; /* Amplada màxima per a les imatges dels serveis */
     height: auto; /* Mantenir les proporcions de la imatge */
-    margin-right: 20px; /* Espai entre la imatge i el text */
+    margin-right: 30px; /* Más espai entre la imatge i el text */
+    border-radius: 8px; /* Esquerres arrodonides per a la imatge */
 }
 
 .service-content {
@@ -353,26 +380,30 @@ button:hover, .submit-button:hover, .download-button:hover, .pricing-card button
 }
 
 .service-content h3 {
-    font-size: 1.5em; /* Mida del títol del servei */
-    margin-bottom: 10px; /* Espai entre el títol i la descripció */
+    font-size: 1.75em; /* Mida del títol del servei */
+    margin-bottom: 15px; /* Más espacio entre el títol i la descripció */
+    color: var(--primary-color); /* Color distintivo para los títulos */
 }
 
 .service-content p {
-    margin-bottom: 15px; /* Espai entre la descripció i el botó */
+    line-height: 1.5; /* Mejora la legibilidad */
 }
 
 .service-content .service-button {
-    padding: 10px 20px; /* Espai interior del botó */
-    background-color: var(--button-bg-color); /* Color de fons del botó */
-    color: var(--button-text-color); /* Color del text del botó */
+    padding: 12px 24px; /* Más espai interior del botó */
+    background-color: var(--primary-color); /* Color de fons del botó */
+    color: #fff; /* Color del text del botó */
     border: none; /* Elimina el borde del botó */
-    border-radius: 4px; /* Esquerres arrodonides del botó */
+    border-radius: 50px; /* Esquerres arrodonides més pronunciades */
     cursor: pointer; /* Cursor de mà al passar per damunt */
+    transition: background-color 0.3s, transform 0.3s; /* Transiciones suaves */
 }
 
 .service-content .service-button:hover {
-    background-color: var(--button-bg-hover-color); /* Color de fons del botó en hover */
+    background-color: var(--primary-dark-color); /* Color de fons del botó en hover */
+    transform: scale(1.05); /* Ligero agrandamiento en hover */
 }
+
 
 
 /* Secció sobre nosaltres */

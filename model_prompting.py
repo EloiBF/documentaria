@@ -10,39 +10,26 @@ def prompt_text(texto, add_prompt, file_type, model='llama3-70b-8192', api_key_f
         client = Groq(api_key=api_key)
 
                 # Genera el prompt base para la traducción según el tipo de archivo
-        if file_type == None:
+        if file_type == None or file_type in ['.txt', '.html']:
             prompt = f"""
-        Follow this rules:
-        - Provide only the asked text without any additional comments or annotations. I don't want your feedback, only the pure translation, do not introduce"
-        - Ensure that the translation is grammatically correct in the same language, with special attention to the correct use of apostrophes in articles and pronouns.
-        - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
-        - Keep similar text lenght when editing.
+        You are a multilingual text editor. Follow this rules:
+        - Provide only the edited text without any additional comments or annotations. I don't want your feedback, only the pure edition, do not introduce"
+        - Keep similar text lenght when editing. 
+        - Do not duplicate or translate text if it is not asked, even if instructions are in other language.
         Additional rules that must be followed:
         {add_prompt}
         Text to edit:
         {texto}
         """
 
-        elif file_type in ['.pptx', '.docx', '.pdf']:
+        if file_type in ['.pptx', '.docx', '.pdf']:
             prompt = f"""
-        Follow this rules:
-        - Your task is to  edit text while strictly preserving codes (_CDTR_00000) in their exact positions, including at the start or end of the text. 
-        - Provide only the asked text without any additional comments or annotations. I don't want your feedback, only the pure translation, do not introduce"
-        - Ensure that the translation is grammatically correct in the same language, with special attention to the correct use of apostrophes in articles and pronouns.
-        - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
+        You are a multilingual text editor. Follow this rules:
+        - Your task is to edit text while strictly preserving codes (_CDTR_00000) in their exact positions, including at the start or end of the text. 
+        - Provide only the asked text without any additional comments or annotations. I don't want your feedback, only the pure edition, do not introduce"
         - Keep similar text lenght when editing.
-        Additional rules that must be followed:
-        {add_prompt}
-        Text to edit:
-        {texto}
-        """
-        elif file_type in ['.txt', '.html']:
-            prompt = f"""
-        Follow this rules:
-        - Provide only the asked text without any additional comments or annotations. I don't want your feedback, only the pure translation, do not introduce"
-        - Ensure that the translation is grammatically correct in the same language, with special attention to the correct use of apostrophes in articles and pronouns.
-        - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
-        - Keep similar text lenght when editing.
+        - Do not duplicate or translate text if it is not asked, even if instructions are in other language.
+
         Additional rules that must be followed:
         {add_prompt}
         Text to edit:
@@ -50,9 +37,8 @@ def prompt_text(texto, add_prompt, file_type, model='llama3-70b-8192', api_key_f
         """
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
-
         
-        # Llama a la API de Groq para traducir el texto
+        # Llama a la API de Groq para editar el texto
         chat_completion = client.chat.completions.create(
             messages=[
                 {
