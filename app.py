@@ -26,15 +26,17 @@ def index():
 def pricing():
     return render_template('pricing.html')
 
-@app.route('/about_us')
-def about_us():
-    return render_template('about_us.html')
+@app.route('/privacy_policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
+@app.route('/terms_and_conditions')
+def terms_and_conditions():
+    return render_template('terms_and_conditions.html')
 
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
-
-
 
 # Funciones comunes: carga, nombre archivo, check de archivo y descarga
 

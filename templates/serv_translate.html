@@ -3,19 +3,18 @@
 {% block title %}Traducció de Documents{% endblock %}
 
 {% block content %}
-<main>
+<main class="main-content">
     <!-- Secció de traducció -->
     <section id="upload_translate">
         <div class="header-section">
-            <h1>Traducció de documents amb IA</h1>
-            <h3>Tradueix fitxers .pptx .docx i .pdf en un instant!</h3>
+            <h1>Traducció de Documents amb IA</h1>
         </div>
-        <!-- Contenedor del formulario -->
+        <!-- Contenedor del formulari -->
         <form action="{{ url_for('upload_translate') }}" method="post" enctype="multipart/form-data">
             <div class="form-container">
-                <!-- Sección de carga de archivos -->
+                <!-- Secció de càrrega de fitxers -->
                 <div class="upload-container">
-                    <h2>Carrega el teu document</h2>
+                    <h2>Carrega el Teu Document</h2>
                     <div class="upload-area" id="upload-area">
                         <input type="file" name="file" id="file-input" required>
                         <label for="file-input" class="upload-label">Arrossega el teu arxiu aquí o fes clic per seleccionar-lo</label>
@@ -25,12 +24,20 @@
 
                 <div class="form-options">
                     <div class="form-group">
-                        <label for="source_language">Idioma original:</label>
+                        <label for="source_language">Idioma Original:</label>
                         <select name="source_language" id="source_language" required>
-                            <option value="auto" selected>Detecció automàtica</option>
+                            <option value="auto" selected>Detecció Automàtica</option>
                             <option value="catalan">Català</option>
                             <option value="spanish">Espanyol</option>
                             <option value="english">Anglès</option>
+                            <option value="spanish">Francès</option>
+                            <option value="english">Italià</option>
+                            <option value="english">Alemany</option>
+                            <option value="english">Aranès</option>
+                            <option value="english">Gallec</option>
+                            <option value="english">Vasc</option>
+                            <option value="english">Japonès</option>
+
                         </select>
                     </div>
                     <div class="form-group">
@@ -39,17 +46,24 @@
                             <option value="catalan" selected>Català</option>
                             <option value="spanish">Espanyol</option>
                             <option value="english">Anglès</option>
+                            <option value="spanish">Francès</option>
+                            <option value="english">Italià</option>
+                            <option value="english">Alemany</option>
+                            <option value="english">Aranès</option>
+                            <option value="english">Gallec</option>
+                            <option value="english">Vasc</option>
+                            <option value="english">Japonès</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="additional-options">
                     <div class="form-group">
-                        <label for="add_prompt">Afegeix context a la traducció (opcional):</label>
+                        <label for="add_prompt">Afegeix Context a la Traducció (opcional):</label>
                         <textarea name="add_prompt" id="add_prompt" placeholder="Exemple: Tradueix un condicionat d'una assegurança de cotxe, utilitza el vocabulari adequat"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="color_to_exclude">Color de font que no es traduirà (opcional):</label>
+                        <label for="color_to_exclude">Color de Font que No es Traduirà (opcional):</label>
                         <input type="text" name="color_to_exclude" id="color_to_exclude" placeholder="Exemple: #ff0000" class="small-input">
                     </div>
                 </div>
@@ -97,6 +111,6 @@
             handleFileSelect({ target: fileInput });
         });
     });
-    </script>
+</script>
 
 {% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}FabrIA - Termes i Condicions{% endblock %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="ca">
+
+<main>
+    <div class="container">
+        <h1>Termes i Condicions</h1>
+
+        <h2>1. Introducció</h2>
+        <p>Benvingut a FabrIA. Els termes i condicions següents regulen l'ús del nostre lloc web i els serveis proporcionats. En utilitzar els nostres serveis, accepteu complir amb aquests termes i condicions. Si no esteu d'acord amb aquests termes, no feu servir els nostres serveis.</p>
+
+        <h2>2. Serveis</h2>
+        <p>FabrIA ofereix els següents serveis:</p>
+        <ul>
+            <li><strong>Traducció de Documents amb IA:</strong> Traducció automàtica de documents en diversos formats. Tingueu en compte que, encara que fem servir tecnologia avançada, la IA no sempre ofereix un resultat 100% encertat.</li>
+            <li><strong>Edició de Documents:</strong> Ajust i correcció de documents per millorar la seva presentació i coherència.</li>
+            <li><strong>Transcripció d'Àudio:</strong> Conversió de gravacions d'àudio en text.</li>
+            <li><strong>Anàlisi BIG DATA d'Àudio i Text amb IA:</strong> Anàlisi automàtica de grans volums d'àudio i text per extreure informació i patrons.</li>
+        </ul>
+
+        <h2>3. Condicions d'Ús</h2>
+        <p>Els serveis de FabrIA es poden utilitzar sota les següents condicions:</p>
+        <ul>
+            <li>Els serveis estan disponibles per a ús personal i comercial, segons els termes establerts en el moment de la compra o subscripció.</li>
+            <li>Els usuaris poden accedir als serveis mitjançant pagament per ús o acord comercial. Per a més informació sobre els plans de pagament, si us plau, consulteu la nostra pàgina de tarifes.</li>
+            <li>Els usuaris tenen dret a un model gratuït que permet l'ús dels serveis una vegada cada 10 dies.</li>
+        </ul>
+
+        <h2>4. Garanties i Reemborsaments</h2>
+        <p>Ens comprometem a proporcionar serveis de qualitat. Si el servei falla o el resultat no és satisfactori, ofereixem les següents garanties:</p>
+        <ul>
+            <li>Dos intents de reintentar el servei en cas de fallida.</li>
+            <li>Retorn del pagament si el resultat final no és satisfactori. La sol·licitud de reemborsament estarà subjecta a una revisió prèvia per part de l'empresa per determinar si es compleixen les condicions per al reemborsament.</li>
+        </ul>
+
+        <h2>5. Modificacions dels Termes</h2>
+        <p>Ens reservem el dret de modificar aquests termes i condicions en qualsevol moment. Les modificacions seran efectives en el moment de la publicació en aquest lloc web. Us recomanem revisar aquesta pàgina periòdicament per estar al corrent de qualsevol canvi.</p>
+
+        <h2>6. Contacte</h2>
+        <p>Si teniu qualsevol pregunta sobre aquests termes i condicions, si us plau, poseu-vos en contacte amb nosaltres a través de la nostra pàgina de contacte.</p>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 FabrIA: Traductor de Documents. Tots els drets reservats.</p>
+        <ul>
+            <li><a href="{{ url_for('privacy_policy') }}">Política de Privadesa</a></li>
+            <li><a href="{{ url_for('terms_and_conditions') }}">Termes i Condicions</a></li>
+        </ul>
+    </footer>
+</main>
+</html>
+{% endblock %}

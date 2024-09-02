@@ -8,7 +8,7 @@
     <!-- Script per a l'scroll suau -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const links = document.querySelectorAll('nav a[href^="#"]');
+            const links = document.querySelectorAll('nav a[href^="#"], .hero-group-button a');
             links.forEach(link => {
                 link.addEventListener('click', function(event) {
                     event.preventDefault();
@@ -48,14 +48,18 @@
                         <a href="{{ url_for('upload_transcribe') }}">Transcripció de veu</a>
                     </div>                
                 </div>
-                <a href="{{ url_for('about_us') }}">Qui som?</a>
-                <a href="#contact">Contacte</a>
+                <a href="#about-us" class="nav-button">Qui som?</a>
+                <a href="#contact" class="nav-button">Contacte</a>
             </nav>
         </div>
     </header>
     {% block content %}{% endblock %}
     <footer>
         <p>&copy; 2024 FabrIA: Traductor de Documents. Tots els drets reservats.</p>
+        <ul>
+            <li><a href="{{ url_for('privacy_policy') }}">Política de Privadesa</a></li>
+            <li><a href="{{ url_for('terms_and_conditions') }}">Termes i Condicions</a></li>
+        </ul>
     </footer>
 </body>
 </html>
