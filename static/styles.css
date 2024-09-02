@@ -459,25 +459,6 @@ button:hover, .submit-button:hover, .download-button:hover, .pricing-card button
     background-color: var(--background-color);
 }
 
-.card {
-    align-items: center;
-    display: flex;
-    justify-content: center; /* Centra horitzontalment el contingut */
-}
-
-.progress-container,
-.result-container
-{   align-items: normal;
-    padding: 20px;
-    line-height: 1.5;
-    max-width: 800px;
-    margin: 50px auto; /* Centra el contenidor dins de la .card */
-    background-color: var(--background-color);
-    border-radius: 8px;
-    box-shadow: 0 4px 8px var(--shadow-color);
-    width: 800px;
-}
-
 /* Estil de la secció de traducció */
 .header-section {
     display: flex;
@@ -581,15 +562,26 @@ input[type="file"] {
 
 
 
+/* Contenidors de Progrés i Resultats */
+/* Estil del contenidor del progrés */
+.card {
+    align-items: center;
+    display: flex;
+    justify-content: center; /* Centra horitzontalment el contingut */
+    text-align: center;
+    padding: 30px;
+}
 
-/* Contenidors de resultats */
+
+.progress-container,
 .result-container {
     text-align: center;
     padding: 40px;
     background-color: #f9f9f9;
     border-radius: 8px;
     box-shadow: 0 4px 8px var(--shadow-color);
-    margin: 20px auto;
+    margin-top: 10%;
+    margin: 30px auto;
     max-width: 600px;
 }
 
@@ -597,12 +589,13 @@ input[type="file"] {
     font-size: 2em;
     color: var(--text-color);
     margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 .result-container p {
     font-size: 16px;
     color: #666;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     line-height: 1.5;
 }
 
@@ -628,15 +621,6 @@ input[type="file"] {
     margin-top: 20px;
     font-size: 16px;
     color: #666;
-}
-
-/* Estil del contenidor del progrés */
-#progress-wrapper {
-    margin-top: 20px;
-    height: 20px;
-    background-color: #f5f5f5;
-    border-radius: 10px;
-    position: center;
 }
 
 
