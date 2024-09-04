@@ -7,3 +7,5 @@ chardet
 beautifulsoup4
 lxml
 html5lib
+PyPDF2
+html2text

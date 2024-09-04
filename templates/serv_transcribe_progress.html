@@ -14,14 +14,15 @@
 
     <script>
         const filename = "{{ filename }}";
+        const processType = "transcribe";
         const statusMessage = document.getElementById('status-message');
 
         function checkStatus() {
-            fetch(`/check_status/${filename}`)
+            fetch(`/check_status/${processType}/${filename}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'completed') {
-                        window.location.href = `/result_transcribe/${filename}`;
+                        window.location.href = `/result_${processType}/${filename}`;
                     } else {
                         setTimeout(checkStatus, 5000); // Check status every 5 seconds
                     }

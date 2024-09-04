@@ -17,42 +17,51 @@
         </div>
     </section>
 
-    <!-- Secció de serveis -->
-    <section id="services">
-        <div class="services-title">
-            <h1>Solucions</h1>
-            <p>Prova els nostres serveis de forma gratuïta!</p>
-        </div>
-        <div class="service-container">
-            <div class="service-item">
-                <img src="{{ url_for('static', filename='images/translate.png') }}" alt="Traducció de documents">
-                <div class="service-content">
-                    <h2>Traducció de Documents</h2>
-                    <p>Tradueix documents amb la millor qualitat i rapidesa... mantenint el mateix format i disseny! </p>
-                    <p>Pots traduir una gran varietat de documents (docx, pdf, pptx, txt, html)</p> 
-                    <a href="{{ url_for('upload_translate') }}" class="cta-button">Vull traduir</a>
-                </div>
-            </div>
-            <div class="service-item">
-                <img src="{{ url_for('static', filename='images/editing.png') }}" alt="Edició de documents">
-                <div class="service-content">
-                    <h2>Edició de Documents</h2>
-                    <p>Transforma i ajusta els teus documents per aconseguir una presentació impecable. Ideal per a presentacions i informes.</p>
-                    <p>Corregeix errors i expressions, modifica la tonalitat o simplement redacta paràgrafs de nou.</p>
-                    <a href="{{ url_for('upload_edit') }}" class="cta-button">Vull editar</a>
-                </div>
-            </div>
-            <div class="service-item">
-                <img src="{{ url_for('static', filename='images/transcription.png') }}" alt="Transcripció de veu">
-                <div class="service-content">
-                    <h2>Transcripció i anàlisi d'Àudio</h2>
-                    <p>Converteix enregistraments d'àudio en text amb alta precisió.</p>
-                    <p>Analitza àudio de forma automàtica amb la nostra solució de Speech Analytics.</p>
-                    <a href="{{ url_for('upload_transcribe') }}" class="cta-button">Vull trascriure</a>
-                </div>
+<!-- Secció de serveis -->
+<section id="services">
+    <div class="services-title">
+        <h1>Solucions</h1>
+        <p>Prova els nostres serveis de forma gratuïta!</p>
+    </div>
+    <div class="service-container">
+        <div class="service-item">
+            <img src="{{ url_for('static', filename='images/translate.png') }}" alt="Traducció de documents">
+            <div class="service-content">
+                <h2>Traducció de Documents</h2>
+                <p>Tradueix documents amb la millor qualitat i rapidesa... mantenint el mateix format i disseny!</p>
+                <p>Pots traduir una gran varietat de documents (docx, pdf, pptx, txt, html)</p>
+                <a href="{{ url_for('upload_translate') }}" class="cta-button">Vull traduir</a>
             </div>
         </div>
-    </section>
+        <div class="service-item">
+            <img src="{{ url_for('static', filename='images/editing.png') }}" alt="Edició de documents">
+            <div class="service-content">
+                <h2>Edició de Documents</h2>
+                <p>Transforma i ajusta els teus documents per aconseguir una presentació impecable. Ideal per a presentacions i informes.</p>
+                <p>Corregeix errors i expressions, modifica la tonalitat o simplement redacta paràgrafs de nou.</p>
+                <a href="{{ url_for('upload_edit') }}" class="cta-button">Vull editar</a>
+            </div>
+        </div>
+        <div class="service-item">
+            <img src="{{ url_for('static', filename='images/transcription.png') }}" alt="Transcripció de veu">
+            <div class="service-content">
+                <h2>Transcripció i anàlisi d'Àudio</h2>
+                <p>Converteix enregistraments d'àudio en text amb alta precisió.</p>
+                <p>Analitza àudio de forma automàtica amb la nostra solució de Speech Analytics.</p>
+                <a href="{{ url_for('upload_transcribe') }}" class="cta-button">Vull trascriure</a>
+            </div>
+        </div>
+        <div class="service-item">
+            <img src="{{ url_for('static', filename='images/summarization.png') }}" alt="Resum de text">
+            <div class="service-content">
+                <h2>Resum de Text</h2>
+                <p>Resumim documents llargs en pocs paràgrafs concisos, mantenint les idees principals.</p>
+                <p>Ideal per processar informes, articles o qualsevol altre tipus de document extens.</p>
+                <a href="{{ url_for('upload_summary') }}" class="cta-button">Vull un resum</a>
+            </div>
+        </div>
+    </div>
+</section>
 
     <!-- Secció sobre nosaltres -->
     <section id="about-us">

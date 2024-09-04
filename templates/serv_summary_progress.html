@@ -1,20 +1,20 @@
 {% extends 'base.html' %}
 
-{% block title %}Edició en curs{% endblock %}
+{% block title %}Resum en curs{% endblock %}
 
 {% block content %}
 <main>
     <div class="card">
         <div class="progress-container">
-            <h2>Edició en curs...</h2>
+            <h2>Resum en curs...</h2>
             <div class="progress-circle"></div>
-            <p id="status-message">Estem editant el teu document. Pot trigar uns minuts...</p>
+            <p id="status-message">Estem resumint el teu document. Pot trigar uns minuts...</p>
         </div>
     </div>
 
     <script>
         const filename = "{{ filename }}";
-        const processType = "edit";
+        const processType = "summary";
         const statusMessage = document.getElementById('status-message');
 
         function checkStatus() {

@@ -624,8 +624,8 @@ input[type="file"] {
 }
 
 
-/* Resultado Transcripción */
-.transcription-textarea {
+/* Resultado Transcripción y Summary*/
+.summary-textarea, .transcription-textarea {
     width: 100%;               /* Ocupa todo el ancho del contenedor */
     height: 400px;             /* Aumenta la altura del área de texto */
     padding: 15px;             /* Añade espacio interno para que el texto no esté pegado a los bordes */
@@ -638,11 +638,6 @@ input[type="file"] {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Añade una sombra sutil para destacar el área de texto */
     background-color: #f9f9f9; /* Cambia el color de fondo para mayor contraste */
 }
-
-
-
-
-
 
 
 

@@ -33,23 +33,12 @@ def translate_text(texto, origin_language, destination_language, add_prompt, fil
             Text to translate:
             """
 
-        elif file_type in ['.pptx', '.docx', '.pdf']:
+        elif file_type in ['.pptx', '.docx', '.pdf','.txt', '.html']:
             base_prompt = f"""
             Follow this rules:
             - Your task is to translate text while strictly preserving codes (_CDTR_00000) in their exact positions, including at the start or end of the text. 
             - Provide only the translated text without any additional comments or annotations. I don't want your feedback, only the pure translation, do not introduce "
             - Ensure that the translation is grammatically correct in {destination_language}, with special attention to the correct use of apostrophes in articles and pronouns.
-            - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
-            - Keep similar text lenght when translating.
-
-            Text to translate:
-            """
-        elif file_type in ['.txt', '.html']:
-            base_prompt = f"""
-            Follow these rules:
-            - Translate the text while ensuring it's grammatically correct in {destination_language}.
-            - Provide only the translation without any comments.
-            - Maintain the integrity of any HTML tags or plaintext formatting.
             - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
             - Keep similar text lenght when translating.
 

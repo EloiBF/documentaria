@@ -6,7 +6,7 @@ from pdf2docx import Converter
 import re
 from bs4 import BeautifulSoup
 import chardet
-from model_prompting import prompt_text
+from model_editor import prompt_text
 
 
 # Funciones para asignar un código a cada parte del texto con formato distinto

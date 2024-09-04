@@ -6,7 +6,7 @@
         <h2>Traducció Completa</h2>
         <p>El teu document ha estat traduït amb èxit.</p>
         <p>Pots descarregar-lo utilitzant l'enllaç següent:</p>
-        <a href="{{ url_for('download_file', filename=filename) }}" class="download-button">Descarregar Document</a>
+        <a href="{{ url_for('download_file', process_type='translate', filename=filename) }}" class="download-button">Descarregar Document</a>
     </div>
 </main>
 {% endblock %}
