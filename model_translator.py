@@ -2,7 +2,7 @@ from groq import Groq
 
 # Funció genèrica per traduir amb la IA, li passes un text i retorna la traducció
 
-def translate_text(texto, origin_language, destination_language, add_prompt, file_type, model='llama3-70b-8192', api_key_file='API_KEY.txt'):
+def translate_text(texto, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
     """
     Traduce el texto utilizando el cliente de Groq.
 
@@ -68,6 +68,10 @@ def translate_text(texto, origin_language, destination_language, add_prompt, fil
         )
 
         traduccion = chat_completion.choices[0].message.content.strip()
+
+        # AFEGIR AQUÍ LA VALIDACIÓ DE LA RESPOSTA. UTILITZANT UN MODEL MÉS ESPECIALITZAT PEL CATALÀ, I EL PROPI MODEL LLAMA 3.1 PER ALTRES IDIOMES.
+        # AL VALIDAR LA RESPOSTA ELS MODELS FUNCIONEN MILLOR, SÓN CAPAÇOS DE CORREGIR ERRORS (model Reflection vídeo DOTCSV)
+
         return traduccion
 
     except Exception as e:

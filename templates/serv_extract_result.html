@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main>
+    <div class="result-container">
+        <h2>Resultados de Extracción</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pregunta</th>
+                    <th>Respuesta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pregunta, respuesta in resultados.items() %}
+                <tr>
+                    <td>{{ pregunta }}</td>
+                    <td>{{ respuesta }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p>Puedes descargar el archivo utilizando el siguiente enlace:</p>
+        <a href="{{ url_for('download_file', process_type='extract', filename=filename) }}" class="download-button">Descargar Document</a>
+    </div>
+</main>
+{% endblock %}

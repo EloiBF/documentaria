@@ -689,5 +689,66 @@ main a:hover {
 
 
 
+/* Estilo para los contenedores de preguntas */
+.question-container {
+    margin-bottom: 20px; /* Espaciado entre preguntas */
+    padding: 20px; /* Espaciado interior */
+    background-color: var(--background-color2); /* Fondo ligero para las preguntas */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px var(--shadow-color); /* Sombra para destacar el contenedor */
+}
 
+/* Estilo para el título de la pregunta */
+.question-title {
+    font-size: 1.5em; /* Tamaño del título de la pregunta */
+    color: var(--primary-color); /* Color del título */
+    margin-bottom: 10px; /* Espaciado debajo del título */
+}
+
+/* Estilo para el cuerpo de la pregunta */
+.question-body {
+    font-size: 1.2em; /* Tamaño del texto de la pregunta */
+    color: var(--text-color-dark); /* Color del texto */
+    line-height: 1.6; /* Espacio entre líneas */
+    margin-bottom: 15px; /* Espaciado debajo del cuerpo */
+}
+
+/* Estilo para los botones de respuesta */
+.answer-button {
+    display: block; /* Los botones ocupan todo el ancho disponible */
+    width: 100%; /* Asegura que los botones se ajusten al contenedor */
+    padding: 12px; /* Espaciado interior del botón */
+    font-size: 1.1em; /* Tamaño del texto del botón */
+    color: #fff; /* Color del texto del botón */
+    background-color: var(--primary-color); /* Color de fondo del botón */
+    border: none; /* Sin borde */
+    border-radius: 8px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de mano al pasar por encima */
+    margin-bottom: 10px; /* Espaciado entre botones */
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Transición suave para hover */
+}
+
+/* Efecto hover para los botones de respuesta */
+.answer-button:hover {
+    background-color: var(--secondary-color); /* Color de fondo en hover */
+    transform: translateY(-2px); /* Efecto de elevación en hover */
+}
+
+/* Estilo para los mensajes de respuesta seleccionados */
+.selected-answer {
+    background-color: var(--secondary-color); /* Fondo diferente para respuesta seleccionada */
+    color: var(--highlight-color); /* Color de texto diferente para la respuesta seleccionada */
+}
+
+/* Estilo para los mensajes de respuesta correcta */
+.correct-answer {
+    background-color: #28a745; /* Fondo verde para respuesta correcta */
+    color: var(--highlight-color); /* Color de texto para respuesta correcta */
+}
+
+/* Estilo para los mensajes de respuesta incorrecta */
+.incorrect-answer {
+    background-color: #dc3545; /* Fondo rojo para respuesta incorrecta */
+    color: var(--highlight-color); /* Color de texto para respuesta incorrecta */
+}
 

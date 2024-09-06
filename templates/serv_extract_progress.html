@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Progreso de Extracción</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function checkProgress() {
+            $.ajax({
+                url: "{{ url_for('check_progress_extract', filename=filename) }}",
+                type: "GET",
+                success: function(status) {
+                    $("#progress-status").text(status);
+
+                    if (status === "completed") {
+                        clearInterval(interval);
+                        window.location.href = "{{ url_for('result_extract', filename=filename) }}";
+                    }
+                },
+                error: function() {
+                    console.error("Error al verificar el progreso.");
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            // Verificar el progreso cada 5 segundos
+            var interval = setInterval(checkProgress, 5000);
+        });
+    </script>
+</head>
+<body>
+    <h1>Progreso de Extracción</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Archivo</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ filename }}</td>
+                <td id="progress-status">in_progress</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Actualizando progreso...</p>
+</body>
+</html>

@@ -4,11 +4,13 @@ import os
 import threading
 import time
 from pathlib import Path
+import json
 from doc_translator import traducir_doc
 from model_translator import translate_text
 from model_transcribe import transcribe_audio
 from doc_editor import editar_doc
 from doc_summary import resumir_doc  # Asumimos que tienes una función para resumir documentos
+from doc_extract_info import extract_info_from_doc
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.abspath('docs/uploads')
@@ -162,12 +164,53 @@ class DocumentSummarizer(FileProcessor):
             print(f"Error durante el resumen del archivo: {str(e)}")
 
 
+class InformationExtractor(FileProcessor):
+    def __init__(self):
+        super().__init__(self.background_extract)
+
+    def get_result_filename(self, filename):
+        return f"{os.path.splitext(filename)[0]}_extracted.txt"
+
+    def process_file(self, file, prompts, response_types, examples):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        result_filename = self.get_result_filename(filename)
+        result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
+        
+        # Guardar archivo subido
+        file.save(file_path)
+
+        # Llamar al método que procesará el archivo en segundo plano
+        threading.Thread(target=self.background_extract, args=(file_path, result_file_path, prompts, response_types, examples)).start()
+
+        return filename, result_filename
+
+    def background_extract(self, file_path, result_file_path, prompts, response_types, examples):
+        try:
+            if os.path.exists(result_file_path):
+                os.remove(result_file_path)
+
+            # Extraer la información
+            extracted_data = extract_info_from_doc(
+                file_path,
+                prompts, 
+                response_types, 
+                ejemplos_respuesta=examples
+            )
             
+            # Guardar los datos extraídos en un archivo JSON
+            with open(result_file_path, 'w') as file:
+                json.dump(extracted_data, file, indent=4)
+
+        except Exception as e:
+            print(f"Error durante la extracción de información del archivo: {str(e)}")
+
 # Instancias para cada tipo de procesamiento
 translator = DocumentTranslator()
 transcriber = AudioTranscriber()
 editor = DocumentEditor()
 summarizer = DocumentSummarizer()
+extractor = InformationExtractor()
 
 # Rutas estáticas
 @app.route('/')
@@ -191,7 +234,6 @@ def contact():
     return render_template('contact.html')
 
 
-# Verificación que existe el archivo resultante y descarga
 @app.route('/check_status/<process_type>/<filename>')
 def check_status(process_type, filename):
     if process_type == "translate":
@@ -202,16 +244,17 @@ def check_status(process_type, filename):
         result_filename = editor.get_result_filename(filename)
     elif process_type == "summary":
         result_filename = summarizer.get_result_filename(filename)
+    elif process_type == "extract":
+        result_filename = extractor.get_result_filename(filename)
     else:
         return jsonify({"status": "error", "message": "Invalid process type"}), 400
 
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
-
-    # Verificamos si el archivo existe y devolvemos el estado
     if os.path.exists(result_file_path):
         return jsonify({"status": "completed"})
     else:
-        return jsonify({"status": "processing"})
+        return jsonify({"status": "in_progress"})
+
 
 @app.route('/download/<process_type>/<filename>')
 def download_file(process_type, filename):
@@ -223,6 +266,8 @@ def download_file(process_type, filename):
         result_filename = editor.get_result_filename(filename)
     elif process_type == "summary":
         result_filename = summarizer.get_result_filename(filename)
+    elif process_type == "extract":
+        result_filename = extractor.get_result_filename(filename)        
     else:
         abort(400, description="Tipo de proceso inválido")
 
@@ -407,6 +452,49 @@ def result_summary(filename):
     else:
         return redirect(url_for('check_progress_summary', filename=filename))
 
+
+# Extracció de dades de documents
+
+# Rutas de extracción de información ajustadas
+@app.route('/extract', methods=['GET', 'POST'])
+def upload_extract():
+    if request.method == 'POST':
+        file = request.files.get('file')  # Obtener el único archivo subido
+        prompts = request.form.getlist('prompts')  # Obtener las preguntas como lista
+        response_types = request.form.getlist('response_types')  # Obtener los tipos de respuesta como lista
+        examples = request.form.getlist('examples')  # Obtener ejemplos si existen
+
+        if file:
+            filename, result_filename = extractor.process_file(file, prompts, response_types, examples)
+            return redirect(url_for('check_progress_extract', filename=result_filename))
+    
+    return render_template('serv_extract.html')
+
+
+@app.route('/check_progress_extract/<filename>')
+def check_progress_extract(filename):
+    result_filename = extractor.get_result_filename(filename)
+    result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
+
+    if os.path.exists(result_file_path):
+        return redirect(url_for('result_extract', filename=result_filename))
+    
+    return render_template('serv_extract_progress.html', filename=filename)
+
+
+@app.route('/result_extract/<filename>')
+def result_extract(filename):
+    result_filename = extractor.get_result_filename(filename)
+    result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
+
+    if os.path.exists(result_file_path):
+        with open(result_file_path, 'r') as file:
+            extracted_data = json.load(file)
+
+        return render_template('serv_extract_result.html', extracted_data=extracted_data)
+    else:
+        return redirect(url_for('check_progress_extract', filename=filename))
+    
 
 if __name__ == '__main__':
     Path(app.config['UPLOAD_FOLDER']).mkdir(parents=True, exist_ok=True)
