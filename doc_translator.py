@@ -12,7 +12,7 @@ from lxml import etree
 from docx import Document
 from io import BytesIO
 import shutil
-
+import os
 
 
 # Funciones para asignar un código a cada parte del texto con formato distinto
@@ -337,7 +337,7 @@ def procesar_docx(input_path,output_path, textos_originales, color_to_exclude, t
                                         textos_originales[code] = run.text
                                     elif action == "reemplazar" and code in textos_traducidos_final:
                                         run.text = textos_traducidos_final[code]
-    for shape in doc.inline_shapes:
+    for shape in doc.inline_shapes: # REVISAR SI ES NECESARIO ESTE FOR. QUIZÁS PARA MANTENER IMÁGENES. LOS CUADROS DE TEXTO Y FIGURAS SE LEEN DESPUÉS
         if hasattr(shape, 'text_frame') and shape.text_frame:
             for para in shape.text_frame.paragraphs:
                 for run in para.runs:
@@ -350,6 +350,11 @@ def procesar_docx(input_path,output_path, textos_originales, color_to_exclude, t
                                     textos_originales[code] = run.text
                                 elif action == "reemplazar" and code in textos_traducidos_final:
                                     run.text = textos_traducidos_final[code]
+    # Guardar el documento temporalmente
+    if action == "reemplazar":
+        input_path = input_path + '_temp.docx'
+        doc.save(input_path)
+
     # Procesar shapes (cuadros de texto y formas) en el XML
     with zipfile.ZipFile(input_path, 'r') as docx_zip:
         # Extraemos el archivo `document.xml` para modificarlo
@@ -386,6 +391,7 @@ def procesar_docx(input_path,output_path, textos_originales, color_to_exclude, t
     # Si estamos en modo reemplazar, creamos un nuevo archivo .docx con los cambios
     if action == "reemplazar":
         # Crear un archivo temporal
+            # Guardar el documento temporal
         temp_zip_path = output_path + '_temp.zip'
         with zipfile.ZipFile(input_path, 'r') as docx_zip:
             with zipfile.ZipFile(temp_zip_path, 'w') as temp_zip:
@@ -399,8 +405,10 @@ def procesar_docx(input_path,output_path, textos_originales, color_to_exclude, t
                     buffer.seek(0)
                     temp_zip.writestr('word/document.xml', buffer.read())
 
-        # Renombrar el archivo temporal como el archivo de salida final
+        # Renombrar el archivo temporal (figuras) como el archivo de salida final
         shutil.move(temp_zip_path, output_path)
+        os.remove(input_path)
+
 
     return textos_originales if action == "leer" else None
 
@@ -416,57 +424,7 @@ def procesar_pdf(input_path, output_path, textos_originales, color_to_exclude, t
     word_path = input_path.replace('.pdf', '.docx')
     pdf_to_word(input_path, word_path)
 
-    doc = Document(word_path)
-
-    exclude_color_rgb = color_to_rgb(color_to_exclude)
-
-    textos_originales = {}
-    counter = 1  # Inicializar el contador desde 1
-
-    # Recopilar textos y asignar códigos - Genera el diccionario "textos_originales"
-    for para in doc.paragraphs:
-        for run in para.runs:
-            if run.text: # Verificamos que existe la figura
-                if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                    if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
-                        code = generate_numeric_code(counter) # Volvemos a generar un código para cada texto para cruzar el formato con la traducción
-                        counter += 1
-                        if action == "leer":
-                            textos_originales[code] = run.text
-                        elif action == "reemplazar" and code in textos_traducidos_final:
-                            run.text = textos_traducidos_final[code]
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for para in cell.paragraphs:
-                    for run in para.runs:
-                        if run.text: # Verificamos que existe la figura
-                            if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                                if exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb:
-                                    code = generate_numeric_code(counter)
-                                    counter += 1
-                                    if action == "leer":
-                                        textos_originales[code] = run.text
-                                    elif action == "reemplazar" and code in textos_traducidos_final:
-                                        run.text = textos_traducidos_final[code]
-    for shape in doc.inline_shapes:
-        if hasattr(shape, 'text_frame') and shape.text_frame:
-            for para in shape.text_frame.paragraphs:
-                for run in para.runs:
-                    if run.text:  # Verificamos que existe la figura
-                        if run.text.strip(): # Verificamos que tiene texto (no vacía)
-                            if  exclude_color_rgb == None or run.font.color is None or not hasattr(run.font.color, 'rgb') or run.font.color.rgb != exclude_color_rgb: # Verificamos el color del texto
-                                code = generate_numeric_code(counter)
-                                counter += 1
-                                if action == "leer":
-                                    textos_originales[code] = run.text
-                                elif action == "reemplazar" and code in textos_traducidos_final:
-                                    run.text = textos_traducidos_final[code]
-    if action == "leer":
-        return textos_originales
-    elif action == "reemplazar":
-        output_path = output_path.replace('.pdf', '.docx')
-        return doc.save(output_path)
+    return procesar_docx(word_path,output_path, textos_originales, color_to_exclude, textos_traducidos_final, action)
 
 def procesar_txt(input_path, output_path, action, textos_traducidos_final=None):
     """Leer un archivo TXT, detectar su codificación, y dividir el texto en bloques de 10 palabras."""
@@ -557,8 +515,6 @@ def procesar_documento(extension, input_path ,output_path, textos_originales, co
         return procesar_html(input_path, output_path, action, textos_traducidos_final) 
 
 
-
-
 # Funció genèrica per traduir amb la IA, li passes un text i retorna la traducció. MODEL I PROMPT
 def translate_text(texto, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
     """
@@ -634,7 +590,6 @@ def translate_text(texto, origin_language, destination_language, add_prompt, fil
 
     except Exception as e:
         raise RuntimeError(f"Error during translation: {e}")
-
 
 
 def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt):
