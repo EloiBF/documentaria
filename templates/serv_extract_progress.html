@@ -1,49 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Progreso de Extracción</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        function checkProgress() {
-            $.ajax({
-                url: "{{ url_for('check_progress_extract', filename=filename) }}",
-                type: "GET",
-                success: function(status) {
-                    $("#progress-status").text(status);
+{% extends 'base.html' %}
 
-                    if (status === "completed") {
-                        clearInterval(interval);
-                        window.location.href = "{{ url_for('result_extract', filename=filename) }}";
+{% block title %}Extracció de dades en curs{% endblock %}
+
+{% block content %}
+<main>
+    <link rel="stylesheet" href="{{ url_for('static', filename='progress.css') }}">
+    <div class="card">
+        <div class="progress-container">
+            <h2>Resum en curs...</h2>
+            <div class="progress-circle"></div>
+            <p id="status-message">Estem generant les dades basades en el teu document. Pot trigar uns minuts...</p>
+        </div>
+    </div>
+
+    <script>
+        const filename = "{{ filename }}";
+        const processType = "extract";
+        const statusMessage = document.getElementById('status-message');
+
+        function checkStatus() {
+            fetch(`/check_status/${processType}/${filename}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        window.location.href = `/result_${processType}/${filename}`;
+                    } else {
+                        setTimeout(checkStatus, 5000); // Check status every 5 seconds
                     }
-                },
-                error: function() {
-                    console.error("Error al verificar el progreso.");
-                }
-            });
+                });
         }
 
-        $(document).ready(function() {
-            // Verificar el progreso cada 5 segundos
-            var interval = setInterval(checkProgress, 5000);
-        });
+        checkStatus();
     </script>
-</head>
-<body>
-    <h1>Progreso de Extracción</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Archivo</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{ filename }}</td>
-                <td id="progress-status">in_progress</td>
-            </tr>
-        </tbody>
-    </table>
-    <p>Actualizando progreso...</p>
-</body>
-</html>
+</main>
+{% endblock %}

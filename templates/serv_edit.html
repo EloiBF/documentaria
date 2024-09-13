@@ -4,6 +4,7 @@
 
 {% block content %}
 <main>
+    <link rel="stylesheet" href="{{ url_for('static', filename='service.css') }}">
     <!-- Secció d'edició -->
     <section id="upload_edit">
         <div class="header-section">
@@ -14,11 +15,12 @@
             <div class="form-container">
                 <!-- Secció de càrrega de fitxers -->
                 <div class="upload-container">
-                    <h2>Carrega el teu document</h2>
+                    <h2>Carrega el Teu Document</h2>
                     <div class="upload-area" id="upload-area">
                         <input type="file" name="file" id="file-input" required>
                         <label for="file-input" class="upload-label">Arrossega el teu arxiu aquí o fes clic per seleccionar-lo</label>
                         <div class="file-info" id="file-info"></div>
+                        <div class="error-message" id="error-message">No se ha seleccionat cap fitxer.</div>
                     </div>
                 </div>
 

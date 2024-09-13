@@ -4,6 +4,7 @@
 
 {% block content %}
 <main class="main-content">
+    <link rel="stylesheet" href="{{ url_for('static', filename='service.css') }}">
     <!-- Secció de traducció -->
     <section id="upload_translate">
         <div class="header-section">
@@ -12,16 +13,16 @@
         <!-- Contenedor del formulari -->
         <form action="{{ url_for('upload_translate') }}" method="post" enctype="multipart/form-data">
             <div class="form-container">
-                <!-- Secció de càrrega de fitxers -->
-                <div class="upload-container">
-                    <h2>Carrega el Teu Document</h2>
-                    <div class="upload-area" id="upload-area">
-                        <input type="file" name="file" id="file-input" required>
-                        <label for="file-input" class="upload-label">Arrossega el teu arxiu aquí o fes clic per seleccionar-lo</label>
-                        <div class="file-info" id="file-info"></div>
-                    </div>
+            <!-- Secció de càrrega de fitxers -->
+            <div class="upload-container">
+                <h2>Carrega el Teu Document</h2>
+                <div class="upload-area" id="upload-area">
+                    <input type="file" name="file" id="file-input" required>
+                    <label for="file-input" class="upload-label">Arrossega el teu arxiu aquí o fes clic per seleccionar-lo</label>
+                    <div class="file-info" id="file-info"></div>
+                    <div class="error-message" id="error-message">No se ha seleccionat cap fitxer.</div>
                 </div>
-
+            </div>
                 <div class="form-options">
                     <div class="form-group">
                         <label for="source_language">Idioma Original:</label>

@@ -6,8 +6,8 @@ import time
 from pathlib import Path
 import json
 from doc_translator import traducir_doc
-from model_translator import translate_text
-from model_transcribe import transcribe_audio
+from doc_translator import translate_text
+from doc_transcribe import transcribe_audio
 from doc_editor import editar_doc
 from doc_summary import resumir_doc  # Asumimos que tienes una función para resumir documentos
 from doc_extract_info import extract_info_from_doc

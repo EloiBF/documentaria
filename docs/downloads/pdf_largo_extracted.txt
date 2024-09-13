@@ -1,5 +1,4 @@
 {
-    "Quiero saber el a\u00f1o del estudio": "N/D",
-    "En que idioma est\u00e1 el documento?": "N/D",
-    "De que habla el estudio? resume en 5 palabras": "N/D"
+    "El documento est\u00e1 en espa\u00f1ol?": "N/D",
+    "\u00bfDe qu\u00e9 a\u00f1o es el estudio?": "N/D"
 }

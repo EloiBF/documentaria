@@ -4,6 +4,7 @@
 
 {% block content %}
 <main class="main-content">
+    <link rel="stylesheet" href="{{ url_for('static', filename='service.css') }}">
     <!-- Secció de resum -->
     <section id="upload_summary">
         <div class="header-section">
@@ -19,6 +20,7 @@
                         <input type="file" name="file" id="file-input" required>
                         <label for="file-input" class="upload-label">Arrossega el teu arxiu aquí o fes clic per seleccionar-lo</label>
                         <div class="file-info" id="file-info"></div>
+                        <div class="error-message" id="error-message">No se ha seleccionat cap fitxer.</div>
                     </div>
                 </div>
 

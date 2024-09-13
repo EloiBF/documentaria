@@ -1,4 +1,4 @@
-fabrIA.cat
+DocumentarIA.cat
 
 Funcionalitats:
 TRADUCCIÓ, EDICIÓ I TRANSCRIPCIÓ AMB IA

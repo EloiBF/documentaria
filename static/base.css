@@ -1,0 +1,216 @@
+/* base.css */
+
+
+
+/* Importar la fuente desde Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+
+/* Estils generals */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%; /* Assegura que el body ocupi almenys tota l'alçada de la finestra */
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2em;
+}
+
+main {
+    flex: 1; /* Permet que el main ocupi l'espai restant disponible */
+}
+
+
+
+/* Estils generals per als títols */
+.header-section {
+    font-size: 2.5rem; /* Mida del text per a un títol principal */
+    margin-bottom: 10px;
+    color: var(--text-color-dark); /* Color destacat per al títol */
+    align-items: center;
+}
+
+.header-section h1 {
+    font-size: 2.5rem; /* Mida del text per a un títol principal */
+    margin-bottom: 10px;
+    color: var(--text-color-dark); /* Color destacat per al títol */
+}
+
+
+
+
+
+
+.header-section h3 {
+    font-size: 1.5rem; /* Mida del text per a un subtítol */
+    margin-bottom: 30px;
+    color: var(--text-color-dark); /* Color per al subtítol */
+}
+
+
+/* Botons */
+button, .submit-button, .download-button, .pricing-card button,  .cta-button {
+    background-color: var(--mid-color);
+    color: var(--text-color-light);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    display: inline-block; /* Cambiado a inline-block para ajustarse al tamaño del texto */
+    margin: 20px auto 0;
+    transition: background-color 0.3s ease; /* Cambiado a background-color para que el hover funcione correctamente */
+    text-decoration: none; /* Asegura que no haya subrayado en los enlaces dentro de los botones */
+    font: inherit;
+    min-width: 120px; /* Establece un ancho mínimo para el botón */
+    text-align: center; /* Alinea el texto en el centro */
+}
+
+button:hover, .submit-button:hover, .download-button:hover, .pricing-card button:hover,  .cta-button:hover {
+    background-color: var(--dark-color);
+}
+
+/* Asegúrate de que los enlaces dentro de los botones no tengan subrayado */
+button a, .submit-button a, .download-button a, .pricing-card button a, .cta-button a {
+    text-decoration: none;
+    color: inherit; /* Hereda el color del botón */
+}
+
+
+
+
+
+
+
+/* Capçalera */
+header {
+    background-color: var(--background-light);
+    color: var(--text-color-dark);
+    padding: 5px 0;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 85%;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+header h1 a {
+    color: var(--text-color-dark);
+    text-decoration: none;
+    font-size: 24px;
+}
+
+header h1 a span{
+    color: var(--mid-color);
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+nav a, .dropbtn {
+    color: var(--text-color-dark);
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Botó desplegable de la capcelera */
+.dropbtn {
+    background: none;
+    border: 2px solid var(--dark-color);
+}
+
+.dropbtn:hover {
+    background-color: var(--dark-color);
+    color: #fff;
+}
+
+.dropdown {
+    position: relative;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--background-light);
+    min-width: 160px;
+    box-shadow: 0 8px 16px var(--shadow-color);
+    z-index: 1;
+    top: 100%;
+    left: 0;
+}
+
+.dropdown-content a {
+    color: var(--text-color);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--background-mid);
+}
+
+.dropdown .show {
+    display: block;
+}
+
+/* Peu de pàgina */
+footer {
+    background-color: var(--light-color);
+    color: var(--text-color-dark);
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+    position: relative; /* No fixa el footer, sinó que es posiciona de forma normal al flux del document */
+}
+
+footer p {
+    margin: 0; /* Elimina el marge per al text del footer */
+}
+
+footer ul {
+    list-style-type: none; /* Elimina els punts de la llista */
+    padding: 0; /* Elimina el padding per defecte */
+    margin: 10px 0 0; /* Ajusta el marge superior per separar la llista del text */
+    display: flex; /* Utilitza flexbox per centrar la llista */
+    justify-content: center; /* Centra la llista horitzontalment */
+}
+
+footer ul li {
+    margin: 0 10px; /* Espai entre els elements de la llista */
+}
+
+footer ul li a {
+    color: var(--text-color-dark); /* Color blanc per als enllaços */
+    text-decoration: underline; /* Elimina el subratllat dels enllaços */
+    transition: color 0.3s ease; /* Suavitza el canvi de color */
+}
+
+footer ul li a:hover {
+    color: var(--mid-color); /* Canvia el color en passar el cursor per sobre */
+}
+
+
+

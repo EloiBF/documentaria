@@ -6,7 +6,13 @@ from pdf2docx import Converter
 import re
 import chardet
 from bs4 import BeautifulSoup
-from model_translator import translate_text
+from groq import Groq
+import zipfile
+from lxml import etree
+from docx import Document
+from io import BytesIO
+import shutil
+
 
 
 # Funciones para asignar un código a cada parte del texto con formato distinto
@@ -344,10 +350,59 @@ def procesar_docx(input_path,output_path, textos_originales, color_to_exclude, t
                                     textos_originales[code] = run.text
                                 elif action == "reemplazar" and code in textos_traducidos_final:
                                     run.text = textos_traducidos_final[code]
-    if action == "leer":
-        return textos_originales
-    elif action == "reemplazar":
-        return doc.save(output_path)
+    # Procesar shapes (cuadros de texto y formas) en el XML
+    with zipfile.ZipFile(input_path, 'r') as docx_zip:
+        # Extraemos el archivo `document.xml` para modificarlo
+        with docx_zip.open('word/document.xml') as document_xml:
+            tree = etree.parse(document_xml)
+            namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+
+            # Buscar cuadros de texto (w:txbxContent) y otras figuras (formas)
+            cuadros_texto = tree.xpath('//w:txbxContent//w:t', namespaces=namespaces)
+            for element in cuadros_texto:
+                if action == "leer":
+                    code = generate_numeric_code(counter)
+                    counter += 1
+                    textos_originales[code] = element.text
+                elif action == "reemplazar":
+                    code = generate_numeric_code(counter)
+                    counter += 1
+                    if code in textos_traducidos_final:
+                        element.text = textos_traducidos_final[code]
+
+            # Buscar otras formas incrustadas (shapes)
+            formas = tree.xpath('//w:drawTextBox//w:t', namespaces=namespaces)
+            for element in formas:
+                if action == "leer":
+                    code = generate_numeric_code(counter)
+                    counter += 1
+                    textos_originales[code] = element.text
+                elif action == "reemplazar":
+                    code = generate_numeric_code(counter)
+                    counter += 1
+                    if code in textos_traducidos_final:
+                        element.text = textos_traducidos_final[code]
+
+    # Si estamos en modo reemplazar, creamos un nuevo archivo .docx con los cambios
+    if action == "reemplazar":
+        # Crear un archivo temporal
+        temp_zip_path = output_path + '_temp.zip'
+        with zipfile.ZipFile(input_path, 'r') as docx_zip:
+            with zipfile.ZipFile(temp_zip_path, 'w') as temp_zip:
+                # Copiamos todos los archivos originales, excepto `document.xml`
+                for item in docx_zip.infolist():
+                    if item.filename != 'word/document.xml':
+                        temp_zip.writestr(item, docx_zip.read(item.filename))
+                # Escribimos el nuevo `document.xml` modificado
+                with BytesIO() as buffer:
+                    tree.write(buffer, xml_declaration=True, encoding='UTF-8')
+                    buffer.seek(0)
+                    temp_zip.writestr('word/document.xml', buffer.read())
+
+        # Renombrar el archivo temporal como el archivo de salida final
+        shutil.move(temp_zip_path, output_path)
+
+    return textos_originales if action == "leer" else None
 
 # Lectura/Reemplazo PDF
 def procesar_pdf(input_path, output_path, textos_originales, color_to_exclude, textos_traducidos_final, action): 
@@ -500,6 +555,87 @@ def procesar_documento(extension, input_path ,output_path, textos_originales, co
         return procesar_txt(input_path, output_path, action, textos_traducidos_final) 
     elif extension in ['.html']:
         return procesar_html(input_path, output_path, action, textos_traducidos_final) 
+
+
+
+
+# Funció genèrica per traduir amb la IA, li passes un text i retorna la traducció. MODEL I PROMPT
+def translate_text(texto, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
+    """
+    Traduce el texto utilizando el cliente de Groq.
+
+    :param texto: Texto a traducir.
+    :param origin_language: Idioma de origen del texto. Usa "auto" para detección automática.
+    :param destination_language: Idioma al que se traducirá el texto.
+    :param model: Modelo de traducción a utilizar.
+    :param api_key_file: Archivo que contiene la API key de Groq.
+    :param add_prompt: Instrucciones adicionales para la traducción.
+    :param file_type: Tipo de archivo (ppt, docx, pdf, txt, html).
+    :return: Texto traducido.
+    """
+    try:
+        # Inicializa el cliente de Groq
+        with open(api_key_file, 'r') as fichero:
+            api_key = fichero.read().strip()
+        client = Groq(api_key=api_key)
+
+        # Genera el prompt base para la traducción según el tipo de archivo
+        if file_type == None:
+            base_prompt = f"""
+            Follow this rules:
+            - Provide only the translated text without any additional comments or annotations. I don't want your feedback, only the pure translation, do not introduce "
+            - Ensure that the translation is grammatically correct in {destination_language}, with special attention to the correct use of apostrophes in articles and pronouns.
+            - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
+            - Keep similar text lenght when translating.
+
+            Text to translate:
+            """
+
+        elif file_type in ['.pptx', '.docx', '.pdf','.txt', '.html']:
+            base_prompt = f"""
+            Follow this rules:
+            - Your task is to translate text while strictly preserving codes (_CDTR_00000) in their exact positions, including at the start or end of the text. 
+            - Provide only the translated text without any additional comments or annotations. I don't want your feedback, only the pure translation, do not introduce "
+            - Ensure that the translation is grammatically correct in {destination_language}, with special attention to the correct use of apostrophes in articles and pronouns.
+            - Translate all words, including those starting with a capital letter, unless they appear to be proper names.
+            - Keep similar text lenght when translating.
+
+            Text to translate:
+            """
+        else:
+            raise ValueError(f"Unsupported file type: {file_type}")
+
+        # Construye el prompt completo
+        if origin_language == "auto":
+            prompt = f"Translate text to {destination_language}.\n{base_prompt}\n{texto}"
+        else:
+            prompt = f"Translate text from {origin_language} to {destination_language}.\n{base_prompt}\n{texto}"
+
+        if add_prompt:
+            prompt += f"\nAdditional translation instructions: {add_prompt}"
+
+        # Llama a la API de Groq para traducir el texto
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model=model
+        )
+
+        traduccion = chat_completion.choices[0].message.content.strip()
+
+        # AFEGIR AQUÍ LA VALIDACIÓ DE LA RESPOSTA. UTILITZANT UN MODEL MÉS ESPECIALITZAT PEL CATALÀ, I EL PROPI MODEL LLAMA 3.1 PER ALTRES IDIOMES.
+        # AL VALIDAR LA RESPOSTA ELS MODELS FUNCIONEN MILLOR, SÓN CAPAÇOS DE CORREGIR ERRORS (model Reflection vídeo DOTCSV)
+
+        return traduccion
+
+    except Exception as e:
+        raise RuntimeError(f"Error during translation: {e}")
+
+
 
 def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt):
     print(f"Starting translation process for {input_path}")
