@@ -10,4 +10,3 @@ html5lib
 PyPDF2
 html2text
 langchain
-pywin32

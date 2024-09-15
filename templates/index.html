@@ -60,16 +60,16 @@
                 <div class="service-item">
                     <img src="{{ url_for('static', filename='images/editing.png') }}" alt="Edició de documents">
                     <div class="service-description">
-                        <h3>Edició de Documents</h3>
-                        <p>Transforma i ajusta els teus documents per aconseguir una presentació impecable. Ideal per a presentacions i informes.</p>
+                        <h3>Edició del contingut</h3>
+                        <p>Transforma el contingut dels teus documents. Modifica el to, ajusta la ortografia o reescriu de nou el document!</p>
                         <a href="{{ url_for('upload_edit') }}" class="cta-button">Vull editar</a>
                     </div>
                 </div>
                 <div class="service-item">
                     <img src="{{ url_for('static', filename='images/transcription.png') }}" alt="Transcripció de veu">
                     <div class="service-description">
-                        <h3>Transcripció i anàlisi d'Àudio</h3>
-                        <p>Converteix enregistraments d'àudio en text amb alta precisió i analitza l'àudio amb la nostra solució avançada.</p>
+                        <h3>Transcripció d'Àudio</h3>
+                        <p>Converteix àudio en text amb alta precisió... i qualsevol idioma!</p>
                         <a href="{{ url_for('upload_transcribe') }}" class="cta-button">Vull transcriure</a>
                     </div>
                 </div>
@@ -80,11 +80,12 @@
         <div class="analysis-services">
             <div class="service-content">
                 <h2>Prompt Analysis</h2>
-                <p>Extreu informació de forma precisa, automàtica i massiva. Genera bases de dades amb la nostra eina de Prompt Analytics</p>
+                <p>Extreu informació de forma precisa, automàtica i massiva</p>
+                <p>Genera bases de dades amb la nostra eina de Prompt Analytics</p>
             </div>
             <div class="service-list">
                 <div class="service-item">
-                    <img src="{{ url_for('static', filename='images/extract_info.png') }}" alt="Anàlisi de textos">
+                    <img src="{{ url_for('static', filename='images/summary.png') }}" alt="Anàlisi de textos">
                     <div class="service-description">
                         <h3>Resum de documents</h3>
                         <p>Necessites treure conclusions de documents i informes? Utilitza el resum automàtic amb IA.</p>
@@ -92,7 +93,7 @@
                     </div>
                 </div>
                 <div class="service-item large-service-item">
-                    <img src="{{ url_for('static', filename='images/speech_analytics.png') }}" alt="Anàlisi d'àudios">
+                    <img src="{{ url_for('static', filename='images/extract_info.png') }}" alt="Anàlisi d'àudios">
                     <div class="service-description">
                         <h3>Prompt Analytics</h3>
                         <p>Genera bases de dades i KPIs a partir de text i àudio. Només cal definir els prompts i el tipus de dades que vols obtenir (Text, numèric, data...)</p>

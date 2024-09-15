@@ -1,8 +1,17 @@
+/* Estils de pàgines de resultat */
+.card {
+    align-items: center;
+    display: flex;
+    justify-content: center; /* Centra horitzontalment el contingut */
+    text-align: center;
+    padding: 30px;
+}
+
 /* Result Container */
 .result-container {
     text-align: center;
     padding: 40px;
-    background-color: var(--text-color-dark);
+    background-color: var(--background-mid);
     border-radius: 8px;
     margin: 30px auto;
     max-width: 600px;
@@ -20,7 +29,7 @@
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    background-color: #f9f9f9;
+    background-color: var(--background-mid);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     resize: vertical;
 }

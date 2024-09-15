@@ -184,6 +184,7 @@ footer {
     padding: 10px;
     width: 100%;
     position: relative; /* No fixa el footer, sinó que es posiciona de forma normal al flux del document */
+    font-size: medium;
 }
 
 footer p {

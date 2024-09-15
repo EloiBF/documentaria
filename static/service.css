@@ -39,6 +39,12 @@ textarea#add_prompt {
 }
 
 /* Contenidor de càrrega de fitxers */
+/* Ocultar el input de tipo file */
+#file-input {
+    display: none; /* Oculta el input de tipo archivo */
+}
+
+/* Mantener visible el área de carga */
 .upload-container {
     max-width: 800px;
     margin: 0 auto;
@@ -52,23 +58,38 @@ textarea#add_prompt {
     border-radius: 8px;
     background-color: var(--light-color);
     position: relative;
+    cursor: pointer; /* Añade un cursor de pointer para indicar que se puede hacer clic */
 }
 
+/* Personalizar la etiqueta del área de carga */
 .upload-label {
+    display: block;
+    color: var(--text-color-dark);
+    padding: 20px;
+    border-radius: 5px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%; /* Que ocupe todo el ancho del área de carga */
 }
 
+/* Hover effect for the label */
+.upload-area:hover {
+    background-color: var(--light-mid-color); /* Cambia el color cuando el usuario pase el cursor */
+}
+
+/* Cambiar el estilo cuando el archivo esté cargado */
 .upload-area.file-loaded {
     border-color: var(--green-ok-dark);
     background-color: var(--green-ok-light);
 }
 
-/* Estil per a la informació del fitxer seleccionat */
+/* Mostrar información del archivo seleccionado */
 .file-info {
     margin-top: 10px;
     font-size: 1em;
     color: var(--text-color-dark);
 }
+
 
 /* Estil per al missatge d'error, si cal */
 .error-message {

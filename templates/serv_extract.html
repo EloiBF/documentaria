@@ -4,6 +4,7 @@
 
 {% block content %}
 <main class="main-content">
+    <link rel="stylesheet" href="{{ url_for('static', filename='service.css') }}">
     <!-- Secció d'extracció d'informació -->
     <section id="upload_extract">
         <div class="header-section">
@@ -23,42 +24,44 @@
                 </div>
 
                 <!-- Pregunta 1 -->
-                <div class="form-group">
-                    <label for="prompt1">Pregunta 1:</label>
-                    <textarea name="prompts" id="prompt1" placeholder="Exemple: Quina és la data de la factura?" required></textarea>
-                    <label for="response_type1">Tipus de Resposta Esperada:</label>
-                    <select name="response_types" id="response_type1" required>
-                        <option value="text">Text</option>
-                        <option value="numérica">Numèrica</option>
-                        <option value="fecha">Data</option>
-                        <option value="SI/NO">SI/NO</option>
-                    </select>
-                </div>
+                <div class="form-options">
+                    <div class="form-group">
+                        <label for="prompt1">Pregunta 1:</label>
+                        <textarea name="prompts" id="prompt1" placeholder="Exemple: Quina és la data de la factura?" required></textarea>
+                        <label for="response_type1">Tipus de Resposta Esperada:</label>
+                        <select name="response_types" id="response_type1" required>
+                            <option value="text">Text</option>
+                            <option value="numérica">Numèrica</option>
+                            <option value="fecha">Data</option>
+                            <option value="SI/NO">SI/NO</option>
+                        </select>
+                    </div>
 
-                <!-- Pregunta 2 -->
-                <div class="form-group">
-                    <label for="prompt2">Pregunta 2:</label>
-                    <textarea name="prompts" id="prompt2" placeholder="Exemple: Quin és l'import total de la factura?"></textarea>
-                    <label for="response_type2">Tipus de Resposta Esperada:</label>
-                    <select name="response_types" id="response_type2">
-                        <option value="text">Text</option>
-                        <option value="numérica">Numèrica</option>
-                        <option value="fecha">Data</option>
-                        <option value="SI/NO">SI/NO</option>
-                    </select>
-                </div>
+                    <!-- Pregunta 2 -->
+                    <div class="form-group">
+                        <label for="prompt2">Pregunta 2:</label>
+                        <textarea name="prompts" id="prompt2" placeholder="Exemple: Quin és l'import total de la factura?"></textarea>
+                        <label for="response_type2">Tipus de Resposta Esperada:</label>
+                        <select name="response_types" id="response_type2">
+                            <option value="text">Text</option>
+                            <option value="numérica">Numèrica</option>
+                            <option value="fecha">Data</option>
+                            <option value="SI/NO">SI/NO</option>
+                        </select>
+                    </div>
 
-                <!-- Pregunta 3 -->
-                <div class="form-group">
-                    <label for="prompt3">Pregunta 3:</label>
-                    <textarea name="prompts" id="prompt3" placeholder="Exemple: Quin és el nom del proveïdor?"></textarea>
-                    <label for="response_type3">Tipus de Resposta Esperada:</label>
-                    <select name="response_types" id="response_type3">
-                        <option value="texto libre">Text</option>
-                        <option value="numérica">Numèrica</option>
-                        <option value="fecha">Data</option>
-                        <option value="SI/NO">SI/NO</option>
-                    </select>
+                    <!-- Pregunta 3 -->
+                    <div class="form-group">
+                        <label for="prompt3">Pregunta 3:</label>
+                        <textarea name="prompts" id="prompt3" placeholder="Exemple: Quin és el nom del proveïdor?"></textarea>
+                        <label for="response_type3">Tipus de Resposta Esperada:</label>
+                        <select name="response_types" id="response_type3">
+                            <option value="text">Text</option>
+                            <option value="numérica">Numèrica</option>
+                            <option value="fecha">Data</option>
+                            <option value="SI/NO">SI/NO</option>
+                        </select>
+                    </div>
                 </div>
 
                 <button type="submit" class="submit-button">Extracció d'Informació</button>
