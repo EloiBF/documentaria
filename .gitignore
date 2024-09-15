@@ -4,3 +4,4 @@ __pycache__/
 _pycache_/
 API_KEY.txt
 .vscode
+test/out

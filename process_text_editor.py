@@ -126,7 +126,7 @@ def unir_textos_fragmentados(textos):  # Hay casos en que una palabra tiene letr
 
     return nuevo_textos, texto_separador
 
-def separar_texto_bloques(textos, max_chars_per_block=2000):
+def separar_texto_bloques(textos, max_chars_per_block=1000):
     """Separar el texto en bloques basados en un número máximo de caracteres por bloque,
        intentando dividir por signos de puntuación y, si no es posible, por palabras en mayúscula."""
 
@@ -191,8 +191,6 @@ def separar_texto_bloques(textos, max_chars_per_block=2000):
 # APLICACIÓN DEL MODELO IA DE TRADUCCIÓN -- Entran bloques y salen bloques traducidos    # PODRÍAMOS INCLUIR FUNCIONES DE EMBEDDING AQUÍ
 # Se usan las funciones de model_translator.py, que se puede usar para traducir cualquier texto
 
-import re
-
 def verificar_codigos(original, traducido):
     """Verifica que todos los códigos en el texto original estén presentes en el texto traducido.
     También verifica que los caracteres después del último código en el texto original estén presentes
@@ -239,8 +237,6 @@ def verificar_codigos(original, traducido):
     return True
 
 
-
-
 def join_blocks(bloques_traducidos):
     traduccion_completa = "".join(bloques_traducidos)
     translated_texts = re.findall(r"\(_CDTR_([A-Za-z0-9]{6})\)(.*?)(?=\(_CDTR_[A-Za-z0-9]{6}\)|$)", traduccion_completa, re.DOTALL)
@@ -269,64 +265,40 @@ def eliminar_codigos(data):
     else:
         raise TypeError("L'entrada per eliminar codis ha de ser un text o un diccionari.")
 
-
-
-# Limpiamos espacios y puntos que ha añadido de más la traducción
 def ajuste_post_traduccion(entrada_original, entrada_traducida):
     """
-    Ajusta los textos traducidos en un diccionario para que coincidan con el texto original
-    en cuanto a espacios y símbolos al inicio y al final del texto.
-
-    :param entrada_original: Un diccionario de textos originales.
-    :param entrada_traducida: Un diccionario de textos traducidos.
-    :return: Un diccionario de textos traducidos ajustados.
+    Ajusta los textos traducidos para que coincidan con el texto original en cuanto a 
+    espacios y símbolos al inicio y al final. Además, agrega un espacio después de un
+    símbolo de puntuación seguido de una letra o número, a menos que sea el último carácter.
     """
     
     def ajustar_texto(texto_original, traduccion):
         if texto_original is None or traduccion is None:
             return traduccion
 
-        def obtener_simbolos_y_espacios(texto):
-            """Devuelve los caracteres antes y después del primer y último carácter alfanumérico en el texto."""
-            primera_letra_numero = re.search(r'[A-Za-z0-9]', texto)
-            ultima_letra_numero = re.search(r'[A-Za-z0-9](?!.*[A-Za-z0-9])', texto)
-            
-            if primera_letra_numero:
-                primera_pos = primera_letra_numero.start()
-                espacios_y_simbolos_inicio = texto[:primera_pos]
-            else:
-                espacios_y_simbolos_inicio = texto
+        # Extraer los caracteres al inicio y final del texto original
+        inicio_original = re.match(r'^\W*', texto_original).group(0)
+        final_original = re.search(r'\W*$', texto_original).group(0)
 
-            if ultima_letra_numero:
-                ultima_pos = ultima_letra_numero.start()
-                espacios_y_simbolos_final = texto[ultima_pos + 1:]
-            else:
-                espacios_y_simbolos_final = texto
+        # Extraer el contenido de la traducción desde la primera hasta la última letra/número
+        contenido_traduccion = re.search(r'\w.*\w', traduccion).group(0)
 
-            return espacios_y_simbolos_inicio, espacios_y_simbolos_final
-        
-        def ajustar_inicio_y_fin(texto_original, traduccion):
-            espacios_y_simbolos_inicio_original, espacios_y_simbolos_final_original = obtener_simbolos_y_espacios(texto_original)
-            espacios_y_simbolos_inicio_traduccion, espacios_y_simbolos_final_traduccion = obtener_simbolos_y_espacios(traduccion)
+        # Insertar un espacio después de los símbolos de puntuación seguidos de letras o números
+        contenido_traduccion_ajustado = re.sub(r'([.,:;!?])([a-zA-Z0-9])', r'\1 \2', contenido_traduccion)
 
-            # Ajustar el inicio del texto traducido
-            traduccion = espacios_y_simbolos_inicio_original + traduccion[len(espacios_y_simbolos_inicio_traduccion):]
-            
-            # Ajustar el final del texto traducido
-            traduccion = traduccion[:-(len(espacios_y_simbolos_final_traduccion))] + espacios_y_simbolos_final_original
-            
-            return traduccion
+        # Concatenar la parte inicial y final del original con el contenido limpio de la traducción,
+        # asegurando que no haya duplicación de espacios.
+        return inicio_original + contenido_traduccion_ajustado.strip() + final_original
 
-        return ajustar_inicio_y_fin(texto_original, traduccion)
-    
     if not isinstance(entrada_original, dict) or not isinstance(entrada_traducida, dict):
         raise ValueError("Entrada no válida. Debe proporcionar diccionarios para ambos parámetros.")
 
-    textos_ajustados = {}
-    for key, texto_original in entrada_original.items():
-        traduccion = entrada_traducida.get(key)
-        if traduccion is not None:
-            textos_ajustados[key] = ajustar_texto(texto_original, traduccion)
+    # Aplicar el ajuste a cada texto en el diccionario
+    textos_ajustados = {
+        key: ajustar_texto(texto_original, entrada_traducida.get(key))
+        for key, texto_original in entrada_original.items()
+        if entrada_traducida.get(key)
+    }
     
     return {k: v for k, v in textos_ajustados.items() if v.strip() != ""}
 

@@ -122,7 +122,7 @@ def prompt_text(texto, origin_language, destination_language, add_prompt, file_t
         )
 
         traduccion = chat_completion.choices[0].message.content.strip()
-        print(prompt)
+        #print(prompt)
 
         return traduccion
 
@@ -157,8 +157,8 @@ def aplicacion_modelo_bloques(bloques, origin_language, destination_language, ex
 
                 # Verificamos que los códigos se hayan preservado en la traducción
                 if verificar_codigos(bloque, traduccion):
-                    print(f'Bloque original: {bloque}')
-                    print(f'Bloque traducido: {traduccion}')
+                    #print(f'Bloque original: {bloque}')
+                    #print(f'Bloque traducido: {traduccion}')
                     bloques_traducidos.append(traduccion)
 
                     # Guardamos las últimas palabras traducidas para usarlas en el siguiente bloque
@@ -195,7 +195,8 @@ def revisar_traduccio(original_text, translated_text, origin_language, destinati
         - Compare the original text in {origin_language} with the translated text in {destination_language}.
         - Keep the placeholders (e.g., _CDTR_00000) intact.
         - Maintain punctuation and spaces intact.
-        - Make minimum changes, only correct ortographical errors and grammar.
+        - Make minimum changes, only correct ortographical errors and incorrect grammar expressions.
+        - Ensure verb tenses are correct given the original text and sentence context.
         - Ensure proper grammar, syntax, coherence and punctuation in {destination_language}. Use same vocabulary style as original text.
         - Do not introduce any new information or alter the original meaning.
         - Only return the corrected translation without additional feedback or comments.
@@ -267,8 +268,8 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
 
     # Limpiar el texto traducido y separar las palabras fragmentadas
     textos_traducidos_final = eliminar_codigos(textos_traducidos)
-    textos_traducidos_final = ajuste_post_traduccion(textos_traducidos_final, textos_traducidos)
-    print("Diccionario textos_traducidos_final + separar palabras")
+    textos_traducidos_final = ajuste_post_traduccion(textos_para_traducir, textos_traducidos_final)
+    print("Diccionario textos_traducidos_final + ajuste")
     print(textos_traducidos_final)
 
 
