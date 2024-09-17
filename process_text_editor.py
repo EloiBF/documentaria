@@ -19,7 +19,7 @@ import string
 
 # Funciones para asignar un código a cada parte del texto con formato distinto
 def generate_numeric_code(counter):
-    return f"{counter:06d}"
+    return f"{counter}"
 
 # Función para no enviar a traducir textos de un color concreto, y mantenerlos como están
 def color_to_rgb(color_to_exclude):
@@ -92,179 +92,247 @@ def ajuste_pre_traduccion(diccionario):
     return {k: v for k, v in textos_ajustados.items() if v.strip() != ""}
 
 
-# Funciones para seleccionar textos relevantes y separar el texto en bloques para enviar a traducir --> Genera un diccionario nuevo
-def filtrar_textos_relevantes(textos):  # Quita textos que son solo espacios, numeros, etc
-    return {code: texto for code, texto in textos.items() if texto.strip() and not re.fullmatch(r'[\s\W\d]+', texto)}
 
 # Modifica el diccionario, editando algunas entradas para evitar que se corten palabras
-def unir_textos_fragmentados(textos):  # Hay casos en que una palabra tiene letras con diferente formato, esta formula junta los dos textos para unificar la palabra y le da el primer código
-    codigos = sorted(textos.keys())
+def unir_textos_fragmentados(textos):
+    """
+    Une los textos fragmentados en el diccionario, combinando las entradas donde
+    una entrada tiene un solo carácter y la siguiente contiene el resto de la palabra.
+    
+    :param textos: Diccionario con los textos traducidos que pueden estar fragmentados.
+    :return: Un nuevo diccionario con los textos combinados y un diccionario para identificar entradas eliminadas.
+    """
+    codigos = sorted(textos.keys(), key=lambda x: int(x))
     nuevo_textos = {}
-    buffer_texto = ""
-    buffer_codigo = ""
-    texto_separador = {}
-
-    for i in range(len(codigos)):
-        codigo = codigos[i]
-        texto = textos[codigo]
-
-        if buffer_texto:
-            if (len(buffer_texto) <= 3 or len(texto) <= 3) and buffer_texto[-1].isalpha() and texto and texto[0].isalpha() and texto[0].islower():
-                texto_separador[buffer_codigo] = len(buffer_texto)  # Guardar la longitud del primer texto
-                buffer_texto += texto
-                textos[codigo] = ""  # Vaciar el texto en el diccionario original
-            else:
-                nuevo_textos[buffer_codigo] = buffer_texto
-                buffer_texto = texto
-                buffer_codigo = codigo
-        else:
-            buffer_texto = texto
-            buffer_codigo = codigo
-
-    if buffer_texto:
-        nuevo_textos[buffer_codigo] = buffer_texto
-
-    return nuevo_textos, texto_separador
-
-def separar_texto_bloques(textos, max_chars_per_block=1000):
-    """Separar el texto en bloques basados en un número máximo de caracteres por bloque,
-       intentando dividir por signos de puntuación y, si no es posible, por palabras en mayúscula."""
-
-    def split_text_into_blocks(textos, max_chars_per_block):
-        blocks = []
-        current_block = ""
-        current_chars = 0
-
-        # Crear una lista de pares (código, texto) a partir del diccionario de textos
-        items = list(textos.items())
+    entradas_eliminadas = {}
+    
+    i = 0
+    while i < len(codigos) - 1:  # Cambiamos el rango para evitar desbordamiento
+        codigo_actual = codigos[i]
+        codigo_siguiente = codigos[i + 1]
+        texto_actual = textos[codigo_actual]
+        texto_siguiente = textos[codigo_siguiente]
         
-        for code, text in items:
-            # Añadir el código y el texto al bloque actual
-            new_text = f"(_CDTR_{code}){text}"
-            
-            # Si añadir el nuevo texto excede el límite de caracteres
-            if current_chars + len(new_text) > max_chars_per_block:
-                # Intentar cortar por signos de puntuación
-                last_punctuation = max(
-                    [m.end() for m in re.finditer(r'[.!?…]', current_block)] or [0]
-                )
-                
-                if last_punctuation > 0:
-                    # Cortar el bloque en la última posición del signo de puntuación
-                    blocks.append(current_block[:last_punctuation])
-                    # Continuar el bloque actual con el texto restante
-                    current_block = current_block[last_punctuation:].strip()
-                else:
-                    # Intentar cortar por la siguiente palabra en mayúscula si no hay signos de puntuación
-                    next_capital_word = re.search(r'\b[A-Z][a-z]*\b', current_block)
-                    
-                    if next_capital_word:
-                        # Cortar el bloque en la posición de la siguiente palabra en mayúscula
-                        capital_pos = next_capital_word.start()
-                        blocks.append(current_block[:capital_pos].strip())
-                        # Continuar el bloque actual con el texto restante
-                        current_block = current_block[capital_pos:].strip()
-                    else:
-                        # Si no hay signos de puntuación ni palabras en mayúscula, cortar en el límite exacto
-                        blocks.append(current_block)
-                        current_block = ""
-                
-                current_chars = len(current_block)
-            
-            # Añadir el nuevo texto al bloque
-            current_block += new_text
-            current_chars += len(new_text)
+        if len(texto_actual) == 1 and texto_siguiente and texto_siguiente[0].isalpha() and texto_siguiente[0].islower():
+            # Combinar textos
+            nuevo_textos[codigo_actual] = texto_actual + texto_siguiente
+            entradas_eliminadas[codigo_siguiente] = texto_siguiente
+            i += 2  # Saltar la siguiente entrada
+        else:
+            nuevo_textos[codigo_actual] = texto_actual
+            i += 1
+    
+    # Manejar la última entrada si no se combinó
+    if i < len(codigos):
+        ultimo_codigo = codigos[-1]
+        nuevo_textos[ultimo_codigo] = textos[ultimo_codigo]
 
-        # Añadir el último bloque si no está vacío
-        if current_block:
-            blocks.append(current_block)
+    return nuevo_textos, entradas_eliminadas
+
+def separar_palabras_fragmentadas(textos_unidos, entradas_eliminadas, textos_originales):
+    textos_separados = {}
+    
+    for codigo, texto in textos_unidos.items():
+        if any(int(codigo) < int(cod_eliminado) < int(codigo) + 2 for cod_eliminado in entradas_eliminadas):
+            # Este texto fue unido, necesitamos separarlo
+            primer_caracter = texto[0]
+            resto_texto = texto[1:]
+            
+            textos_separados[codigo] = primer_caracter
+            
+            # Encontrar el código correcto para el resto del texto
+            for cod_eliminado, texto_eliminado in entradas_eliminadas.items():
+                if int(cod_eliminado) == int(codigo) + 1:
+                    textos_separados[cod_eliminado] = resto_texto
+                    break
+        else:
+            # Este texto no fue unido, lo copiamos tal cual
+            textos_separados[codigo] = texto
+    
+    return textos_separados
+
+
+# Funciones para seleccionar textos relevantes y separar el texto en bloques para enviar a traducir --> Genera un diccionario nuevo
+
+# Filtramos del diccionario original, las entradas que no contienen letras (se quedan igual en el docu)
+def filtrar_textos_relevantes(diccionario):
+    # Filtrar textos que contengan al menos una letra
+    return {code: texto for code, texto in diccionario.items() if re.search(r'[a-zA-Z]', texto)}
+
+# Juntamos todos los textos de los diccionarios y los separamos por bloques, evitando cortar frases.
+def separar_texto_bloques(diccionario, max_chars_per_block=500, min_chars_per_block=100):
+        """Separar el texto en bloques basados en un número máximo y mínimo de caracteres por bloque,
+        intentando dividir por signos de puntuación y, si no es posible, por palabras en mayúscula."""
+
+        # Generar un texto concatenado de todas las claves y valores del texto
+        full_text = "".join([f"(_CDTR_{code}){text}" for code, text in diccionario.items()])
+
+        blocks = []
+        current_pos = 0
+        total_length = len(full_text)
+        block_index = 1  # Para contar los índices de los bloques
+
+        while current_pos < total_length:
+            # Definir el límite superior e inferior para el bloque actual
+            max_block_end = min(current_pos + max_chars_per_block, total_length)
+            min_block_end = min(current_pos + min_chars_per_block, total_length)
+
+            # Buscar la última posición de un placeholder (_CDTR_XXXXX) antes del límite máximo
+            last_placeholder_pos = max([m.start() for m in re.finditer(r'\(_CDTR_\d+\)', full_text[current_pos:max_block_end])] or [0])
+
+            # Buscar la última posición de un signo de puntuación antes del límite máximo
+            last_punctuation_pos = max([m.end() for m in re.finditer(r'[.!?…]', full_text[current_pos:max_block_end])] or [0])
+
+            if last_punctuation_pos > min_block_end:
+                block_end = current_pos + last_punctuation_pos
+            else:
+                # Si no hay signos de puntuación dentro del límite, buscar la última letra mayúscula
+                last_capital_pos = max([m.end() for m in re.finditer(r'\b[A-Z][a-z]*\b', full_text[current_pos:max_block_end])] or [0])
+                
+                if last_capital_pos > min_block_end:
+                    block_end = current_pos + last_capital_pos
+                else:
+                    # Si no hay letras mayúsculas dentro del límite, buscar la última palabra
+                    last_word_pos = full_text.rfind(' ', current_pos, max_block_end)
+                    
+                    if last_word_pos > min_block_end:
+                        block_end = last_word_pos
+                    else:
+                        block_end = max_block_end
+
+            # Ajustar block_end para no cortar un placeholder (_CDTR_XXXXX) por la mitad
+            if last_placeholder_pos > 0 and last_placeholder_pos < block_end - current_pos:
+                block_end = current_pos + last_placeholder_pos
+
+            # Añadir el bloque a la lista con placeholders al principio y al final
+            block = full_text[current_pos:block_end].strip()
+            blocks.append(block)
+            
+            # Actualizar la posición actual
+            current_pos = block_end
+
+        # Ajustar el penúltimo bloque si el último bloque es demasiado corto
+        if len(blocks) > 1 and len(blocks[-1]) < min_chars_per_block:
+            blocks[-2] += blocks[-1]
+            blocks.pop()
 
         return blocks
 
-    # Convertir el diccionario de textos en bloques basados en el número máximo de caracteres por bloque
-    bloques = split_text_into_blocks(textos, max_chars_per_block)
-    
-    return bloques
+# Añadimos placeholders de inicio y fin para evitar recoger textos adicionales que pueda meter la IA
+def incluir_placehold_inicial_final(bloques):
+    # Crear una nueva lista con los bloques modificados
+    bloques_modificados = [f"(_CDTR_ST){bloque}(_CDTR_ND)" for bloque in bloques]
+    return bloques_modificados
 
-
+# Función para seleccionar el texto entre placeholder de inicio y fin
+def seleccionar_texto_placeholder(texto):
+    # Usar una expresión regular para capturar el texto entre los placeholders
+    match = re.search(r'\(_CDTR_ST\)(.*?)\(_CDTR_ND\)', texto)
+    if match:
+        # Devolver el texto encontrado entre los placeholders
+        return match.group(1)
+    return None  # Si no se encuentra el patrón, devolver None
 
 # APLICACIÓN DEL MODELO IA DE TRADUCCIÓN -- Entran bloques y salen bloques traducidos    # PODRÍAMOS INCLUIR FUNCIONES DE EMBEDDING AQUÍ
 # Se usan las funciones de model_translator.py, que se puede usar para traducir cualquier texto
 
 def verificar_codigos(original, traducido):
     """Verifica que todos los códigos en el texto original estén presentes en el texto traducido.
-    También verifica que los caracteres después del último código en el texto original estén presentes
-    en el texto traducido después del último código correspondiente."""
+    También verifica que los códigos de inicio (_CDTR_ST) y final (_CDTR_ND) estén presentes,
+    y que los caracteres después del último código en el texto original estén presentes en el texto traducido.
+    Además, verifica que no haya códigos duplicados en ninguno de los textos.
+    """
     
-    patron_codigo = r'\(_CDTR_\d{6}\)'
+    # Patrones para los códigos
+    patron_codigo_numerico = r'\(_CDTR_\d+\)'  # Cualquier código con número (_CDTR_X) donde X es un número
+    patron_codigo_inicio = r'\(_CDTR_ST\)'     # Placeholder de inicio
+    patron_codigo_final = r'\(_CDTR_ND\)'      # Placeholder de final
     
-    # Encontrar todos los códigos en el texto original y traducido
-    codigos_originales = re.findall(patron_codigo, original)
-    codigos_traducidos = re.findall(patron_codigo, traducido)
+    # Verificar que los placeholders de inicio y fin existan en ambos textos
+    if not (re.search(patron_codigo_inicio, original) and re.search(patron_codigo_inicio, traducido)):
+        print(f'[ERROR] Falta el placeholder de inicio (_CDTR_ST) en alguno de los textos.')
+        return False
     
-    # Convertir listas a conjuntos para verificar presencia de códigos
+    if not (re.search(patron_codigo_final, original) and re.search(patron_codigo_final, traducido)):
+        print(f'[ERROR] Falta el placeholder de final (_CDTR_ND) en alguno de los textos.')
+        return False
+    
+    # Encontrar todos los códigos numéricos en el texto original y traducido
+    codigos_originales = re.findall(patron_codigo_numerico, original)
+    codigos_traducidos = re.findall(patron_codigo_numerico, traducido)
+    
+    # Convertir listas a conjuntos para verificar la presencia de todos los códigos
     codigos_originales_set = set(codigos_originales)
     codigos_traducidos_set = set(codigos_traducidos)
     
-    # Códigos faltantes en la traducción
-    codigos_faltantes = codigos_originales_set - codigos_traducidos_set
+    # Verificar si hay códigos duplicados en el texto original
+    if len(codigos_originales) != len(codigos_originales_set):
+        print(f'[ERROR] Hay códigos duplicados en el texto original.')
+        return False
     
+    # Verificar si hay códigos duplicados en el texto traducido
+    if len(codigos_traducidos) != len(codigos_traducidos_set):
+        print(f'[ERROR] Hay códigos duplicados en el texto traducido.')
+        return False
+    
+    # Verificar si hay códigos faltantes en la traducción
+    codigos_faltantes = codigos_originales_set - codigos_traducidos_set
     if codigos_faltantes:
         print(f'[ERROR] Códigos faltantes en la traducción: {codigos_faltantes}')
         return False
     
-    # Verificar caracteres después del último código
-    ultimo_codigo_original_match = re.search(patron_codigo, original[::-1])
-    ultimo_codigo_original = ""
-    if ultimo_codigo_original_match:
-        ultimo_codigo_original = ultimo_codigo_original_match.group()[::-1]
-    
-    if ultimo_codigo_original:
-        # Encontrar la posición del último código en el texto original
-        pos_ultimo_codigo_original = original.rfind(ultimo_codigo_original) + len(ultimo_codigo_original)
-        # Obtener los caracteres después del último código en el texto original
-        caracteres_despues_ultimo_codigo_original = original[pos_ultimo_codigo_original:]
-        
-        # Encontrar la posición del último código en el texto traducido
-        pos_ultimo_codigo_traducido = traducido.rfind(ultimo_codigo_original) + len(ultimo_codigo_original)
-        # Obtener los caracteres después del último código en el texto traducido
-        caracteres_despues_ultimo_codigo_traducido = traducido[pos_ultimo_codigo_traducido:]
-        
-        if caracteres_despues_ultimo_codigo_original and caracteres_despues_ultimo_codigo_original != caracteres_despues_ultimo_codigo_traducido:
-            print(f'[ERROR] Los caracteres después del último código en el original no están presentes en la traducción.')
-            return False
-
     return True
 
-
 def join_blocks(bloques_traducidos):
+    # Unir todos los bloques traducidos en un solo string
     traduccion_completa = "".join(bloques_traducidos)
-    translated_texts = re.findall(r"\(_CDTR_([A-Za-z0-9]{6})\)(.*?)(?=\(_CDTR_[A-Za-z0-9]{6}\)|$)", traduccion_completa, re.DOTALL)
-    return {code: text for code, text in translated_texts}
+    # Buscar todos los códigos CDTR con 1 o más dígitos/letras y capturar el texto entre ellos
+    # Ignoramos los códigos de inicio (_CDTR_ST) y final (_CDTR_ND), que ya han sido eliminados previamente.
+    translated_texts = re.findall(r"\(_CDTR_([A-Za-z0-9]+)\)(.*?)(?=\(_CDTR_[A-Za-z0-9]+\)|$)", traduccion_completa, re.DOTALL)
+    # Retornar un diccionario con el código como clave y el texto asociado como valor
+    return {code: text.strip() for code, text in translated_texts}
 
-
-# Funciones para limpiar el texto traducido
-def eliminar_codigos(data):
+# Funciones para limpiar el texto traducido y poder enviar bloques sin placeholders para una mejor traducción de ejemplo
+def codigos_por_espacios(data):
     """
-    Elimina els codis (_CDTR_00000, etc.) d'un text o d'un diccionari.
+    Reemplaza los códigos del tipo (_CDTR_00000) o similares con espacios en un texto o un diccionario.
 
-    :param data: Pot ser un text (str) o un diccionari (dict) on cal eliminar els codis.
-    :return: El text o diccionari sense codis.
+    :param data: Puede ser un texto (str) o un diccionario (dict) del cual reemplazar los códigos.
+    :return: El texto o diccionario con los códigos reemplazados por espacios.
     """
-    # Expressió regular per eliminar els codis amb o sense parèntesis
-    patron = r"\(?_?CDTR[_A-Za-z0-9]{1,}\)?|\(?__?CDTR[_A-Za-z0-9]{1,}\)?|CDTR[_A-Za-z0-9]{1,}"
+    # Expresión regular para encontrar los códigos del tipo (_CDTR_00000) o variaciones
+    patron = r"\(?_?CDTR[_A-Za-z0-9]*\)?"
     
     if isinstance(data, str):
-        # Si 'data' és un text, eliminem els codis del text
+        # Si 'data' es un texto, reemplazamos los códigos por espacios
+        return re.sub(patron, " ", data)
+    
+    else:
+        raise TypeError("La entrada para reemplazar códigos debe ser un texto o un diccionario.")
+
+# Funciones para limpiar el texto traducido de codigos por si acaso
+def eliminar_codigos(data):
+    """
+    Elimina los códigos del tipo (_CDTR_00000) o similares de un texto o de un diccionario.
+
+    :param data: Puede ser un texto (str) o un diccionario (dict) del cual eliminar los códigos.
+    :return: El texto o diccionario sin los códigos.
+    """
+    # Expresión regular para eliminar los códigos del tipo (_CDTR_00000) o variaciones
+    patron = r"\(?_?CDTR[_A-Za-z0-9]*\)?"
+    
+    if isinstance(data, str):
+        # Si 'data' es un texto, eliminamos los códigos del texto
         return re.sub(patron, "", data)
     
     elif isinstance(data, dict):
-        # Si 'data' és un diccionari, eliminem els codis per a cada valor del diccionari
+        # Si 'data' es un diccionario, eliminamos los códigos para cada valor del diccionario
         return {key: re.sub(patron, "", value) for key, value in data.items()}
     
     else:
-        raise TypeError("L'entrada per eliminar codis ha de ser un text o un diccionari.")
+        raise TypeError("La entrada para eliminar códigos debe ser un texto o un diccionario.")
 
+# Ajustamos espacios i símbolos de cada entrada del diccionario para que sean idénticos al diccionario original
 def ajuste_post_traduccion(entrada_original, entrada_traducida):
     """
     Ajusta los textos traducidos para que coincidan con el texto original en cuanto a 
@@ -277,11 +345,18 @@ def ajuste_post_traduccion(entrada_original, entrada_traducida):
             return traduccion
 
         # Extraer los caracteres al inicio y final del texto original
-        inicio_original = re.match(r'^\W*', texto_original).group(0)
-        final_original = re.search(r'\W*$', texto_original).group(0)
+        inicio_original_match = re.match(r'^\W*', texto_original)
+        final_original_match = re.search(r'\W*$', texto_original)
+
+        inicio_original = inicio_original_match.group(0) if inicio_original_match else ""
+        final_original = final_original_match.group(0) if final_original_match else ""
 
         # Extraer el contenido de la traducción desde la primera hasta la última letra/número
-        contenido_traduccion = re.search(r'\w.*\w', traduccion).group(0)
+        contenido_traduccion_match = re.search(r'\w.*\w', traduccion)
+        if contenido_traduccion_match:
+            contenido_traduccion = contenido_traduccion_match.group(0)
+        else:
+            contenido_traduccion = traduccion  # Si no se encuentra, usamos la traducción original
 
         # Insertar un espacio después de los símbolos de puntuación seguidos de letras o números
         contenido_traduccion_ajustado = re.sub(r'([.,:;!?])([a-zA-Z0-9])', r'\1 \2', contenido_traduccion)
@@ -302,8 +377,6 @@ def ajuste_post_traduccion(entrada_original, entrada_traducida):
     
     return {k: v for k, v in textos_ajustados.items() if v.strip() != ""}
 
-
-def separar_palabras_fragmentadas(textos_traducidos, texto_separador, textos_originales): # Una vez tenemos la el diccionario traducido, separamos las palabras unificadas con sus dos códigos, en base al num de caracteres del primer texto.
     textos_traducidos_ok = {}
     nuevos_codigos = {}
     counter = max([int(c) for c in textos_originales.keys()]) + 1
@@ -430,7 +503,6 @@ def procesar_docx(input_path,output_path, textos_originales, color_to_exclude, t
                         counter += 1
                         if action == "leer":
                             textos_originales[code] = run.text
-                            print(run.text)
                         elif action == "reemplazar" and code in textos_traducidos_final:
                             run.text = textos_traducidos_final[code]
                             
@@ -522,6 +594,7 @@ def procesar_pdf(input_path, output_path, textos_originales, color_to_exclude, t
     pdf_to_word(input_path, word_path)
 
     return procesar_docx(word_path,output_path, textos_originales, color_to_exclude, textos_traducidos_final, action)
+
 
 def procesar_txt(input_path, output_path, action, textos_traducidos_final=None):
     """Leer un archivo TXT, detectar su codificación, y dividir el texto en bloques de 10 palabras."""

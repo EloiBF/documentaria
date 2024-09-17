@@ -2,16 +2,20 @@ from groq import Groq
 import re
 
 # Cargamos las funciones de procesado de documento, que se usan para editar o traducir
-from process_text_editor import unir_textos_fragmentados
 from process_text_editor import filtrar_textos_relevantes
 from process_text_editor import separar_texto_bloques
-from process_text_editor import separar_palabras_fragmentadas
 from process_text_editor import verificar_codigos
 from process_text_editor import join_blocks
-from process_text_editor import eliminar_codigos
+from process_text_editor import codigos_por_espacios
 from process_text_editor import ajuste_post_traduccion
 from process_text_editor import ajuste_pre_traduccion
 from process_text_editor import procesar_documento
+from process_text_editor import incluir_placehold_inicial_final
+from process_text_editor import seleccionar_texto_placeholder
+from process_text_editor import eliminar_codigos
+from process_text_editor import unir_textos_fragmentados
+from process_text_editor import separar_palabras_fragmentadas
+
 
 
 # Obtenir les paraules abans i despres de cada bloc perquè la traducció no quedi tallada
@@ -50,26 +54,19 @@ def obtenir_context(bloques, num_caracters=50):
 
 # Funció genèrica per traduir amb la IA, li passes un text i retorna la traducció. MODEL I PROMPT
 # Función genérica para traducir con IA, con soporte para contexto
-def prompt_text(texto, origin_language, destination_language, add_prompt, file_type, context_anterior="", context_seguent="", model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
+def modelo_traduccion_sin_placeholders(texto, origin_language, destination_language, add_prompt, file_type, context_anterior="", context_seguent="", model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
     """
     Traduce el texto utilizando el cliente de Groq con el contexto anterior y siguiente.
 
-    :param texto: Texto a traducir.
-    :param origin_language: Idioma de origen del texto. Usa "auto" para detección automática.
-    :param destination_language: Idioma al que se traducirá el texto.
-    :param context_anterior: Texto contextual anterior al bloque (si existe).
-    :param context_seguent: Texto contextual siguiente al bloque (si existe).
-    :param model: Modelo de traducción a utilizar.
-    :param api_key_file: Archivo que contiene la API key de Groq.
-    :param add_prompt: Instrucciones adicionales para la traducción.
-    :param file_type: Tipo de archivo (ppt, docx, pdf, txt, html).
-    :return: Texto traducido.
     """
     try:
         # Inicializa el cliente de Groq
         with open(api_key_file, 'r') as fichero:
             api_key = fichero.read().strip()
         client = Groq(api_key=api_key)
+
+        # Genera el texto sin placeholders
+        texto = codigos_por_espacios(texto)
 
         # Genera el prompt base para la traducción según el tipo de archivo
         if file_type == None:
@@ -87,7 +84,6 @@ def prompt_text(texto, origin_language, destination_language, add_prompt, file_t
         elif file_type in ['.pptx', '.docx', '.pdf', '.txt', '.html']:
             base_prompt = f"""
             Translation Instructions:
-            - Translate the text while maintaining the exact position of the codes (_CDTR_00000), ensuring they remain unaltered in both placement and format.
             - Do not add any comments, annotations, or changes outside the translation.
             - Ensure the translation is grammatically correct and coherent in {destination_language}, including proper usage of punctuation, symbols, and apostrophes.
             - Preserve all punctuation, symbols, numbers, line breaks, and white spaces exactly as they appear in the original text.
@@ -129,59 +125,10 @@ def prompt_text(texto, origin_language, destination_language, add_prompt, file_t
     except Exception as e:
         raise RuntimeError(f"Error during translation: {e}")
 
-
-def aplicacion_modelo_bloques(bloques, origin_language, destination_language, extension, add_prompt="", numintentos=10):
-    bloques_traducidos = []
-    ultimas_palabras_traducidas = ""  # Almacena las últimas palabras traducidas del bloque anterior
-
-    # Iterar sobre cada bloque para traducir
-    for i, bloque in enumerate(bloques):
-        reintentos = 0
-        context_anterior = ultimas_palabras_traducidas  # El contexto anterior ahora es la última traducción (ya traducido)
-        context_seguent = ""
-
-        if i < len(bloques) - 1:
-            # Si no es el último bloque, obtenemos el contexto del siguiente bloque
-            context_seguent = bloques[i+1][:50]  # Solo obtenemos las primeras palabras del siguiente bloque
-
-        while reintentos < numintentos:
-            try:
-                # Traducimos el bloque actual junto con el contexto anterior traducido
-                traduccion = prompt_text(
-                    bloque, origin_language, destination_language, add_prompt, extension,
-                    context_anterior=context_anterior, context_seguent=context_seguent
-                )
-
-                # Podemos pasarle otro prompt de revisión del lenguaje, mejor con un modelo específico... ver como hacerlo
-                traduccion = revisar_traduccio(bloque, traduccion, origin_language, destination_language, add_prompt, extension)
-
-                # Verificamos que los códigos se hayan preservado en la traducción
-                if verificar_codigos(bloque, traduccion):
-                    #print(f'Bloque original: {bloque}')
-                    #print(f'Bloque traducido: {traduccion}')
-                    bloques_traducidos.append(traduccion)
-
-                    # Guardamos las últimas palabras traducidas para usarlas en el siguiente bloque
-                    ultimas_palabras_traducidas = " ".join(traduccion.split()[-5:])  # Últimas 5 palabras del bloque actual traducido
-                    break  # Salimos del bucle si la traducción es válida
-                else:
-                    print(f'[ERROR] Bloque original: {bloque}')
-                    print(f'[ERROR] Bloque traducido: {traduccion}')
-                    raise ValueError("Error por traducción no válida")
-
-            except Exception as e:
-                print(f'Error en la traducción del bloque. {e}. Reintentando...')
-                reintentos += 1
-
-        else:
-            print(f'No se pudo traducir correctamente el bloque después de {numintentos} intentos')
-            bloques_traducidos.append(bloque)
-    
-    return bloques_traducidos
-
+# Possibilitat d'aplicar una altra iteració del model, o d'un model especialitzat per corregir la traducció
 
 # Funció perquè el model Revisi la traducció. Jo faria servir models específics segons els llenguatges d'entrada i sortida.
-def revisar_traduccio(original_text, translated_text, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
+def modelo_traduccion_con_placeholders(original_text, translated_text, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
     try:
         # Inicializa el cliente de Groq
         with open(api_key_file, 'r') as fichero:
@@ -191,21 +138,20 @@ def revisar_traduccio(original_text, translated_text, origin_language, destinati
         # Genera el prompt base para la revisión de la traducción con énfasis en los puntos de corte
         base_prompt = f"""
         Follow these rules:
-        - Act as a translation corrector, expert in {destination_language}.
-        - Compare the original text in {origin_language} with the translated text in {destination_language}.
-        - Keep the placeholders (e.g., _CDTR_00000) intact.
+        - Translate text with placeholders
+        - Keep the placeholders (e.g., _CDTR_XX) intact, do not alter it even if there are other instructions.
         - Maintain punctuation and spaces intact.
-        - Make minimum changes, only correct ortographical errors and incorrect grammar expressions.
+        - If there are errors in translation, correct it in the placeholder version.
         - Ensure verb tenses are correct given the original text and sentence context.
         - Ensure proper grammar, syntax, coherence and punctuation in {destination_language}. Use same vocabulary style as original text.
         - Do not introduce any new information or alter the original meaning.
         - Only return the corrected translation without additional feedback or comments.
 
-        Original text (current block):
-        {original_text}
-
-        Translated text (current block):
+        For your context, translated text with placeholders is:
         {translated_text}
+
+        Text to translate keeping exact placeholders:
+        {original_text}
         """
 
         # Instrucciones adicionales, si son necesarias
@@ -230,6 +176,56 @@ def revisar_traduccio(original_text, translated_text, origin_language, destinati
     except Exception as e:
         raise RuntimeError(f"Error during revision: {e}")
 
+def aplicacion_modelo_bloques(bloques, origin_language, destination_language, extension, add_prompt="", numintentos=10):
+    bloques_traducidos = []
+    ultimas_palabras_traducidas = ""  # Almacena las últimas palabras traducidas del bloque anterior
+
+    # Iterar sobre cada bloque para traducir
+    for i, bloque in enumerate(bloques):
+        reintentos = 0
+        context_anterior = ultimas_palabras_traducidas  # El contexto anterior ahora es la última traducción (ya traducido)
+        context_seguent = ""
+
+        if i < len(bloques) - 1:
+            # Si no es el último bloque, obtenemos el contexto del siguiente bloque
+            context_seguent = bloques[i+1][:50]  # Solo obtenemos las primeras palabras del siguiente bloque
+
+        while reintentos < numintentos:
+            try:
+                # Traducimos el bloque actual junto con el contexto anterior traducido
+                traduccion = modelo_traduccion_sin_placeholders(bloque, origin_language, destination_language, add_prompt, extension, context_anterior=context_anterior, context_seguent=context_seguent)
+                print(f'Bloque original: {bloque}')
+                print(f'Bloque traducido sin: {traduccion}')
+
+                # Podemos pasarle otro prompt de revisión del lenguaje, mejor con un modelo específico... ver como hacerlo
+                traduccion = modelo_traduccion_con_placeholders(bloque, traduccion, origin_language, destination_language, add_prompt, extension)
+
+                # Verificamos que los códigos se hayan preservado en la traducción
+                if verificar_codigos(bloque, traduccion):
+                    print(f'Bloque traducido con placeholders: {traduccion}')
+                    
+                    # Si pasa la validación, pillamos el texto entre placeholder de inicio y fin
+                    traduccion = seleccionar_texto_placeholder(traduccion)
+
+                    bloques_traducidos.append(traduccion)
+
+                    # Guardamos las últimas palabras traducidas para usarlas en el siguiente bloque
+                    ultimas_palabras_traducidas = " ".join(traduccion.split()[-5:])  # Últimas 5 palabras del bloque actual traducido
+                    break  # Salimos del bucle si la traducción es válida
+                else:
+                    print(f'[ERROR] Bloque original: {bloque}')
+                    print(f'[ERROR] Bloque traducido: {traduccion}')
+                    raise ValueError("Error por traducción no válida")
+
+            except Exception as e:
+                print(f'Error en la traducción del bloque. {e}. Reintentando...')
+                reintentos += 1
+
+        else:
+            print(f'No se pudo traducir correctamente el bloque después de {numintentos} intentos')
+            bloques_traducidos.append(bloque)
+    
+    return bloques_traducidos
 
 def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt):
     print(f"Starting translation process for {input_path}")
@@ -245,19 +241,18 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
     print(textos_originales)
 
     # Unir textos fragmentados y luego filtrar textos irrelevantes (se quitan las entradas del diccionario que están en blanco o que no se tiene que enviar a traducir)
-    textos_para_traducir, texto_separador = unir_textos_fragmentados(textos_originales)
+    textos_para_traducir, entradas_eliminadas = unir_textos_fragmentados(textos_originales)
+    print(entradas_eliminadas)
     textos_para_traducir = filtrar_textos_relevantes(textos_para_traducir)
 
     print("Diccionario textos_para_traducir")
     print(textos_para_traducir)
 
-    # Inicializar variable para almacenar textos traducidos
-    textos_traducidos = {}
-
     # Generación de bloques
     bloques = separar_texto_bloques(textos_para_traducir)
+    bloques = incluir_placehold_inicial_final(bloques)
 
-    # Traducción de bloques con el modelo
+    # Traducción de bloques con el modelo - se coge el texto entre placeholder inicial y final y se valida que cuadren placeholders
     bloques_traducidos = aplicacion_modelo_bloques(bloques, origin_language, destination_language, extension, add_prompt)
 
     # Traducir los textos recopilados en bloques
@@ -270,12 +265,9 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
     textos_traducidos_final = eliminar_codigos(textos_traducidos)
     textos_traducidos_final = ajuste_post_traduccion(textos_para_traducir, textos_traducidos_final)
     print("Diccionario textos_traducidos_final + ajuste")
-    print(textos_traducidos_final)
 
-
-    # Separar los textos traducidos --> Generamos el diccionario con los textos traducidos y su código
-    textos_traducidos_final = separar_palabras_fragmentadas(textos_traducidos_final, texto_separador, textos_originales)
-    
+    # Separar los textos traducidos --> Generamos el diccionario con los textos traducidos y su código   
+    textos_traducidos_final = separar_palabras_fragmentadas(textos_traducidos_final, entradas_eliminadas, textos_originales)
     print("Diccionario textos_traducidos_final + separar palabras")
     print(textos_traducidos_final)
 
