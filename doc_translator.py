@@ -8,7 +8,6 @@ from process_text_editor import verificar_codigos
 from process_text_editor import join_blocks
 from process_text_editor import codigos_por_espacios
 from process_text_editor import ajuste_post_traduccion
-from process_text_editor import ajuste_pre_traduccion
 from process_text_editor import procesar_documento
 from process_text_editor import incluir_placehold_inicial_final
 from process_text_editor import seleccionar_texto_placeholder
@@ -19,42 +18,43 @@ from process_text_editor import separar_palabras_fragmentadas
 
 
 # Obtenir les paraules abans i despres de cada bloc perquè la traducció no quedi tallada
-def obtenir_context(bloques, num_caracters=50):
+def ampliar_blocs(bloques, num_paraules=10):
     """
-    Retorna per a cada bloc els últims caràcters del bloc anterior i els primers del bloc següent, sense tallar paraules.
+    Amplia cada bloc de text amb les últimes paraules del bloc anterior i les primeres del bloc següent, 
+    sense tallar paraules.
 
     :param bloques: Llista de blocs de text.
-    :param num_caracters: Nombre de caràcters a obtenir del final i principi de cada bloc.
-    :return: Llista de tuples (context_anterior, context_seguent) per a cada bloc.
+    :param num_paraules: Nombre de paraules a obtenir del final i principi de cada bloc.
+    :return: Llista de blocs amb context afegit abans i després.
     """
-    context = []
+    blocs_ampliats = []
 
     for i, bloque in enumerate(bloques):
         # Obtenim el final del bloc anterior
         if i > 0:
-            anterior = bloques[i-1]
-            anterior = eliminar_codigos(anterior)
-            final_anterior = anterior[-num_caracters:]
-            final_anterior = re.sub(r'\s\S*$', '', final_anterior)  # Eliminem paraules tallades
+            anterior = codigos_por_espacios(bloques[i-1])
+            final_anterior = ' '.join(anterior.split()[-num_paraules:])
         else:
             final_anterior = ''  # No hi ha bloc anterior pel primer bloc
 
         # Obtenim el principi del bloc següent
         if i < len(bloques) - 1:
-            seguent = bloques[i+1]
-            seguent = eliminar_codigos(seguent)
-            principi_seguent = seguent[:num_caracters]
-            principi_seguent = re.sub(r'\s\S*$', '', principi_seguent)  # Eliminem paraules tallades
+            seguent = codigos_por_espacios(bloques[i+1])
+            principi_seguent = ' '.join(seguent.split()[:num_paraules])
         else:
             principi_seguent = ''  # No hi ha bloc següent per l'últim bloc
 
-        context.append((final_anterior, principi_seguent))
+        # Crear el bloc ampliat amb context abans i després
+        bloc_amb_context = f"{final_anterior} {bloque} {principi_seguent}".strip()
+        
+        # Afegim el bloc ampliat a la llista
+        blocs_ampliats.append(bloc_amb_context)
 
-    return context
+    return blocs_ampliats
 
 # Funció genèrica per traduir amb la IA, li passes un text i retorna la traducció. MODEL I PROMPT
 # Función genérica para traducir con IA, con soporte para contexto
-def modelo_traduccion_sin_placeholders(texto, origin_language, destination_language, add_prompt, file_type, context_anterior="", context_seguent="", model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
+def modelo_traduccion_sin_placeholders(texto, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
     """
     Traduce el texto utilizando el cliente de Groq con el contexto anterior y siguiente.
 
@@ -97,16 +97,10 @@ def modelo_traduccion_sin_placeholders(texto, origin_language, destination_langu
         # Construye el prompt completo
         prompt = base_prompt
 
-        if context_anterior:
-            prompt += f"Words before the text (use as context):\n{context_anterior}\n"
-
         if origin_language == "auto":
             prompt += f"Translate the text to {destination_language}.\nText to translate:\n{texto}"
         else:
             prompt += f"Translate the text from {origin_language} to {destination_language}.\nText to translate:\n{texto}"
-
-        if context_seguent:
-            prompt += f"\nWords after the text (use as context):\n{context_seguent}"
 
         if add_prompt:
             prompt += f"\n\nAdditional translation instructions: {add_prompt}"
@@ -138,7 +132,7 @@ def modelo_traduccion_con_placeholders(original_text, translated_text, origin_la
         # Genera el prompt base para la revisión de la traducción con énfasis en los puntos de corte
         base_prompt = f"""
         Follow these rules:
-        - Translate text with placeholders
+        - Translate text with placeholders to {destination_language}.
         - Keep the placeholders (e.g., _CDTR_XX) intact, do not alter it even if there are other instructions.
         - Maintain punctuation and spaces intact.
         - If there are errors in translation, correct it in the placeholder version.
@@ -178,14 +172,13 @@ def modelo_traduccion_con_placeholders(original_text, translated_text, origin_la
 
 def aplicacion_modelo_bloques(bloques, origin_language, destination_language, extension, add_prompt="", numintentos=10):
     bloques_traducidos = []
-    ultimas_palabras_traducidas = ""  # Almacena las últimas palabras traducidas del bloque anterior
+
+    blocs_ampliats = ampliar_blocs(bloques)
 
     # Iterar sobre cada bloque para traducir
-    for i, bloque in enumerate(bloques):
+    for i, (bloque, bloc_ampliat) in enumerate(zip(bloques, blocs_ampliats)):
         reintentos = 0
-        context_anterior = ultimas_palabras_traducidas  # El contexto anterior ahora es la última traducción (ya traducido)
-        context_seguent = ""
-
+       
         if i < len(bloques) - 1:
             # Si no es el último bloque, obtenemos el contexto del siguiente bloque
             context_seguent = bloques[i+1][:50]  # Solo obtenemos las primeras palabras del siguiente bloque
@@ -193,16 +186,16 @@ def aplicacion_modelo_bloques(bloques, origin_language, destination_language, ex
         while reintentos < numintentos:
             try:
                 # Traducimos el bloque actual junto con el contexto anterior traducido
-                traduccion = modelo_traduccion_sin_placeholders(bloque, origin_language, destination_language, add_prompt, extension, context_anterior=context_anterior, context_seguent=context_seguent)
-                print(f'Bloque original: {bloque}')
-                print(f'Bloque traducido sin: {traduccion}')
+                traduccion = modelo_traduccion_sin_placeholders(bloc_ampliat, origin_language, destination_language, add_prompt, extension)
+                print(f'BLOQUE ORIGINAL: {bloque}')
+                print(f'TRADUCCIÓN EJEMPLO: {traduccion}')
 
                 # Podemos pasarle otro prompt de revisión del lenguaje, mejor con un modelo específico... ver como hacerlo
                 traduccion = modelo_traduccion_con_placeholders(bloque, traduccion, origin_language, destination_language, add_prompt, extension)
 
                 # Verificamos que los códigos se hayan preservado en la traducción
                 if verificar_codigos(bloque, traduccion):
-                    print(f'Bloque traducido con placeholders: {traduccion}')
+                    print(f'TRADUCCIÓN SIN PLACEHOLDERS: {traduccion}')
                     
                     # Si pasa la validación, pillamos el texto entre placeholder de inicio y fin
                     traduccion = seleccionar_texto_placeholder(traduccion)
@@ -235,10 +228,6 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
     print("Diccionario textos_originales tal cual")
     print(textos_originales)
 
-    # Arreglamos algunas cosas como comas sin espacio posterior
-    textos_originales = ajuste_pre_traduccion(textos_originales)
-    print("Diccionario textos_originales ajustado")
-    print(textos_originales)
 
     # Unir textos fragmentados y luego filtrar textos irrelevantes (se quitan las entradas del diccionario que están en blanco o que no se tiene que enviar a traducir)
     textos_para_traducir, entradas_eliminadas = unir_textos_fragmentados(textos_originales)
@@ -267,7 +256,7 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
     print("Diccionario textos_traducidos_final + ajuste")
 
     # Separar los textos traducidos --> Generamos el diccionario con los textos traducidos y su código   
-    textos_traducidos_final = separar_palabras_fragmentadas(textos_traducidos_final, entradas_eliminadas, textos_originales)
+    textos_traducidos_final = separar_palabras_fragmentadas(textos_traducidos_final, entradas_eliminadas)
     print("Diccionario textos_traducidos_final + separar palabras")
     print(textos_traducidos_final)
 
