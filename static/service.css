@@ -52,24 +52,27 @@ textarea#add_prompt {
 }
 
 .upload-area {
+    display: flex; /* Activa el uso de flexbox */
+    flex-direction: column; /* Alinea los elementos en columna */
+    justify-content: center; /* Centra verticalmente */
+    align-items: center; /* Centra horizontalmente */
+    text-align: center; /* Centra el texto dentro del área */
     border: 2px dashed var(--border-color);
     padding: 20px;
-    text-align: center;
     border-radius: 8px;
     background-color: var(--light-color);
-    position: relative;
-    cursor: pointer; /* Añade un cursor de pointer para indicar que se puede hacer clic */
+    cursor: pointer;
 }
 
 /* Personalizar la etiqueta del área de carga */
 .upload-label {
-    display: block;
     color: var(--text-color-dark);
     padding: 20px;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
     width: 100%; /* Que ocupe todo el ancho del área de carga */
+    text-align: center; /* Asegura que el texto en la etiqueta esté centrado */
 }
 
 /* Hover effect for the label */
@@ -85,9 +88,10 @@ textarea#add_prompt {
 
 /* Mostrar información del archivo seleccionado */
 .file-info {
-    margin-top: 10px;
+    margin: 0;
     font-size: 1em;
     color: var(--text-color-dark);
+    text-align: center; /* Asegura que la información del archivo esté centrada */
 }
 
 
@@ -96,4 +100,52 @@ textarea#add_prompt {
     display: none; /* Amaga per defecte */
     color: red;
     margin-top: 10px;
+}
+
+
+
+
+/* Estilo para cada grupo de preguntas */
+.form-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+}
+
+/* Estilo para cada grupo de entrada (textarea y select) */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Cambiado de flex-start a stretch */
+    gap: 10px;
+    width: 100%;
+}
+
+/* Ajustes para los elementos de entrada */
+textarea {
+    height: 50px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    width: 100%; /* Asegura que ocupe todo el ancho del contenedor */
+    box-sizing: border-box; /* Incluye padding y border en el ancho total */
+}
+
+/* Ajustes específicos para el select */
+select {
+    height: 50px;
+    width: 100%; /* Asegura que ocupe todo el ancho del contenedor */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Incluye padding y border en el ancho total */
 }

@@ -168,9 +168,9 @@ class InformationExtractor(FileProcessor):
         super().__init__(self.background_extract)
 
     def get_result_filename(self, filename):
-        return f"{os.path.splitext(filename)[0]}_extracted.txt"
+        return f"{os.path.splitext(filename)[0]}.json"
 
-    def process_file(self, file, prompts, response_types, examples):
+    def process_file(self, file, prompts, response_types):
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         result_filename = self.get_result_filename(filename)
@@ -180,11 +180,11 @@ class InformationExtractor(FileProcessor):
         file.save(file_path)
 
         # Llamar al método que procesará el archivo en segundo plano
-        threading.Thread(target=self.background_extract, args=(file_path, result_file_path, prompts, response_types, examples)).start()
+        threading.Thread(target=self.background_extract, args=(file_path, result_file_path, prompts, response_types)).start()
 
         return filename, result_filename
 
-    def background_extract(self, file_path, result_file_path, prompts, response_types, examples):
+    def background_extract(self, file_path, result_file_path, prompts, response_types):
         try:
             if os.path.exists(result_file_path):
                 os.remove(result_file_path)
@@ -192,9 +192,9 @@ class InformationExtractor(FileProcessor):
             # Extraer la información
             extracted_data = extract_info_from_doc(
                 file_path,
+                result_file_path,
                 prompts, 
-                response_types, 
-                ejemplos_respuesta=examples
+                response_types
             )
             
             # Guardar los datos extraídos en un archivo JSON
@@ -247,9 +247,11 @@ def check_status(process_type, filename):
         result_filename = extractor.get_result_filename(filename)
     else:
         return jsonify({"status": "error", "message": "Invalid process type"}), 400
+    print(f'Result filename essss: {result_filename}')
 
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
     if os.path.exists(result_file_path):
+        print(f'existe en check_status {result_file_path}')
         return jsonify({"status": "completed"})
     else:
         return jsonify({"status": "in_progress"})
@@ -461,10 +463,11 @@ def upload_extract():
         file = request.files.get('file')  # Obtener el único archivo subido
         prompts = request.form.getlist('prompts')  # Obtener las preguntas como lista
         response_types = request.form.getlist('response_types')  # Obtener los tipos de respuesta como lista
-        examples = request.form.getlist('examples')  # Obtener ejemplos si existen
 
         if file:
-            filename, result_filename = extractor.process_file(file, prompts, response_types, examples)
+            filename, result_filename = extractor.process_file(file, prompts, response_types)
+            print("lanzando progressoooo")
+            print(f'el fichero es: {result_filename}')
             return redirect(url_for('check_progress_extract', filename=result_filename))
     
     return render_template('serv_extract.html')
@@ -474,14 +477,14 @@ def upload_extract():
 def check_progress_extract(filename):
     result_filename = extractor.get_result_filename(filename)
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
-
     if os.path.exists(result_file_path):
+        print('existe el archivo!!!!')
         return redirect(url_for('result_extract', filename=result_filename))
     
     return render_template('serv_extract_progress.html', filename=filename)
 
 
-@app.route('/result_extract/<filename>')
+@app.route('/result_extract/<filename>', methods = ['GET'])
 def result_extract(filename):
     result_filename = extractor.get_result_filename(filename)
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
@@ -490,6 +493,7 @@ def result_extract(filename):
         with open(result_file_path, 'r') as file:
             extracted_data = json.load(file)
 
+        # Asegúrate de pasar extracted_data correctamente
         return render_template('serv_extract_result.html', extracted_data=extracted_data)
     else:
         return redirect(url_for('check_progress_extract', filename=filename))

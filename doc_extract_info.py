@@ -1,11 +1,11 @@
 import re
 from dateutil import parser
 from groq import Groq
-
+import json
 from process_text_reader import read_document
 from process_text_reader import split_text
 
-
+tipos_respuesta = ["SI/NO","text","num","date"]
 
 def model_exctact_info(texto, prompt, respuesta_tipo, ejemplo_respuesta=None, file_type=None, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
     try:
@@ -68,7 +68,7 @@ def validar_respuesta(respuesta, tipo):
             return False
         return True
     
-    elif tipo == 'numérica':
+    elif tipo == 'num':
         # Eliminar cualquier carácter no numérico (excepto dígitos)
         respuesta_sin_simbolos = re.sub(r'\D', '', respuesta)
         if not respuesta_sin_simbolos.isdigit():
@@ -76,7 +76,7 @@ def validar_respuesta(respuesta, tipo):
             return False
         return True
     
-    elif tipo == 'fecha':
+    elif tipo == 'date':
         try:
             # Intentar parsear la fecha
             parser.parse(respuesta, fuzzy=True)
@@ -85,14 +85,14 @@ def validar_respuesta(respuesta, tipo):
             print(f"Respuesta inválida: {respuesta} (no es una fecha válida)")
             return False
     
-    elif tipo == 'texto libre':
+    elif tipo == 'text':
         if not (isinstance(respuesta, str) and len(respuesta) > 0):
             print(f"Respuesta inválida: {respuesta} (debe ser un texto libre no vacío)")
             return False
         return True
     
     else:
-        print(f"Tipo de respuesta desconocido: {tipo}")
+        print(f"Tipo de respuesta desconocido: {tipo}. Debe ser ")
         return False
 
 def extract_with_retry(texto, prompt, respuesta_tipo, ejemplo_respuesta=None, file_type=None, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt', max_retries=3):
@@ -145,7 +145,7 @@ def reflexionar_respuestas(respuestas, prompt, tipo_respuesta):
     )
     return respuesta_consolidada.strip()
 
-def extract_info_from_doc(input_path, prompts, tipos_respuesta, ejemplos_respuesta=None, max_retries=3):
+def extract_info_from_doc(input_path, output_path, prompts, tipos_respuesta, ejemplos_respuesta=None, max_retries=10):
     """Función principal para extraer información de un documento usando múltiples prompts y tipos de respuesta."""
     try:
         # Leer el documento y obtener el tipo de archivo
@@ -161,13 +161,13 @@ def extract_info_from_doc(input_path, prompts, tipos_respuesta, ejemplos_respues
         for block in blocks:
             print(f"Procesando bloque de texto...")
             
-            for prompt, tipo, ejemplo in zip(prompts, tipos_respuesta, ejemplos_respuesta or []):
+            for prompt, tipo in zip(prompts, tipos_respuesta or []):
                 # Llamada a la nueva función con reintentos
                 extracted_info = extract_with_retry(
                     texto=block,
                     prompt=prompt,
                     respuesta_tipo=tipo,
-                    ejemplo_respuesta=ejemplo,
+                    ejemplo_respuesta=None,
                     file_type=file_type,
                     max_retries=max_retries
                 )
@@ -190,6 +190,13 @@ def extract_info_from_doc(input_path, prompts, tipos_respuesta, ejemplos_respues
                 final_results[prompt] = 'N/D'  # Si la validación falla, devolver "N/D"
         
         print(final_results)
+        
+        # Guardar el resultado en un archivo JSON
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(final_results, f, ensure_ascii=False, indent=4)
+        
+        print(f"Resultados guardados en {output_path}")
+        
         return final_results
 
     except Exception as e:

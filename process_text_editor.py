@@ -373,26 +373,58 @@ class DOCX_process:
 
         def process_paragraphs_in_container(container):
             """
-            Procesa los 'runs' dentro de un contenedor (parágrafo, celda de tabla o lista),
-            unificando los que tienen el mismo formato y separando correctamente las entradas.
+            Procesa los 'runs' dentro de un contenedor (párrafo, celda de tabla o lista),
+            unificando los que tienen el mismo formato y preservando correctamente los espacios.
             """
             runs = container.xpath('.//w:r', namespaces=namespaces)
             previous_run = None
 
             for run in runs:
+                # Obtener el texto actual del run
                 texto_actual = ''.join(run.xpath('.//w:t/text()', namespaces=namespaces))
-                formato_run_actual = etree.tostring(run.xpath('./w:rPr', namespaces=namespaces)[0], method='c14n') \
-                    if run.xpath('./w:rPr', namespaces=namespaces) else None
+
+                # Verificar si xml:space="preserve" está presente
+                preserve_space_actual = run.xpath('.//w:t[@xml:space="preserve"]', namespaces=namespaces)
+
+                # Eliminar <w:spacing> del formato actual
+                formato_run_actual = run.xpath('./w:rPr', namespaces=namespaces)
+                if formato_run_actual:
+                    # Elimina <w:spacing> del formato actual
+                    for spacing in formato_run_actual[0].xpath('.//w:spacing', namespaces=namespaces):
+                        spacing.getparent().remove(spacing)
+
+                    # Convertir el formato en cadena
+                    formato_run_actual_str = etree.tostring(formato_run_actual[0], method='c14n')
+                else:
+                    formato_run_actual_str = None
 
                 if previous_run is not None:
-                    # Obtener el formato del run anterior
-                    formato_run_anterior = etree.tostring(previous_run.xpath('./w:rPr', namespaces=namespaces)[0], method='c14n') \
-                        if previous_run.xpath('./w:rPr', namespaces=namespaces) else None
+                    # Obtener el texto y el formato del run anterior
+                    texto_anterior = ''.join(previous_run.xpath('.//w:t/text()', namespaces=namespaces))
+                    preserve_space_anterior = previous_run.xpath('.//w:t[@xml:space="preserve"]', namespaces=namespaces)
 
-                    # Unir los runs solo si tienen el mismo formato y están en el mismo contenedor
-                    if formato_run_actual == formato_run_anterior:
-                        previous_run.xpath('.//w:t', namespaces=namespaces)[0].text += texto_actual
-                        run.getparent().remove(run)  # Eliminar el run actual porque lo hemos unido al anterior
+                    # Eliminar <w:spacing> del formato anterior
+                    formato_run_anterior = previous_run.xpath('./w:rPr', namespaces=namespaces)
+                    if formato_run_anterior:
+                        for spacing in formato_run_anterior[0].xpath('.//w:spacing', namespaces=namespaces):
+                            spacing.getparent().remove(spacing)
+
+                        # Convertir el formato en cadena
+                        formato_run_anterior_str = etree.tostring(formato_run_anterior[0], method='c14n')
+                    else:
+                        formato_run_anterior_str = None
+
+                    # Unir los runs si tienen el mismo formato
+                    if formato_run_actual_str == formato_run_anterior_str:
+                        # Añadir un espacio si preserve_space está presente en el anterior o actual run
+                        if preserve_space_anterior or preserve_space_actual:
+                            texto_anterior += " " + texto_actual.strip()  # Agregar espacio si es necesario
+                        else:
+                            texto_anterior += texto_actual  # Unir directamente si no se necesita espacio adicional
+
+                        # Actualizar el texto del run anterior
+                        previous_run.xpath('.//w:t', namespaces=namespaces)[0].text = texto_anterior
+                        run.getparent().remove(run)  # Eliminar el run actual ya que lo unimos al anterior
                     else:
                         previous_run = run
                 else:

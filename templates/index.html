@@ -4,7 +4,6 @@
 
 {% block content %}
 <main>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
 
     <!-- Secció d'inici -->
@@ -13,7 +12,6 @@
             <div class="hero-content">
                 <h1>Benvinguts a Documentar<span class="highlight">IA</span></h1>
                 <p>Inteligència Artificial per automatitzar documents de text o àudio.</p>
-                <!-- Botó per fer scroll a la secció de serveis -->
                 <a href="#services" class="cta-button">Descobreix els nostres serveis</a>
             </div>
             <div class="hero-group-button">
@@ -30,7 +28,6 @@
                 <p>Les nostres solucions de Prompt Analytics permeten extreure informació rellevant i generar bases de dades a partir dels teus documents.</p>
             </div>
             <div class="explanation-image">
-                <!-- Aquí pots afegir la imatge que vulguis -->
                 <img src="{{ url_for('static', filename='images/cloud.png') }}" alt="Exemple d'imatge">
             </div>
         </div>
@@ -42,71 +39,62 @@
             <h1>Solucions</h1>
             <p>Prova les nostres solucions de IA de forma gratuïta!</p>
         </div>
-        <!-- Categoria: Automatització -->
-        <div class="general-services">
-            <div class="service-content">
-                <h2>Automatització</h2>
-                <p>Transforma i genera nous documents - mantenint el format - amb els nostres serveis de IA</p>
-            </div>
-            <div class="service-list">
-                <div class="service-item">
-                    <img src="{{ url_for('static', filename='images/translate.png') }}" alt="Traducció de documents">
-                    <div class="service-description">
-                        <h3>Traducció de Documents</h3>
-                        <p>Tradueix documents amb la millor qualitat i rapidesa, mantenint el format i disseny original!</p>
-                        <a href="{{ url_for('upload_translate') }}" class="cta-button">Vull traduir</a>
+    
+        <div class="service-columns">
+            <div class="service-column">
+                <div class="service-list">
+                    <div class="service-item">
+                        <img src="{{ url_for('static', filename='images/extract_info.png') }}" alt="Prompt Analytics">
+                        <div class="service-description">
+                            <h3>Prompt Analytics</h3>
+                            <p>Genera bases de dades i KPIs a partir de text i àudio.<br>Només cal definir els prompts i el tipus de dades que vols obtenir.</p>
+                            <a href="{{ url_for('upload_extract') }}" class="cta-button">Vull analitzar</a>
+                        </div>
                     </div>
-                </div>
-                <div class="service-item">
-                    <img src="{{ url_for('static', filename='images/editing.png') }}" alt="Edició de documents">
-                    <div class="service-description">
-                        <h3>Edició del contingut</h3>
-                        <p>Transforma el contingut dels teus documents. Modifica el to, ajusta la ortografia o reescriu de nou el document!</p>
-                        <a href="{{ url_for('upload_edit') }}" class="cta-button">Vull editar</a>
-                    </div>
-                </div>
-                <div class="service-item">
-                    <img src="{{ url_for('static', filename='images/transcription.png') }}" alt="Transcripció de veu">
-                    <div class="service-description">
-                        <h3>Transcripció d'Àudio</h3>
-                        <p>Converteix àudio en text amb alta precisió... i qualsevol idioma!</p>
-                        <a href="{{ url_for('upload_transcribe') }}" class="cta-button">Vull transcriure</a>
+                    <div class="service-item">
+                        <img src="{{ url_for('static', filename='images/summary.png') }}" alt="Resum de documents">
+                        <div class="service-description">
+                            <h3>Resum de documents</h3>
+                            <p>Necessites treure conclusions de documents i informes?<br>Utilitza el resum automàtic amb IA.</p>
+                            <a href="{{ url_for('upload_summary') }}" class="cta-button">Vull un resum</a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Categoria: Anàlisi avançada amb IA -->
-        <div class="analysis-services">
-            <div class="service-content">
-                <h2>Prompt Analysis</h2>
-                <p>Extreu informació de forma precisa, automàtica i massiva</p>
-                <p>Genera bases de dades amb la nostra eina de Prompt Analytics</p>
-            </div>
-            <div class="service-list">
-                <div class="service-item">
-                    <img src="{{ url_for('static', filename='images/summary.png') }}" alt="Anàlisi de textos">
-                    <div class="service-description">
-                        <h3>Resum de documents</h3>
-                        <p>Necessites treure conclusions de documents i informes? Utilitza el resum automàtic amb IA.</p>
-                        <a href="{{ url_for('upload_summary') }}" class="cta-button">Vull un resum</a>
+            <div class="service-column">
+                <div class="service-list">
+                    <div class="service-item">
+                        <img src="{{ url_for('static', filename='images/translate.png') }}" alt="Traducció de documents">
+                        <div class="service-description">
+                            <h3>Traducció de Documents</h3>
+                            <p>Tradueix documents amb la millor qualitat i rapidesa.<br>Mantenint el format i disseny original!</p>
+                            <a href="{{ url_for('upload_translate') }}" class="cta-button">Vull traduir</a>
+                        </div>
+                    </div>
+                    <div class="service-item">
+                        <img src="{{ url_for('static', filename='images/editing.png') }}" alt="Edició de documents">
+                        <div class="service-description">
+                            <h3>Edició del contingut</h3>
+                            <p>Transforma el contingut dels teus documents.<br>Modifica el to, ajusta la ortografia o reescriu de nou el document!</p>
+                            <a href="{{ url_for('upload_edit') }}" class="cta-button">Vull editar</a>
+                        </div>
+                    </div>
+                    <div class="service-item">
+                        <img src="{{ url_for('static', filename='images/transcription.png') }}" alt="Transcripció de veu">
+                        <div class="service-description">
+                            <h3>Transcripció d'Àudio</h3>
+                            <p>Converteix àudio en text amb alta precisió...<br>i en qualsevol idioma!</p>
+                            <a href="{{ url_for('upload_transcribe') }}" class="cta-button">Vull transcriure</a>
+                        </div>
                     </div>
                 </div>
-                <div class="service-item large-service-item">
-                    <img src="{{ url_for('static', filename='images/extract_info.png') }}" alt="Anàlisi d'àudios">
-                    <div class="service-description">
-                        <h3>Prompt Analytics</h3>
-                        <p>Genera bases de dades i KPIs a partir de text i àudio. Només cal definir els prompts i el tipus de dades que vols obtenir (Text, numèric, data...)</p>
-                        <a href="{{ url_for('upload_extract') }}" class="cta-button">Vull analitzar</a>
-                    </div>
-                </div>                
             </div>
         </div>
+    
         <div class="services-closing">
             <h3>Contacta amb nosaltres per accedir a les funcionalitats de DocumentarIA sense límits</h3>
         </div>
     </section>
-
 
     <!-- Secció de contacte -->
     <section id="contact">

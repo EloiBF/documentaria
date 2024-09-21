@@ -174,6 +174,7 @@ html {
 
 
 
+
 /* Estil de la secció de contacte */
 #contact {
     padding: 60px 5%; /* Espai interior ajustat */
@@ -252,129 +253,89 @@ html {
 
 
 
-/* Estilos comunes para ambas secciones de servicios */
+/* Estilos para la sección de servicios */
 .service-section {
-    background-color: var(--background-mid); /* Color de fons de les seccions de serveis */
-    background-size: cover;
-    background-position: center;
-    color: var(--text-color-dark); /* Color de text */
-    padding-left: 100px;
-    padding-right: 100px;
-    padding-top: 40px;
-    padding-bottom: 10px;
-    align-items: center;
+    background-color: var(--background-mid);
+    color: var(--text-color-dark);
+    padding: 40px 100px;
     text-align: center;
 }
 
-.services-title { 
-    margin-bottom: 100px;
-    margin-top: 100px;
-    align-items: center;
+.services-title {
+    margin-bottom: 50px;
 }
 
-.services-title h1{ 
+.services-title h1 {
     font-size: 3em;
+    margin-bottom: 10px;
 }
 
-.services-title p{ 
+.services-title p {
     font-size: 1.2em;
 }
 
-.separator-line {
-    border: none; /* Elimina els estils per defecte de l'element hr */
-    border-top: 2px solid var(--dark-color); /* Color i amplada de la línia */
-    margin-bottom:50px; /* Espai al voltant de la línia */
-    margin-right: 50px; /* Espai al voltant de la línia */
-    margin-left: 50px 0; /* Espai al voltant de la línia */
-
-}
-
-.service-section .service-content {
-    text-align: left;
-}
-
-.service-section .service-content h2 {
-    font-size: 2em;
-    color: var(--text-color-dark);
-}
-
-.service-section .service-content p {
-    font-size: 1em;
-    color: var(--text-color-dark);
-}
-
-.service-section .service-content h3 {
-    font-size: 2em;
-    color: var(--text-color-dark);
-}
-
-
-
-.service-section .service-list {
+.service-columns {
     display: flex;
-    flex-direction: row;
-    gap: 20px;
-    margin-bottom: 100px;
+    justify-content: space-between;
+    gap: 40px;
+    margin-bottom: 150px;
 }
 
-.service-section .service-item {
+.service-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.service-item {
+    background-color: var(--background-light);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    padding: 30px;
+    height: 300px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: var(--background-light); /* Fons blanc semitransparent */
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px var(--shadow-color);
-    width: 1000px; /* Medida fija para las tarjetas normales */
-    height: auto; /* Medida fija para las tarjetas normales */
-    box-sizing: border-box; /* Asegura que padding y border se incluyan en el tamaño total */
-    margin-bottom: 30px;
-    position: relative; /* Necesario para el posicionamiento absoluto del botón */
+    justify-content: space-between;
 }
 
-.service-section .service-item img {
-    max-width: 80px;
-    height: auto;
-    margin-bottom: 10px; /* Ajusta el margen inferior para separarlo del texto */
-}
-
-.service-section .service-description {
-    color: var(--text-color-dark);
-    text-align: center; /* Centrar texto dentro de la tarjeta */
+.service-item img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
 }
 
 
-.service-section .service-description h3 {
-    font-size: 1.75em;
-    color: var(--text-color-dark);
+
+.service-description {
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-.service-section .service-description p {
+.service-description h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.service-description p {
     font-size: 1em;
+    margin-bottom: 10px;
 }
 
-.service-section .service-description p span {
-    display: block; /* Cada span apareix en una nova línia */
-    margin: 0; /* Elimina marges si cal */
+.services-closing {
+    margin-top: 50px;
 }
 
-.service-section .service-description .cta.button {
-    position: absolute; /* Posiciona el botón absolutamente dentro del contenedor */
-    bottom: 1px; /* Ajusta según sea necesario para el espaciado */
-}
-
-/* Categoria: Serveis Generals */
-.general-services {
-    /* Utiliza la clase base */
-}
-
-/* Categoria: Anàlisi */
-.analysis-services .service-content {
-    text-align: left;
-    margin-bottom: 30px;
-}
-
-/* Targeta més gran */
-.analysis-services .large-service-item {
-    width: 2000px; /* Dos cops més gran que les targetes normals */
+.services-closing h3 {
+    font-size: 1.5em;
 }
