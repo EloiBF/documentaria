@@ -1,18 +1,8 @@
 from groq import Groq
 import re
+from process_text_editor import Modify_Diccionarios, Modify_Bloques, DOCX_process, PPTX_process, Excel_process, PDF_process, TXT_process, HTML_process
 
-# Cargamos las funciones de procesado de documento, que se usan para editar o traducir
-from process_text_editor import Modify_Diccionarios
-from process_text_editor import Modify_Bloques
-from process_text_editor import Validar_Bloques
-from process_text_editor import DOCX_process
-from process_text_editor import PPTX_process
-from process_text_editor import Excel_process
-from process_text_editor import PDF_process
-
-
-
-# Definimos las funciones específicas para la traducción
+# Funcions específiques de la traducció de documents. Prompting i model IA.
 
 class Aplicar_Modelo:
 
@@ -181,74 +171,77 @@ class Aplicar_Modelo:
 def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt):
     
     textos_originales = {}
+    
     if extension == ".pptx":
-        textos_originales = PPTX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action = "leer")
+        textos_originales = PPTX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action="leer")
         print("Diccionario textos_originales")
         print(textos_originales)
-        textos_para_traducir = PPTX_process.procesar_original(textos_originales)
-
 
     elif extension == ".docx":
-        #input_path = DOCX_process.unify_runs_in_docx(input_path, nombre_fichero)
-        textos_originales = DOCX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action = "leer")
-        print("Diccionario textos_originales")        
+        textos_originales = DOCX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action="leer")
+        print("Diccionario textos_originales")
         print(textos_originales)
-        textos_para_traducir = DOCX_process.procesar_original(textos_originales)
-
 
     elif extension == ".pdf":
-        #input_path = DOCX_process.unify_runs_in_docx(input_path, nombre_fichero)
-        textos_originales = PDF_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action = "leer")
-        print("Diccionario textos_originales")        
-        print(textos_originales)        
-        textos_para_traducir = PDF_process.procesar_original(textos_originales)
-
+        textos_originales = PDF_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action="leer")
+        print("Diccionario textos_originales")
+        print(textos_originales)
 
     elif extension == ".xlsx":
-        textos_originales = Excel_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action = "leer")
-        print("Diccionario textos_originales")        
-        print(textos_originales)        
-        textos_para_traducir = Excel_process.procesar_original(textos_originales)
+        textos_originales = Excel_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action="leer")
+        print("Diccionario textos_originales")
+        print(textos_originales)
 
-    # Filtramos entradas del diccionario que no se envían a la IA (espacios o vacías), al reconstruir el docu no se habran modificado
-    textos_para_traducir = Modify_Diccionarios.filtrar_textos_relevantes(textos_para_traducir)
+    elif extension == ".txt":
+        textos_originales = TXT_process.leer_doc(input_path, output_path, textos_traducidos_final=None, action="leer")
+        print("Diccionario textos_originales")
+        print(textos_originales)
+
+    elif extension == ".html":
+        textos_originales = HTML_process.leer_doc(input_path, output_path, textos_traducidos_final=None, action="leer")
+        print("Diccionario textos_originales")
+        print(textos_originales)
+
+    # Filtrar entradas que no se enviarán a la IA (espacios o vacías)
+    textos_para_traducir = Modify_Diccionarios.filtrar_textos_relevantes(textos_originales)
     print("Diccionario textos_para_traducir")
     print(textos_para_traducir)
 
-
-
-    # Generación de bloques
-
+    # Generar bloques
     bloques = Modify_Diccionarios.separar_texto_bloques(textos_para_traducir)
 
-    # Traducción de bloques con el modelo
+    # Traducción de bloques con el modelo de IA
     bloques_traducidos = Aplicar_Modelo.aplicar_modelo_IA(bloques, origin_language, destination_language, extension, add_prompt)
 
-    # Traducir los textos recopilados en bloques --> Obtenemos un diccionario con los textos traducidos
+    # Unir bloques traducidos y generar el diccionario de textos traducidos
     textos_traducidos = Modify_Bloques.join_blocks(bloques_traducidos)
 
     print("Diccionario textos_traducidos")
     print(textos_traducidos)
 
-    # Limpiar el texto traducido por si se ha quedado algun código de formato y separar las palabras fragmentadas
+    # Ajustar y limpiar el texto traducido
     textos_traducidos_final = Validar_Bloques.eliminar_placeholders(textos_traducidos)
-    textos_traducidos_final = Modify_Diccionarios.ajuste_post_traduccion_dict(textos_para_traducir,textos_traducidos_final)
+    textos_traducidos_final = Modify_Diccionarios.ajuste_post_traduccion_dict(textos_para_traducir, textos_traducidos_final)
     print("Diccionario textos_traducidos_final + ajuste")
     print(textos_traducidos_final)
 
-    # Reconstruir diccionario original (tal y como se lee) y substituir el texto
+    # Reconstruir y reemplazar texto traducido en el documento original
     if extension == ".pptx":
-        PPTX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action = "reemplazar")
+        PPTX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action="reemplazar")
 
     elif extension == ".docx":
-        DOCX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action = "reemplazar")
+        DOCX_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action="reemplazar")
 
     elif extension == ".pdf":
-        PDF_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action = "reemplazar")
+        PDF_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action="reemplazar")
 
     elif extension == ".xlsx":
-        Excel_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action = "reemplazar")
+        Excel_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action="reemplazar")
 
+    elif extension == ".txt":
+        TXT_process.leer_doc(input_path, output_path, textos_traducidos_final, action="reemplazar")
 
+    elif extension == ".html":
+        HTML_process.leer_doc(input_path, output_path, textos_traducidos_final, action="reemplazar")
 
     print(f'Se ha dejado el documento traducido en la ruta especificada: {output_path}')

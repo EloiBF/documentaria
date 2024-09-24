@@ -1,6 +1,10 @@
 import os
 from groq import Groq
 
+
+# Funcions específiques per transcriure àudio
+
+
 def transcribe_audio(audio_file, output_path , language, add_prompt='', model='distil-whisper-large-v3-en', api_key_file='API_KEY.txt'):
     try:
         # Inicialitza el client de Groq

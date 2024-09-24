@@ -2,8 +2,9 @@ import re
 from dateutil import parser
 from groq import Groq
 import json
-from process_text_reader import read_document
-from process_text_reader import split_text
+from process_text_reader import read_document, split_text
+
+# Funcions específiques per extreure dades en format JSON d'un arxiu a base de prompts i check de la resposta.
 
 tipos_respuesta = ["SI/NO","text","num","date"]
 

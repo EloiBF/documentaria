@@ -9,32 +9,23 @@ import chardet
 from groq import Groq
 import zipfile
 from lxml import etree
-from docx import Document
 from io import BytesIO
 import shutil
 import os
 import string
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
-import os
-import sys
-from pptx import Presentation
-from pptx.dml.color import RGBColor
-from docx import Document
-from docx.shared import RGBColor
-from pdf2docx import Converter
-import time
-import re
 from pathlib import Path
-import zipfile
-from lxml import etree
-from docx import Document
-from io import BytesIO
-import shutil
-from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
-import zipfile
-from lxml import etree
+import sys
+import time
+import chardet
+
+
+# Script per llegir i reescriure un document (traduir o modificar el text).
+# Es llegeix el text per "frases" amb format diferent, i es posa en un diccionari. Després es passen unes quantes entrades del diccionari a la IA.
+# Finalment es reconstrueix el diccionari final i es torna a generar el document amb el mateix format
+
+
 
 class Modify_Diccionarios:
 
@@ -257,10 +248,129 @@ class Validar_Bloques:
         else:
             raise TypeError("La entrada para eliminar placeholders debe ser un texto o un diccionario.")
 
-class PPTX_process: 
+class PPTX_process:
+    def correcciones_pptx(input_path, temp_output_path):
+        """
+        Procesa el archivo PPTX, unifica los runs con el mismo formato,
+        y trata correctamente los textos en las diapositivas. Crea un archivo PPTX temporal con los cambios.
+        """
+        namespaces = {'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'}
+
+        def unir_runs(tree):
+            """
+            Unifica los 'runs' consecutivos que tienen el mismo formato en las diapositivas.
+            """
+            # Buscar todos los párrafos en la diapositiva
+            parrafos = tree.xpath('//a:p', namespaces=namespaces)
+            
+            for parrafo in parrafos:
+                process_paragraphs_in_container(parrafo)  # Procesar los runs dentro del párrafo
+
+        def process_paragraphs_in_container(container):
+            """
+            Procesa los 'runs' dentro de un párrafo,
+            unificando los que tienen el mismo formato y preservando correctamente los espacios.
+            """
+            runs = container.xpath('.//a:r', namespaces=namespaces)
+            previous_run = None
+
+            def es_run_vacio(run):
+                """Determina si el run está vacío o tiene solo espacios o tabuladores"""
+                texto = ''.join(run.xpath('.//a:t/text()', namespaces=namespaces)).strip()
+                return texto == ""
+
+            for run in runs:
+                # Obtener el texto actual del run
+                texto_actual = ''.join(run.xpath('.//a:t/text()', namespaces=namespaces))
+
+                # Verificar si xml:space="preserve" está presente
+                preserve_space_actual = run.xpath('.//a:t[@xml:space="preserve"]', namespaces=namespaces)
+
+                # Eliminar propiedades irrelevantes del formato actual
+                formato_run_actual = run.xpath('./a:rPr', namespaces=namespaces)
+                if formato_run_actual:
+                    # Elimina <a:latin>, <a:ea>, <a:cs> (equivalentes a fuentes o lenguajes) del formato actual
+                    for tag in ['latin', 'ea', 'cs']:
+                        for elem in formato_run_actual[0].xpath(f'.//a:{tag}', namespaces=namespaces):
+                            elem.getparent().remove(elem)
+
+                    # Convertir el formato en cadena
+                    formato_run_actual_str = etree.tostring(formato_run_actual[0], method='c14n')
+                else:
+                    formato_run_actual_str = None
+
+                if previous_run is not None:
+                    # Obtener el texto y el formato del run anterior
+                    texto_anterior = ''.join(previous_run.xpath('.//a:t/text()', namespaces=namespaces))
+                    preserve_space_anterior = previous_run.xpath('.//a:t[@xml:space="preserve"]', namespaces=namespaces)
+
+                    # Eliminar propiedades irrelevantes del formato anterior
+                    formato_run_anterior = previous_run.xpath('./a:rPr', namespaces=namespaces)
+                    if formato_run_anterior:
+                        for tag in ['latin', 'ea', 'cs']:
+                            for elem in formato_run_anterior[0].xpath(f'.//a:{tag}', namespaces=namespaces):
+                                elem.getparent().remove(elem)
+
+                        # Convertir el formato en cadena
+                        formato_run_anterior_str = etree.tostring(formato_run_anterior[0], method='c14n')
+                    else:
+                        formato_run_anterior_str = None
+
+                    # Unir los runs si tienen el mismo formato o si el run actual está vacío
+                    if formato_run_actual_str == formato_run_anterior_str or es_run_vacio(run):
+                        # Añadir un espacio si el anterior run tenía xml:space="preserve"
+                        if preserve_space_anterior or preserve_space_actual:
+                            texto_anterior += " " + texto_actual.strip()  # Agregar espacio si es necesario
+                        else:
+                            texto_anterior += texto_actual  # Unir directamente si no se necesita espacio adicional
+
+                        # Actualizar el texto del run anterior
+                        previous_run.xpath('.//a:t', namespaces=namespaces)[0].text = texto_anterior
+                        run.getparent().remove(run)  # Eliminar el run actual ya que lo unimos al anterior
+                    else:
+                        previous_run = run
+                else:
+                    previous_run = run
+
+        try:
+            # Crear un archivo temporal para aplicar las correcciones
+            with zipfile.ZipFile(input_path, 'r') as pptx_zip:
+                temp_zip_path = temp_output_path + '_temp.zip'
+
+                with zipfile.ZipFile(temp_zip_path, 'w') as temp_zip:
+                    # Procesar cada diapositiva de ppt/slides/slideN.xml
+                    for item in pptx_zip.infolist():
+                        if item.filename.startswith('ppt/slides/slide') and item.filename.endswith('.xml'):
+                            with pptx_zip.open(item.filename) as slide_xml:
+                                tree = etree.parse(slide_xml)
+                                unir_runs(tree)  # Unificar los runs en la diapositiva
+
+                            # Escribir los cambios en el archivo temporal
+                            with BytesIO() as buffer:
+                                tree.write(buffer, xml_declaration=True, encoding='UTF-8')
+                                buffer.seek(0)
+                                temp_zip.writestr(item.filename, buffer.read())
+                        else:
+                            temp_zip.writestr(item, pptx_zip.read(item.filename))
+
+            # Renombrar el archivo temporal como el archivo de salida final
+            shutil.move(temp_zip_path, temp_output_path)
+            print(f"Correcciones aplicadas y guardadas en {temp_output_path}")
+
+        except zipfile.BadZipFile:
+            print(f"El archivo {input_path} no es un archivo ZIP válido o está corrupto.")
+        except FileNotFoundError:
+            print(f"El archivo {input_path} no se encuentra.")
+        except Exception as e:
+            print(f"Ha ocurrido un error inesperado: {e}")
+
+
+
 
     # Lectura/Reemplazo de PPTX
     def leer_doc(input_path,output_path, color_to_exclude, textos_traducidos_final, action): 
+                
+
         doc = Presentation(input_path)
 
         exclude_color_rgb = Modify_Diccionarios.color_to_rgb(color_to_exclude)
@@ -330,13 +440,9 @@ class PPTX_process:
         elif action == "reemplazar":
             return doc.save(output_path)
         
-    def procesar_original(dict): # Por si tenemos que hacer ajustes específicos por tipo de documento
-        return dict
-    
-    def reconstruir_original(dict_traducido,dict_original): # Por si tenemos que hacer ajustes específicos por tipo de documento
-        return dict_traducido
-
 class DOCX_process:
+    
+    @staticmethod
     def correcciones_docx(input_path, temp_output_path):
         """
         Procesa el archivo DOCX, unifica los runs con el mismo formato,
@@ -379,6 +485,11 @@ class DOCX_process:
             runs = container.xpath('.//w:r', namespaces=namespaces)
             previous_run = None
 
+            def es_run_vacio(run):
+                """Determina si el run está vacío o tiene solo espacios o tabuladores"""
+                texto = ''.join(run.xpath('.//w:t/text()', namespaces=namespaces)).strip()
+                return texto == ""
+
             for run in runs:
                 # Obtener el texto actual del run
                 texto_actual = ''.join(run.xpath('.//w:t/text()', namespaces=namespaces))
@@ -386,12 +497,13 @@ class DOCX_process:
                 # Verificar si xml:space="preserve" está presente
                 preserve_space_actual = run.xpath('.//w:t[@xml:space="preserve"]', namespaces=namespaces)
 
-                # Eliminar <w:spacing> del formato actual
+                # Eliminar <w:spacing> y otras propiedades irrelevantes del formato actual
                 formato_run_actual = run.xpath('./w:rPr', namespaces=namespaces)
                 if formato_run_actual:
-                    # Elimina <w:spacing> del formato actual
-                    for spacing in formato_run_actual[0].xpath('.//w:spacing', namespaces=namespaces):
-                        spacing.getparent().remove(spacing)
+                    # Eliminar <w:spacing>, <w:lang>, <w:rFonts> del formato actual
+                    for tag in ['spacing', 'lang', 'rFonts']:
+                        for elem in formato_run_actual[0].xpath(f'.//w:{tag}', namespaces=namespaces):
+                            elem.getparent().remove(elem)
 
                     # Convertir el formato en cadena
                     formato_run_actual_str = etree.tostring(formato_run_actual[0], method='c14n')
@@ -403,22 +515,35 @@ class DOCX_process:
                     texto_anterior = ''.join(previous_run.xpath('.//w:t/text()', namespaces=namespaces))
                     preserve_space_anterior = previous_run.xpath('.//w:t[@xml:space="preserve"]', namespaces=namespaces)
 
-                    # Eliminar <w:spacing> del formato anterior
+                    # Eliminar <w:spacing> y otras propiedades irrelevantes del formato anterior
                     formato_run_anterior = previous_run.xpath('./w:rPr', namespaces=namespaces)
                     if formato_run_anterior:
-                        for spacing in formato_run_anterior[0].xpath('.//w:spacing', namespaces=namespaces):
-                            spacing.getparent().remove(spacing)
+                        for tag in ['spacing', 'lang', 'rFonts']:
+                            for elem in formato_run_anterior[0].xpath(f'.//w:{tag}', namespaces=namespaces):
+                                elem.getparent().remove(elem)
 
                         # Convertir el formato en cadena
                         formato_run_anterior_str = etree.tostring(formato_run_anterior[0], method='c14n')
                     else:
                         formato_run_anterior_str = None
 
-                    # Unir los runs si tienen el mismo formato
-                    if formato_run_actual_str == formato_run_anterior_str:
-                        # Añadir un espacio si preserve_space está presente en el anterior o actual run
+                    # Si el run actual está vacío, concatenarlo sin cambiar el formato de previous_run
+                    if es_run_vacio(run):
+                        # Si el run tiene `xml:space="preserve"`, aseguramos añadir un espacio.
                         if preserve_space_anterior or preserve_space_actual:
-                            texto_anterior += " " + texto_actual.strip()  # Agregar espacio si es necesario
+                            texto_anterior += " "  # Añadir un espacio si es necesario por preserve
+                        else:
+                            texto_anterior += texto_actual  # Concatenar sin agregar espacio
+
+                        # Actualizar el texto del run anterior con el texto concatenado
+                        previous_run.xpath('.//w:t', namespaces=namespaces)[0].text = texto_anterior
+                        run.getparent().remove(run)  # Eliminar el run vacío ya que lo hemos unido
+                        continue  # No actualizamos previous_run, seguimos con el siguiente run
+
+                    # Unir los runs si tienen el mismo formato o si el run actual está vacío
+                    if formato_run_actual_str == formato_run_anterior_str:
+                        if preserve_space_anterior or preserve_space_actual:
+                            texto_anterior += " " + texto_actual.strip()  # Añadir un espacio si es necesario
                         else:
                             texto_anterior += texto_actual  # Unir directamente si no se necesita espacio adicional
 
@@ -462,96 +587,69 @@ class DOCX_process:
         except Exception as e:
             print(f"Ha ocurrido un error inesperado: {e}")
 
-
     @staticmethod
-    def leer_doc(temp_path, output_path, color_to_exclude, textos_traducidos_final, action):
-               
-        exclude_color_rgb = Modify_Diccionarios.color_to_rgb(color_to_exclude)
-
+    def leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action):
+        """
+        Lee o reemplaza el texto de un archivo DOCX. Al leer, genera un diccionario de textos originales.
+        Al reemplazar, usa el diccionario de textos traducidos para actualizar el DOCX.
+        """
         textos_originales = {}
         counter = 1  # Inicializar el contador desde 1
 
-        # Función para procesar un archivo XML y actualizar el contador
-        def process_xml(tree, counter):
-            namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-
-            textos = tree.xpath('//w:t', namespaces=namespaces)
-            if action == "leer":
-                for texto in textos:
-                    texto_str = texto.text.strip() if texto.text else ''
-                    code = Modify_Diccionarios.generate_numeric_code(counter)
-                    counter += 1
-                    textos_originales[code] = texto_str
-            elif action == "reemplazar":
-                for texto in textos:
-                    texto_str = texto.text.strip() if texto.text else ''
-                    code = Modify_Diccionarios.generate_numeric_code(counter)
-                    counter += 1
-                    if code in textos_traducidos_final:
-                        texto.text = textos_traducidos_final[code]
-            return counter
-
         try:
-            # Corregir el documento antes de proceder a leer o reemplazar
-            temp_corrected_path = temp_path + "_corrected.docx"
-            DOCX_process.correcciones_docx(temp_path, temp_corrected_path)
-
-            # Ahora trabajamos con el archivo corregido
-            with zipfile.ZipFile(temp_corrected_path, 'r') as docx_zip:
+            # Abrir y procesar el archivo DOCX
+            with zipfile.ZipFile(input_path, 'r') as docx_zip:
+                # Leer el archivo document.xml
                 with docx_zip.open('word/document.xml') as document_xml:
                     tree = etree.parse(document_xml)
-                    counter = process_xml(tree, counter)
+                    namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
 
-                # Procesar encabezados y pies de página
-                headers_footers = {}
-                for item in docx_zip.infolist():
-                    if item.filename.startswith('word/header') or item.filename.startswith('word/footer'):
-                        with docx_zip.open(item.filename) as xml_file:
-                            header_footer_tree = etree.parse(xml_file)
-                            counter = process_xml(header_footer_tree, counter)
-                            headers_footers[item.filename] = header_footer_tree
+                    if action == "leer":
+                        textos = tree.xpath('//w:t', namespaces=namespaces)
+                        for texto in textos:
+                            texto_str = texto.text.strip() if texto.text else ''
+                            code = Modify_Diccionarios.generate_numeric_code(counter)
+                            counter += 1
+                            textos_originales[code] = texto_str
 
-            # Si estamos en modo reemplazar, creamos un nuevo archivo .docx con los cambios
-            if action == "reemplazar":
-                temp_zip_path = output_path + '_temp.zip'
-                with zipfile.ZipFile(temp_corrected_path, 'r') as docx_zip:
-                    with zipfile.ZipFile(temp_zip_path, 'w') as temp_zip:
-                        # Copiamos todos los archivos originales, excepto `document.xml` y header/footer files
-                        for item in docx_zip.infolist():
-                            if item.filename == 'word/document.xml':
-                                with BytesIO() as buffer:
-                                    tree.write(buffer, xml_declaration=True, encoding='UTF-8')
-                                    buffer.seek(0)
-                                    temp_zip.writestr('word/document.xml', buffer.read())
-                            elif item.filename in headers_footers:
-                                with BytesIO() as buffer:
-                                    headers_footers[item.filename].write(buffer, xml_declaration=True, encoding='UTF-8')
-                                    buffer.seek(0)
-                                    temp_zip.writestr(item.filename, buffer.read())
-                            else:
-                                temp_zip.writestr(item, docx_zip.read(item.filename))
+                    elif action == "reemplazar":
+                        textos = tree.xpath('//w:t', namespaces=namespaces)
+                        for texto in textos:
+                            code = Modify_Diccionarios.generate_numeric_code(counter)
+                            counter += 1
+                            if code in textos_traducidos_final:
+                                texto.text = textos_traducidos_final[code]
 
-                # Renombrar el archivo temporal como el archivo de salida final
-                shutil.move(temp_zip_path, output_path)
+                # Guardar los cambios si estamos reemplazando texto
+                if action == "reemplazar":
+                    temp_zip_path = output_path + '_temp.zip'
+                    with zipfile.ZipFile(input_path, 'r') as docx_zip:
+                        with zipfile.ZipFile(temp_zip_path, 'w') as temp_zip:
+                            # Copiar todos los archivos originales
+                            for item in docx_zip.infolist():
+                                if item.filename == 'word/document.xml':
+                                    with BytesIO() as buffer:
+                                        tree.write(buffer, xml_declaration=True, encoding='UTF-8')
+                                        buffer.seek(0)
+                                        temp_zip.writestr(item.filename, buffer.read())
+                                else:
+                                    temp_zip.writestr(item, docx_zip.read(item.filename))
+
+                    # Renombrar el archivo temporal como el archivo de salida final
+                    shutil.move(temp_zip_path, output_path)
 
             if action == "leer":
                 print(f"Diccionario textos_originales: {textos_originales}")
                 return textos_originales
             else:
                 return None
-        
+
         except zipfile.BadZipFile:
-            print(f"El archivo {temp_path} no es un archivo ZIP válido o está corrupto.")
+            print(f"El archivo {input_path} no es un archivo ZIP válido o está corrupto.")
         except FileNotFoundError:
-            print(f"El archivo {temp_path} no se encuentra.")
+            print(f"El archivo {input_path} no se encuentra.")
         except Exception as e:
             print(f"Ha ocurrido un error inesperado: {e}")
-
-    def procesar_original(dict): # Por si tenemos que hacer ajustes específicos por tipo de documento
-        return dict
-    
-    def reconstruir_original(dict_traducido,dict_original): # Por si tenemos que hacer ajustes específicos por tipo de documento
-        return dict_traducido
 
 class PDF_process:
 
@@ -568,12 +666,6 @@ class PDF_process:
         pdf_to_word(input_path, word_path)
 
         return DOCX_process.leer_doc(word_path,output_path, textos_originales, color_to_exclude, textos_traducidos_final, action)
-
-    def procesar_original(dict):
-        return DOCX_process.procesar_original(dict)
-    
-    def reconstruir_original(dict_traducido,dict_original):
-        return DOCX_process.reconstruir_original(dict_traducido,dict_original) 
 
 class Excel_process:
     def leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action):
@@ -612,3 +704,161 @@ class Excel_process:
     def reconstruir_original(dict_traducido, dict_original):  # Por si tenemos que hacer ajustes específicos por tipo de documento
         return dict_traducido
 
+class TXT_process:
+    
+    @staticmethod
+    def leer_doc(input_path, output_path, textos_traducidos_final, action):
+        """
+        Procesa archivos TXT, ya sea para leerlos y devolver un diccionario de textos originales,
+        o para reemplazar los textos con textos traducidos.
+        """
+        textos_originales = {}
+
+        # Lista de codificaciones a probar
+        encodings = ['utf-8', 'latin-1', 'windows-1252']
+        content = None
+        
+        # Detectar la codificación usando chardet
+        try:
+            with open(input_path, 'rb') as file:
+                raw_data = file.read()
+                result = chardet.detect(raw_data)
+                encoding_detected = result['encoding']
+                print(f"Codificación detectada automáticamente: {encoding_detected}")
+
+                # Intentamos leer con la codificación detectada
+                try:
+                    content = raw_data.decode(encoding_detected)
+                except (UnicodeDecodeError, TypeError):
+                    print(f"No se pudo decodificar con la codificación detectada: {encoding_detected}. Intentando otras codificaciones...")
+
+        except Exception as e:
+            print(f"Error al leer el archivo en modo binario: {e}")
+
+        # Si la detección automática falla o no es precisa, probamos otras codificaciones
+        if content is None:
+            for encoding in encodings:
+                try:
+                    with open(input_path, 'r', encoding=encoding) as file:
+                        content = file.read()
+                        print(f"Archivo leído con éxito usando la codificación: {encoding}")
+                        break  # Si tiene éxito, salimos del loop
+                except UnicodeDecodeError:
+                    print(f"Error al leer el archivo con la codificación: {encoding}")
+                except Exception as e:
+                    print(f"Ocurrió otro error al leer el archivo: {e}")
+
+        if content is None:
+            raise Exception("No se pudo leer el archivo con ninguna de las codificaciones disponibles.")
+        
+        # Procesar el contenido según la acción
+        if action == "leer":
+            lines = content.splitlines()
+            counter = 1
+            for line in lines:
+                code = Modify_Diccionarios.generate_numeric_code(counter)
+                textos_originales[code] = line.strip()
+                counter += 1
+            return textos_originales
+
+        elif action == "reemplazar" and textos_traducidos_final is not None:
+            # Reemplazar el contenido con los textos traducidos
+            lines = content.splitlines()
+            counter = 1
+            with open(output_path, 'w', encoding='utf-8') as file:
+                for line in lines:
+                    code = Modify_Diccionarios.generate_numeric_code(counter)
+                    if code in textos_traducidos_final:
+                        file.write(textos_traducidos_final[code] + '\n')
+                    else:
+                        file.write(line + '\n')
+                    counter += 1
+        return textos_originales
+
+class HTML_process:
+    
+    @staticmethod
+    def leer_doc(input_path, output_path, textos_traducidos_final, action):
+        """
+        Procesa archivos HTML, ya sea para leer el contenido de texto y devolver un diccionario de textos originales,
+        o para reemplazar los textos con textos traducidos.
+        """
+        textos_originales = {}
+
+        # Lista de codificaciones a probar
+        encodings = ['utf-8', 'latin-1', 'windows-1252']
+        content = None
+        
+        # Detectar la codificación usando chardet
+        try:
+            with open(input_path, 'rb') as file:
+                raw_data = file.read()
+                result = chardet.detect(raw_data)
+                encoding_detected = result['encoding']
+                print(f"Codificación detectada automáticamente: {encoding_detected}")
+
+                # Intentamos leer con la codificación detectada
+                try:
+                    content = raw_data.decode(encoding_detected)
+                except (UnicodeDecodeError, TypeError):
+                    print(f"No se pudo decodificar con la codificación detectada: {encoding_detected}. Intentando otras codificaciones...")
+
+        except Exception as e:
+            print(f"Error al leer el archivo en modo binario: {e}")
+
+        # Si la detección automática falla o no es precisa, probamos otras codificaciones
+        if content is None:
+            for encoding in encodings:
+                try:
+                    with open(input_path, 'r', encoding=encoding) as file:
+                        content = file.read()
+                        print(f"Archivo leído con éxito usando la codificación: {encoding}")
+                        break  # Si tiene éxito, salimos del loop
+                except UnicodeDecodeError:
+                    print(f"Error al leer el archivo con la codificación: {encoding}")
+                except Exception as e:
+                    print(f"Ocurrió otro error al leer el archivo: {e}")
+
+        if content is None:
+            raise Exception("No se pudo leer el archivo con ninguna de las codificaciones disponibles.")
+        
+        try:
+            # Usar BeautifulSoup para analizar el HTML
+            soup = BeautifulSoup(content, 'html.parser')
+
+            # Recorrer todos los elementos de texto en el HTML
+            textos = soup.find_all(string=True)  # Busca todo el texto dentro del HTML
+
+            if action == "leer":
+                counter = 1
+                for texto in textos:
+                    texto_str = texto.strip()
+                    if texto_str:  # Evitar procesar textos vacíos
+                        code = Modify_Diccionarios.generate_numeric_code(counter)
+                        counter += 1
+                        textos_originales[code] = texto_str
+
+            elif action == "reemplazar" and textos_traducidos_final is not None:
+                counter = 1
+                for texto in textos:
+                    texto_str = texto.strip()
+                    if texto_str:  # Evitar procesar textos vacíos
+                        code = Modify_Diccionarios.generate_numeric_code(counter)
+                        counter += 1
+                        if code in textos_traducidos_final:
+                            texto.replace_with(textos_traducidos_final[code])
+
+                # Guardar el archivo HTML modificado
+                with open(output_path, 'w', encoding='utf-8') as file:
+                    file.write(str(soup.prettify()))  # Guardar el HTML formateado
+
+            if action == "leer":
+                print(f"Diccionario textos_originales: {textos_originales}")
+                return textos_originales
+            else:
+                return None
+        
+        except FileNotFoundError:
+            print(f"El archivo {input_path} no se encuentra.")
+        except Exception as e:
+            print(f"Ha ocurrido un error inesperado: {e}")

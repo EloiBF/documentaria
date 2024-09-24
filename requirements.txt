@@ -11,3 +11,5 @@ PyPDF2
 html2text
 langchain
 openpyxl
+chroma
+sentence_transformers

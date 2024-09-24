@@ -7,6 +7,11 @@ from groq import Groq
 from lxml import etree
 import zipfile
 from io import BytesIO
+import chardet
+
+# Script per llegir tot el text d'un document.
+# Serveix per quan no és necessari tornar a generar el document, es llegeix tot de cop i se li passa a la IA blocs de molts caràcters. Útil per fer un resum o extreure informació concreta.
+
 
 def read_document(file_path):
     """Lee el contenido del archivo especificado según su tipo y devuelve el texto y la extensión del archivo."""
@@ -31,9 +36,42 @@ def read_document(file_path):
         raise ValueError(f"Tipo de archivo no soportado: {file_extension}")
 
 def read_txt(file_path):
-    """Lee el contenido de un archivo .txt."""
-    with open(file_path, 'r', encoding='utf-8') as file:
-        return file.read()
+    """Lee el contenido de un archivo .txt, detectando automáticamente la codificación."""
+    encodings = ['utf-8', 'latin-1', 'windows-1252']
+    content = None
+    
+    # Detectar la codificación usando chardet
+    try:
+        with open(file_path, 'rb') as file:
+            raw_data = file.read()
+            result = chardet.detect(raw_data)
+            encoding_detected = result['encoding']
+            print(f"Codificación detectada automáticamente: {encoding_detected}")
+
+            # Intentamos leer con la codificación detectada
+            try:
+                content = raw_data.decode(encoding_detected)
+                print(f"Archivo leído con éxito usando la codificación detectada: {encoding_detected}")
+            except (UnicodeDecodeError, TypeError):
+                print(f"No se pudo decodificar con la codificación detectada: {encoding_detected}. Intentando otras codificaciones...")
+
+    except Exception as e:
+        print(f"Error al leer el archivo en modo binario: {e}")
+
+    # Si la detección automática falla o no es precisa, probamos otras codificaciones
+    if content is None:
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding) as file:
+                    content = file.read()
+                    print(f"Archivo leído con éxito usando la codificación: {encoding}")
+                    break  # Si tiene éxito, salimos del loop
+            except UnicodeDecodeError:
+                print(f"Error al leer el archivo con la codificación: {encoding}")
+            except Exception as e:
+                print(f"Ocurrió otro error al leer el archivo: {e}")
+
+    return content
 
 def read_docx(file_path):
     """Lee todo el contenido de un archivo .docx, incluyendo cuadros de texto y formas."""
