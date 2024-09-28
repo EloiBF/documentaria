@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}FabrIA - Traductor de Documents{% endblock %}
+
+{% block content %}
+<main>
+    <link rel="stylesheet" href="{% static 'index.css' %}">
+
+    <!-- Secció d'inici -->
+    <section id="home" class="hero-section">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Benvinguts a Documentar<span class="highlight">IA</span></h1>
+                <p>Inteligència Artificial per automatitzar documents de text o àudio.</p>
+                <a href="#services" class="cta-button">Descobreix els nostres serveis</a>
+            </div>
+            <div class="hero-group-button">
+            </div>
+        </div>
+    </section>
+
+    <!-- Secció explicació -->
+    <section class="explanation-section">
+        <div class="explanation-container">
+            <div class="explanation-content">
+                <p>Saps tot el que pots fer amb els teus documents de text o àudio?</p>
+                <p>Utilitzem algoritmes i models IA d'última generació per traduir o editar el contingut mantenint el disseny.</p>
+                <p>Les nostres solucions de Prompt Analytics permeten extreure informació rellevant i generar bases de dades a partir dels teus documents.</p>
+            </div>
+            <div class="explanation-image">
+                <img src="{% static 'images/cloud.png' %}" alt="Exemple d'imatge">
+            </div>
+        </div>
+    </section>
+
+    <!-- Secció de serveis -->
+    <section id="services" class="service-section">
+        <div class="services-title">
+            <h1>Solucions</h1>
+            <p>Prova les nostres solucions de IA de forma gratuïta!</p>
+        </div>
+    
+        <div class="service-columns">
+            <div class="service-column">
+                <div class="service-list">
+                    <div class="service-item">
+                        <img src="{% static 'images/extract_info.png' %}" alt="Prompt Analytics">
+                        <div class="service-description">
+                            <h3>Prompt Analytics</h3>
+                            <p>Genera bases de dades i KPIs a partir de text i àudio.<br>Només cal definir els prompts i el tipus de dades que vols obtenir.</p>
+                            <a href="{% url 'upload_extract_info' %}" class="cta-button">Vull analitzar</a>
+                        </div>
+                    </div>
+                    <div class="service-item">
+                        <img src="{% static 'images/summary.png' %}" alt="Resum de documents">
+                        <div class="service-description">
+                            <h3>Resum de documents</h3>
+                            <p>Necessites treure conclusions de documents i informes?<br>Utilitza el resum automàtic amb IA.</p>
+                            <a href="{% url 'upload_summarize' %}" class="cta-button">Vull un resum</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="service-column">
+                <div class="service-list">
+                    <div class="service-item">
+                        <img src="{% static 'images/translate.png' %}" alt="Traducció de documents">
+                        <div class="service-description">
+                            <h3>Traducció de Documents</h3>
+                            <p>Tradueix documents amb la millor qualitat i rapidesa.<br>Mantenint el format i disseny original!</p>
+                            <a href="{% url 'upload_translate' %}" class="cta-button">Vull traduir</a>
+                        </div>
+                    </div>
+                    <div class="service-item">
+                        <img src="{% static 'images/editing.png' %}" alt="Edició de documents">
+                        <div class="service-description">
+                            <h3>Edició del contingut</h3>
+                            <p>Transforma el contingut dels teus documents.<br>Modifica el to, ajusta la ortografia o reescriu de nou el document!</p>
+                            <a href="{% url 'upload_edit' %}" class="cta-button">Vull editar</a>
+                        </div>
+                    </div>
+                    <div class="service-item">
+                        <img src="{% static 'images/transcription.png' %}" alt="Transcripció veu">
+                        <div class="service-description">
+                            <h3>Transcripció d'Àudio</h3>
+                            <p>Converteix àudio en text amb alta precisió...<br>i en qualsevol idioma!</p>
+                            <a href="{% url 'upload_transcribe' %}" class="cta-button">Vull transcriure</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="services-closing">
+            <h3>Contacta amb nosaltres per accedir a les funcionalitats de DocumentarIA sense límits</h3>
+        </div>
+    </section>
+
+    <!-- Secció de contacte -->
+    <section id="contact">
+        <div class="contact-container">
+            <h2>Contacte</h2>
+            <p>Per qualsevol consulta o suport, deixa'ns un missatge:</p>
+            <form action="{% url 'contact' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="name">Nom:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Correu electrònic:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Missatge:</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+                <button type="submit" class="submit-button">Enviar</button>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

@@ -1,5 +1,5 @@
 python-pptx
-flask
+django
 python-docx
 pdf2docx
 groq
