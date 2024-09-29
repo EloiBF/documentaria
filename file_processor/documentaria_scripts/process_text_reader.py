@@ -133,7 +133,7 @@ def read_html(file_path):
         html_content = file.read()
     return html2text.html2text(html_content)
 
-def split_text(text, max_length=5000):
+def split_text(text, max_length=50000):
     """Divide el texto en bloques, asegurándose de que cada bloque no supere max_length caracteres."""
     blocks = []
     start = 0

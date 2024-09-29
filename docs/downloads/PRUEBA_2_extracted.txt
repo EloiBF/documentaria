@@ -1,4 +1,0 @@
-{
-    "Quin \u00e9s l'any de l'estudi?": "N/D",
-    "": "N/D"
-}

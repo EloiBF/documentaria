@@ -1,4 +1,0 @@
-{
-    "El documento est\u00e1 en espa\u00f1ol?": "N/D",
-    "\u00bfDe qu\u00e9 a\u00f1o es el estudio?": "N/D"
-}

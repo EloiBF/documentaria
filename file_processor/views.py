@@ -12,11 +12,16 @@ from file_processor.documentaria_scripts.audio_transcribe import transcribe_audi
 from file_processor.documentaria_scripts.doc_editor import editar_doc
 from file_processor.documentaria_scripts.doc_summary import resumir_doc
 from file_processor.documentaria_scripts.doc_extract_info import extract_info_from_doc
+import logging
+
+logger = logging.getLogger(__name__)
 
 UPLOAD_FOLDER = os.path.abspath('docs/uploads')
 RESULT_FOLDER = os.path.abspath('docs/downloads')
 ALLOWED_EXTENSIONS = {'docx', 'pptx', 'pdf', 'txt', 'html', 'm4a', 'wav', 'mp3'}
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+DELAY_TIME = 36000  # 10 horas (36000 segundos) para eliminar archivos subidos
+
 
 class FileProcessor:
     def __init__(self, process_func):
@@ -43,13 +48,31 @@ class FileProcessor:
         return filename, result_filename
 
     def download_file(self, filename):
+        # Ruta completa del archivo de resultado (traducido o procesado)
         result_file_path = os.path.join(RESULT_FOLDER, filename)
+        print(result_file_path)  # Imprime la ruta del archivo de resultado para depuración
 
+        # Verifica si el archivo de resultado existe
         if not os.path.exists(result_file_path):
             raise Http404("Archivo no encontrado")
 
+        # Ruta completa del archivo de subida (el archivo de entrada original)
+        upload_file_path = os.path.join(UPLOAD_FOLDER, filename)
+        print(upload_file_path)  # Imprime la ruta del archivo de subida para depuración
+
+        # Elimina el archivo de entrada/subida en un hilo separado
+        threading.Thread(target=self.handle_file_removal, args=(upload_file_path,)).start()
+
+        # Elimina el archivo de resultado en un hilo separado
         threading.Thread(target=self.handle_file_removal, args=(result_file_path,)).start()
-        return HttpResponse(result_file_path, content_type='application/octet-stream')
+
+        # Abrir el archivo de resultado en modo binario
+        with open(result_file_path, 'rb') as file:
+            # Crear la respuesta HTTP con el contenido del archivo
+            response = HttpResponse(file.read(), content_type='application/octet-stream')
+            # Ajusta el encabezado para que el navegador lo trate como una descarga
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
 
     def check_status(self, filename):
         result_filename = self.get_result_filename(filename)
@@ -70,6 +93,7 @@ class DocumentTranslator(FileProcessor):
             return filename
 
     def background_translation(self, file_path, result_file_path, language, origin_language, color_to_exclude, add_prompt):
+        logger.info(f"Starting translation: {file_path} to {result_file_path} from {origin_language} to {language}")
         try:
             if os.path.exists(result_file_path):
                 os.remove(result_file_path)
@@ -212,24 +236,37 @@ def upload_translate(request):
 
         if not file or not language or not origin_language:
             error_message = "Faltan parámetros"
-            return render(request, 'serv_translate.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
+            return render(request, 'upload_translate.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
 
         if file.name == '':
             error_message = "No se seleccionó ningún archivo"
-            return render(request, 'serv_translate.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
+            return render(request, 'upload_translate.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
 
         if translator.allowed_file(file.name):
-            filename, result_filename = translator.process_file(file, language, origin_language, color_to_exclude, add_prompt)
+            # Guardar el archivo en la carpeta especificada
+            fs = FileSystemStorage(UPLOAD_FOLDER)
+            filename = fs.save(file.name, file)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)  # Ruta completa del archivo guardado
+            result_filename = translator.get_result_filename(filename)
+            result_file_path = os.path.join(RESULT_FOLDER, result_filename)
+            
+            # Procesar el archivo en un hilo
+            threading.Thread(target=translator.process_func, args=(file_path, result_file_path, language, origin_language, color_to_exclude, add_prompt)).start()
+
+            # Iniciar temporizador para eliminar tanto el archivo subido como el archivo de resultado
+            threading.Thread(target=FileProcessor.handle_file_removal, args=(file_path, result_file_path, DELAY_TIME)).start()
+
             return redirect('check_progress_translate', filename=result_filename)
 
-    return render(request, 'serv_translate.html', {'max_file_size': MAX_CONTENT_LENGTH})
+    return render(request, 'upload_translate.html', {'max_file_size': MAX_CONTENT_LENGTH})
+
 
 def check_progress_translate(request, filename):
     result_filename = translator.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
     if os.path.exists(result_file_path):
         return redirect('result_translate', filename=result_filename)
-    return render(request, 'serv_translate_progress.html', {'filename': filename})
+    return render(request, 'progress_translate.html', {'filename': filename})
 
 def result_translate(request, filename):
     result_filename = translator.get_result_filename(filename)
@@ -246,6 +283,17 @@ def download_translate(request, filename):
 def check_status_translate(request, filename):
     return translator.check_status(filename)
 
+
+
+
+
+
+
+
+
+
+
+
 # Rutas de transcripción
 def upload_transcribe(request):
     if request.method == 'POST':
@@ -254,20 +302,31 @@ def upload_transcribe(request):
 
         if not file or not audio_language:
             error_message = "Faltan parámetros"
-            return render(request, 'serv_transcribe.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
+            return render(request, 'upload_transcribe.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
 
         if transcriber.allowed_file(file.name):
-            filename, result_filename = transcriber.process_file(file, audio_language)
+            fs = FileSystemStorage(UPLOAD_FOLDER)
+            filename = fs.save(file.name, file)  # Guardar archivo en la carpeta uploads
+            file_path = os.path.join(UPLOAD_FOLDER, filename)  # Ruta completa del archivo guardado
+            result_filename = transcriber.get_result_filename(filename)
+            result_file_path = os.path.join(RESULT_FOLDER, result_filename)
+            
+            # Procesar el archivo en un hilo
+            threading.Thread(target=transcriber.process_func, args=(file_path, result_file_path, audio_language)).start()
+
+            # Iniciar temporizador para eliminar tanto el archivo subido como el archivo de resultado
+            threading.Thread(target=FileProcessor.handle_file_removal, args=(file_path, result_file_path, DELAY_TIME)).start()
+
             return redirect('check_progress_transcribe', filename=result_filename)
 
-    return render(request, 'serv_transcribe.html', {'max_file_size': MAX_CONTENT_LENGTH})
+    return render(request, 'upload_transcribe.html', {'max_file_size': MAX_CONTENT_LENGTH})
 
 def check_progress_transcribe(request, filename):
     result_filename = transcriber.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
     if os.path.exists(result_file_path):
         return redirect('result_transcribe', filename=result_filename)
-    return render(request, 'serv_transcribe_progress.html', {'filename': filename})
+    return render(request, 'progress_transcribe.html', {'filename': filename})
 
 def result_transcribe(request, filename):
     result_filename = transcriber.get_result_filename(filename)
@@ -284,6 +343,20 @@ def download_transcribe(request, filename):
 def check_status_transcribe(request, filename):
     return transcriber.check_status(filename)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Rutas de edición
 def upload_edit(request):
     if request.method == 'POST':
@@ -293,20 +366,32 @@ def upload_edit(request):
 
         if not file:
             error_message = "Faltan parámetros"
-            return render(request, 'serv_edit.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
+            return render(request, 'upload_edit.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
 
         if editor.allowed_file(file.name):
-            filename, result_filename = editor.process_file(file, add_prompt, color_to_exclude)
+            fs = FileSystemStorage(UPLOAD_FOLDER)
+            filename = fs.save(file.name, file)  # Guardar archivo en la carpeta uploads
+            file_path = os.path.join(UPLOAD_FOLDER, filename)  # Ruta completa del archivo guardado
+            result_filename = editor.get_result_filename(filename)
+            result_file_path = os.path.join(RESULT_FOLDER, result_filename)
+            
+            # Procesar el archivo en un hilo
+            threading.Thread(target=editor.process_func, args=(file_path, result_file_path, add_prompt, color_to_exclude)).start()
+
+            # Iniciar temporizador para eliminar tanto el archivo subido como el archivo de resultado
+            threading.Thread(target=FileProcessor.handle_file_removal, args=(file_path, result_file_path, DELAY_TIME)).start()
+
             return redirect('check_progress_edit', filename=result_filename)
 
-    return render(request, 'serv_edit.html', {'max_file_size': MAX_CONTENT_LENGTH})
+    return render(request, 'upload_edit.html', {'max_file_size': MAX_CONTENT_LENGTH})
+
 
 def check_progress_edit(request, filename):
     result_filename = editor.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
     if os.path.exists(result_file_path):
         return redirect('result_edit', filename=result_filename)
-    return render(request, 'serv_edit_progress.html', {'filename': filename})
+    return render(request, 'progress_edit.html', {'filename': filename})
 
 def result_edit(request, filename):
     result_filename = editor.get_result_filename(filename)
@@ -323,6 +408,19 @@ def download_edit(request, filename):
 def check_status_edit(request, filename):
     return editor.check_status(filename)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Rutas de resumen
 def upload_summarize(request):
     if request.method == 'POST':
@@ -333,20 +431,32 @@ def upload_summarize(request):
 
         if not file or not num_words or not summary_language:
             error_message = "Faltan parámetros"
-            return render(request, 'serv_summarize.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
+            return render(request, 'upload_summarize.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
 
         if summarizer.allowed_file(file.name):
-            filename, result_filename = summarizer.process_file(file, num_words, summary_language, add_prompt)
+            fs = FileSystemStorage(UPLOAD_FOLDER)
+            filename = fs.save(file.name, file)  # Guardar archivo en la carpeta uploads
+            file_path = os.path.join(UPLOAD_FOLDER, filename)  # Ruta completa del archivo guardado
+            result_filename = summarizer.get_result_filename(filename)
+            result_file_path = os.path.join(RESULT_FOLDER, result_filename)
+            
+            # Procesar el archivo en un hilo
+            threading.Thread(target=summarizer.process_func, args=(file_path, result_file_path, num_words, summary_language, add_prompt)).start()
+
+            # Iniciar temporizador para eliminar tanto el archivo subido como el archivo de resultado
+            threading.Thread(target=FileProcessor.handle_file_removal, args=(file_path, result_file_path, DELAY_TIME)).start()
+
             return redirect('check_progress_summarize', filename=result_filename)
 
-    return render(request, 'serv_summarize.html', {'max_file_size': MAX_CONTENT_LENGTH})
+    return render(request, 'upload_summarize.html', {'max_file_size': MAX_CONTENT_LENGTH})
+
 
 def check_progress_summarize(request, filename):
     result_filename = summarizer.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
     if os.path.exists(result_file_path):
         return redirect('result_summarize', filename=result_filename)
-    return render(request, 'serv_summarize_progress.html', {'filename': filename})
+    return render(request, 'progress_summarize.html', {'filename': filename})
 
 def result_summarize(request, filename):
     result_filename = summarizer.get_result_filename(filename)
@@ -363,36 +473,62 @@ def download_summarize(request, filename):
 def check_status_summarize(request, filename):
     return summarizer.check_status(filename)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Rutas de extracción de información
 def upload_extract_info(request):
     if request.method == 'POST':
-        file = request.FILES.get('file')
-        prompts = request.POST.get('prompts')
-        response_types = request.POST.get('response_types')
+        file = request.FILES.get('file')  # Obtener el archivo subido
+        prompts = request.POST.getlist('prompts')  # Obtener las preguntas como lista
+        response_types = request.POST.getlist('response_types')  # Obtener los tipos de respuesta como lista
 
+        # Validar que todos los parámetros estén presentes
         if not file or not prompts or not response_types:
             error_message = "Faltan parámetros"
-            return render(request, 'serv_extract_info.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
+            return render(request, 'upload_extract_info.html', {'max_file_size': MAX_CONTENT_LENGTH, 'error_message': error_message})
 
+        # Procesar si el archivo es permitido
         if extractor.allowed_file(file.name):
-            filename, result_filename = extractor.process_file(file, prompts, response_types)
+            fs = FileSystemStorage(UPLOAD_FOLDER)
+            filename = fs.save(file.name, file)  # Guardar el archivo en la carpeta uploads
+            file_path = os.path.join(UPLOAD_FOLDER, filename)  # Ruta completa del archivo guardado
+            result_filename = extractor.get_result_filename(filename)
+            result_file_path = os.path.join(RESULT_FOLDER, result_filename)
+            
+            # Procesar el archivo en un hilo
+            threading.Thread(target=extractor.process_func, args=(file_path, result_file_path, prompts, response_types)).start()
+
+            # Iniciar temporizador para eliminar tanto el archivo subido como el archivo de resultado
+            threading.Thread(target=FileProcessor.handle_file_removal, args=(file_path, result_file_path, DELAY_TIME)).start()
+
             return redirect('check_progress_extract_info', filename=result_filename)
 
-    return render(request, 'serv_extract_info.html', {'max_file_size': MAX_CONTENT_LENGTH})
+    return render(request, 'upload_extract_info.html', {'max_file_size': MAX_CONTENT_LENGTH})
 
 def check_progress_extract_info(request, filename):
     result_filename = extractor.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
     if os.path.exists(result_file_path):
         return redirect('result_extract_info', filename=result_filename)
-    return render(request, 'serv_extract_info_progress.html', {'filename': filename})
+    return render(request, 'progress_extract_info.html', {'filename': filename})
 
 def result_extract_info(request, filename):
     result_filename = extractor.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
 
     if os.path.exists(result_file_path):
-        return render(request, 'serv_extract_result.html', {'filename': filename})
+        return render(request, 'result_extract_info.html', {'filename': filename})
     else:
         raise Http404("Archivo no encontrado")
 

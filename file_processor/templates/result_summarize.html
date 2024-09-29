@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Resum Completo{% endblock %}
+
+{% block content %}
+<main>
+    <link rel="stylesheet" href="{{ url_for('static', filename='result.css') }}">
+    <div class="result-container">
+        <h2>Resum Complet</h2>
+        <p>El teu document ha estat resumit amb èxit.</p>
+        <textarea readonly class="summary-textarea">{{ summary }}</textarea>
+        <button onclick="copySummary()" class="copy-button">Copiar Resum</button>
+        <p>Pots descarregar-lo utilitzant l'enllaç següent:</p>
+        <a href="{{ url_for('download_file', process_type='summary', filename=filename) }}" class="download-button">Descarregar Resum</a>
+    </div>
+
+    <script>
+        function copySummary() {
+            const textarea = document.querySelector('.summary-textarea');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Resum copiat!');
+        }
+    </script>
+</main>
+{% endblock %}

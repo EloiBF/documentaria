@@ -1,3 +1,0 @@
-{
-    "Treu l'any del document": "2025"
-}

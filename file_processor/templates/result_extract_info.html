@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resultats d'Extracció{% endblock %}
+
+{% block content %}
+<main>
+    <link rel="stylesheet" href="{% static 'result.css' %}">
+    <div class="result-container">
+        <h2>Resultats d'Extracció</h2>
+        <p>Les dades han estat extretes amb èxit.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <!-- Mostrar todas las preguntas como encabezados de columna -->
+                    {% for pregunta in extracted_data.keys %}
+                    <th>{{ pregunta }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <!-- Mostrar todas las respuestas en una fila -->
+                    {% for resposta in extracted_data.values %}
+                    <td>{{ resposta }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Resposta copiada: ' + text);
+            }, (err) => {
+                console.error('Error al copiar: ', err);
+            });
+        }
+    </script>
+</main>
+{% endblock %}

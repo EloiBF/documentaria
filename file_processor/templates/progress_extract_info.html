@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Extracció de dades en curs{% endblock %}
+
+{% block content %}
+<main>
+    <link rel="stylesheet" href="{% static 'progress.css' %}">
+    <div class="card">
+        <div class="progress-container">
+            <h2>Resum en curs...</h2>
+            <div class="progress-circle"></div>
+            <p id="status-message">Estem generant les dades basades en el teu document. Pot trigar uns minuts...</p>
+        </div>
+    </div>
+
+    <script>
+        const filename = "{{ filename }}";
+        const processType = "extract";
+        const statusMessage = document.getElementById('status-message');
+
+        function checkStatus() {
+            fetch("{% url 'check_status_extract_info' filename=filename %}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        window.location.href = "{% url 'result_extract_info' filename=filename %}";
+                    } else {
+                        setTimeout(checkStatus, 5000); // Check status every 5 seconds
+                    }
+                });
+        }
+
+        checkStatus();
+    </script>
+</main>
+{% endblock %}

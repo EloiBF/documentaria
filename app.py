@@ -306,17 +306,17 @@ def upload_translate():
 
         if not file or not language or not origin_language:
             error_message = "Faltan parámetros"
-            return render_template('serv_translate.html', max_file_size=app.config['MAX_CONTENT_LENGTH'], error_message=error_message)
+            return render_template('upload_translate.html', max_file_size=app.config['MAX_CONTENT_LENGTH'], error_message=error_message)
 
         if file.filename == '':
             error_message = "No se seleccionó ningún archivo"
-            return render_template('serv_translate.html', max_file_size=app.config['MAX_CONTENT_LENGTH'], error_message=error_message)
+            return render_template('upload_translate.html', max_file_size=app.config['MAX_CONTENT_LENGTH'], error_message=error_message)
 
         if translator.allowed_file(file.filename):
             filename, result_filename = translator.process_file(file, language, origin_language, color_to_exclude, add_prompt)
             return redirect(url_for('check_progress_translate', filename=result_filename))
 
-    return render_template('serv_translate.html', max_file_size=app.config['MAX_CONTENT_LENGTH'])
+    return render_template('upload_translate.html', max_file_size=app.config['MAX_CONTENT_LENGTH'])
 
 @app.route('/progress_translate/<filename>')
 def check_progress_translate(filename):
@@ -328,7 +328,7 @@ def check_progress_translate(filename):
         print("File exists, redirecting to result page.")
         return redirect(url_for('result_translate', filename=result_filename))
     print("File does not exist, staying on progress page.")
-    return render_template('serv_translate_progress.html', filename=filename)
+    return render_template('upload_translate_progress.html', filename=filename)
 
 
 @app.route('/result_translate/<filename>')
@@ -337,7 +337,7 @@ def result_translate(filename):
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
     if os.path.exists(result_file_path):
-        return render_template('serv_translate_result.html', filename=result_filename)
+        return render_template('upload_translate_result.html', filename=result_filename)
     else:
         return redirect(url_for('check_progress_translate', filename=filename))
 
@@ -353,7 +353,7 @@ def upload_transcribe():
             filename, result_filename = transcriber.process_file(file, audio_language)
             return redirect(url_for('check_progress_transcribe', filename=result_filename))
     
-    return render_template('serv_transcribe.html')
+    return render_template('upload_transcribe.html')
 
 @app.route('/progress_transcribe/<filename>')
 def check_progress_transcribe(filename):
@@ -363,7 +363,7 @@ def check_progress_transcribe(filename):
     if os.path.exists(result_file_path):
         return redirect(url_for('result_transcribe', filename=result_filename))
     
-    return render_template('serv_transcribe_progress.html', filename=filename)
+    return render_template('upload_transcribe_progress.html', filename=filename)
 
 @app.route('/result_transcribe/<filename>', methods=['GET'])
 def result_transcribe(filename):
@@ -373,7 +373,7 @@ def result_transcribe(filename):
     if os.path.exists(result_file_path):
         with open(result_file_path, 'r') as file:
             transcription = file.read()
-        return render_template('serv_transcribe_result.html', transcription=transcription)
+        return render_template('upload_transcribe_result.html', transcription=transcription)
     else:
         return redirect(url_for('check_progress_transcribe', filename=filename))
 
@@ -392,7 +392,7 @@ def upload_edit():
         else:
             return "No file uploaded", 400
     
-    return render_template('serv_edit.html')
+    return render_template('upload_edit.html')
 
 @app.route('/check_progress_edit/<filename>')
 def check_progress_edit(filename):
@@ -402,7 +402,7 @@ def check_progress_edit(filename):
     if os.path.exists(result_file_path):
         return redirect(url_for('result_edit', filename=result_filename))
     
-    return render_template('serv_edit_progress.html', filename=filename)
+    return render_template('upload_edit_progress.html', filename=filename)
 
 @app.route('/result_edit/<filename>')
 def result_edit(filename):
@@ -410,14 +410,14 @@ def result_edit(filename):
     result_file_path = os.path.join(app.config['RESULT_FOLDER'], result_filename)
 
     if os.path.exists(result_file_path):
-        return render_template('serv_edit_result.html', filename=result_filename)
+        return render_template('upload_edit_result.html', filename=result_filename)
     else:
         return redirect(url_for('check_progress_edit', filename=filename))
 
 
 # Rutas de resumen
 @app.route('/summary', methods=['GET', 'POST'])
-def upload_summary():
+def upload_summarize():
     if request.method == 'POST':
         file = request.files.get('file')
         num_words = request.form.get('num_words')
@@ -429,7 +429,7 @@ def upload_summary():
             filename, result_filename = summarizer.process_file(file, num_words, summary_language, add_prompt)
             return redirect(url_for('check_progress_summary', filename=result_filename))
     
-    return render_template('serv_summary.html')
+    return render_template('upload_summarize.html')
 
 @app.route('/check_progress_summary/<filename>')
 def check_progress_summary(filename):
@@ -439,7 +439,7 @@ def check_progress_summary(filename):
     if os.path.exists(result_file_path):
         return redirect(url_for('result_summary', filename=result_filename))
     
-    return render_template('serv_summary_progress.html', filename=filename)
+    return render_template('upload_summarize_progress.html', filename=filename)
 
 @app.route('/result_summary/<filename>', methods=['GET'])
 def result_summary(filename):
@@ -449,7 +449,7 @@ def result_summary(filename):
     if os.path.exists(result_file_path):
         with open(result_file_path, 'r') as file:
             summary = file.read()
-        return render_template('serv_summary_result.html', summary=summary)
+        return render_template('upload_summarize_result.html', summary=summary)
     else:
         return redirect(url_for('check_progress_summary', filename=filename))
 
@@ -458,7 +458,7 @@ def result_summary(filename):
 
 # Rutas de extracción de información ajustadas
 @app.route('/extract', methods=['GET', 'POST'])
-def upload_extract():
+def upload_extract_info():
     if request.method == 'POST':
         file = request.files.get('file')  # Obtener el único archivo subido
         prompts = request.form.getlist('prompts')  # Obtener las preguntas como lista

@@ -93,7 +93,7 @@ def validar_respuesta(respuesta, tipo):
         return True
     
     else:
-        print(f"Tipo de respuesta desconocido: {tipo}. Debe ser ")
+        print(f"Tipo de respuesta desconocido: {tipo}. Debe ser: text, num, SI/NO, o date")
         return False
 
 def extract_with_retry(texto, prompt, respuesta_tipo, ejemplo_respuesta=None, file_type=None, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt', max_retries=3):
