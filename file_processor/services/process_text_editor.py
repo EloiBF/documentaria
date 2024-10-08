@@ -421,7 +421,7 @@ class DOCX_process:
 class PDF_process:
 
     # Lectura/Reemplazo PDF
-    def leer_doc(input_path, output_path, textos_originales, color_to_exclude, textos_traducidos_final, action): 
+    def leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action): 
         # Conversor de PDF a WORD
         def pdf_to_word(input_path, word_path):
             # Convertir el PDF a Word
@@ -432,7 +432,7 @@ class PDF_process:
         word_path = input_path.replace('.pdf', '.docx')
         pdf_to_word(input_path, word_path)
 
-        return DOCX_process.leer_doc(word_path,output_path, textos_originales, color_to_exclude, textos_traducidos_final, action)
+        return DOCX_process.leer_doc(word_path,output_path, color_to_exclude, textos_traducidos_final, action)
 
 class Excel_process:
     def leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final, action):

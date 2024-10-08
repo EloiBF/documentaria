@@ -1,6 +1,6 @@
 from groq import Groq
 
-from file_processor.documentaria_scripts.process_text_reader import read_document, split_text
+from file_processor.services.process_text_reader import read_document, split_text
 
 
 # Funcions específiques per generar un resum del text d'un document.

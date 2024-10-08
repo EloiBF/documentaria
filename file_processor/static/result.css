@@ -33,3 +33,49 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     resize: vertical;
 }
+
+/* Estilo para la tabla */
+table {
+    width: 100%; /* Ocupa todo el ancho del contenedor */
+    border-collapse: collapse; /* Elimina el espacio entre bordes */
+    margin: 20px 0; /* Margen superior e inferior */
+}
+
+th, td {
+    padding: 12px; /* Espaciado interno de celdas */
+    text-align: left; /* Alineación del texto a la izquierda */
+    border: 1px solid var(--background-mid); /* Borde gris claro */
+}
+
+th {
+    background-color: var(--background-dark); /* Color del encabezado */
+    color: white; /* Color del texto en el encabezado */
+}
+
+
+tr:hover {
+    background-color: #ddd; /* Color al pasar el mouse sobre la fila */
+}
+
+/* Estilos para el contenedor de resultados */
+.result-container {
+    max-width: 800px; /* Ancho máximo del contenedor */
+    margin: 20px auto; /* Centrando el contenedor */
+    padding: 20px; /* Espaciado interno */
+    background-color: var(--background-light); /* Fondo blanco */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+}
+
+/* Estilos para los encabezados */
+h2 {
+    text-align: center; /* Centra el texto */
+    color: var(--text-color-dark); /* Color del texto del encabezado */
+}
+
+/* Estilos para párrafos */
+p {
+    text-align: center; /* Centra el texto */
+    font-size: 1.1em; /* Tamaño de fuente */
+    color: var(--text-color-mid-dark); /* Color del texto */
+}

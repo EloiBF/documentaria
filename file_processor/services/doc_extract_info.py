@@ -1,8 +1,9 @@
 import re
+import os
 from dateutil import parser
 from groq import Groq
 import json
-from file_processor.documentaria_scripts.process_text_reader import read_document, split_text
+from file_processor.services.process_text_reader import read_document, split_text
 
 # Funcions específiques per extreure dades en format JSON d'un arxiu a base de prompts i check de la resposta.
 
@@ -124,9 +125,6 @@ def reflexionar_respuestas(respuestas, prompt, tipo_respuesta):
     """
     # Usamos un prompt para pedir al modelo que reflexione sobre las respuestas obtenidas
 
-    print(prompt)
-    print(respuestas)
-
     prompt_reflexion = f"""
     A continuación, se te proporcionan varias respuestas obtenidas para la pregunta '{prompt}':
     
@@ -134,6 +132,7 @@ def reflexionar_respuestas(respuestas, prompt, tipo_respuesta):
     
     Considera que el tipo de respuesta esperado es: {tipo_respuesta}.
     Reflexiona sobre estas respuestas y genera una única respuesta final basada en el consenso o en la información más relevante.
+    El resultado final debe dar respuesta a la pregunta y encajar en el tipo de datos esperado.
     """
     
     # Enviar el prompt al modelo para que genere la respuesta final consolidada
@@ -145,6 +144,8 @@ def reflexionar_respuestas(respuestas, prompt, tipo_respuesta):
         api_key_file='API_KEY.txt'
     )
     return respuesta_consolidada.strip()
+
+import json
 
 def extract_info_from_doc(input_path, output_path, prompts, tipos_respuesta, ejemplos_respuesta=None, max_retries=10):
     """Función principal para extraer información de un documento usando múltiples prompts y tipos de respuesta."""
@@ -175,20 +176,44 @@ def extract_info_from_doc(input_path, output_path, prompts, tipos_respuesta, eje
                 
                 # Guardar la respuesta parcial en el diccionario
                 respuestas_por_prompt[prompt].append(extracted_info)
-        
+
         # Reflexionar sobre las respuestas y obtener una respuesta final por pregunta
         final_results = {}
+        
         for prompt, tipo in zip(prompts, tipos_respuesta):
             respuestas = respuestas_por_prompt[prompt]
+            intentos = 0
             
-            # Reflexionar sobre las respuestas y generar una respuesta consolidada
-            respuesta_final = reflexionar_respuestas(respuestas, prompt, tipo)
-            
-            # Validar la respuesta final antes de guardarla
-            if validar_respuesta(respuesta_final, tipo):
-                final_results[prompt] = respuesta_final
-            else:
-                final_results[prompt] = 'N/D'  # Si la validación falla, devolver "N/D"
+            while True:
+                # Reflexionar sobre las respuestas y generar una respuesta consolidada
+                respuesta_final = reflexionar_respuestas(respuestas, prompt, tipo)
+                
+                if validar_respuesta(respuesta_final, tipo):
+                    final_results[prompt] = respuesta_final
+                    break  # Salir del bucle si la validación es correcta
+                else:
+                    print(f"Verificación fallida para el prompt: {prompt}. Reiniciando el procesamiento...")
+                    intentos += 1
+                    
+                    # Reiniciar el procesamiento si la validación falla
+                    respuestas_por_prompt[prompt] = []  # Limpiar respuestas para esa pregunta
+                    
+                    # Procesar nuevamente todos los bloques para esa pregunta
+                    for block in blocks:
+                        extracted_info = extract_with_retry(
+                            texto=block,
+                            prompt=prompt,
+                            respuesta_tipo=tipo,
+                            ejemplo_respuesta=None,
+                            file_type=file_type,
+                            max_retries=max_retries
+                        )
+                        respuestas_por_prompt[prompt].append(extracted_info)
+                    
+                    # Si se alcanzan los reintentos, asignar 'N/D'
+                    if intentos >= max_retries:
+                        final_results[prompt] = 'N/D'
+                        break
         
         print(final_results)
         
@@ -203,3 +228,27 @@ def extract_info_from_doc(input_path, output_path, prompts, tipos_respuesta, eje
     except Exception as e:
         print(f"Ocurrió un error: {e}")
         return None
+  
+def extract_info_from_multiple_docs(input_dir, output_dir, prompts, tipos_respuesta, ejemplos_respuesta=None, max_retries=10):
+    """Función para procesar todos los archivos en un directorio y extraer información."""
+    resultados_totales = {}
+    
+    # Listar todos los archivos en el directorio de entrada
+    lista_archivos = [os.path.join(input_dir, archivo) for archivo in os.listdir(input_dir) if archivo.endswith(('.pdf', '.docx', '.txt'))]
+    
+    for input_path in lista_archivos:
+        # Determinar el nombre del archivo de salida basado en el nombre del archivo de entrada
+        nombre_archivo = os.path.basename(input_path).split('.')[0]  # Obtener el nombre sin extensión
+        output_path = os.path.join(output_dir, f"{nombre_archivo}_resultados.json")  # Ruta de salida
+        
+        print(f"Procesando archivo: {input_path}")
+        
+        # Llamar a la función principal para extraer información
+        resultados = extract_info_from_doc(input_path, output_path, prompts, tipos_respuesta, ejemplos_respuesta, max_retries)
+        
+        if resultados is not None:
+            resultados_totales[nombre_archivo] = resultados
+        else:
+            print(f"Error al procesar el archivo: {input_path}")
+    
+    return resultados_totales

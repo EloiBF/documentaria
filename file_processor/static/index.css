@@ -102,20 +102,68 @@ html {
     padding: 100px 0; /* Augmenta l'espai vertical per al contingut */
     background-color: var(--mid-color); /* Defineix un color de fons per la secció */
     color: var(--text-color-light); /* Color de text clar per contrastar amb el fons */
+    display: flex;
 }
 
 .explanation-container {
     display: flex;
-    align-items: left; /* Alinea el contingut al principi del contenidor (a l'esquerra) */
-    justify-content: space-between; /* Distribueix l'espai entre el text i la imatge */
-    text-align: left; /* Alinea el text a l'esquerra */
-    max-width: 1500px; /* Opcional: defineix una amplada màxima per al contenidor */
-    margin: 0 auto; /* Centra el contenidor dins de la pàgina */
+    flex-direction: row; /* Alineación horizontal (por defecto) */
+    align-items: flex-start; /* Alinea el contenido al principio (arriba) en pantallas anchas */
+    justify-content: space-between; /* Distribuye espacio entre los elementos */
+    text-align: left; /* Alinea el texto a la izquierda */
+    max-width: 100%; /* Hace que el contenedor ocupe el ancho completo */
+    margin: 0 auto; /* Centra el contenedor */
+    padding: 20px; /* Añade un poco de espacio alrededor del contenido */
+}
+
+/* Media query para pantallas pequeñas (móviles) */
+@media (max-width: 768px) {
+    .explanation-container {
+        flex-direction: column; /* Cambia a disposición vertical */
+        align-items: center; /* Alinea los elementos en el centro en el eje vertical */
+        text-align: center; /* Alinea el texto al centro si es necesario */
+        font-size: medium;
+    }
+
+    .explanation-content {
+        max-width: 100%; /* Hace que el texto ocupe todo el ancho disponible */
+        margin-right: 0; /* Elimina el margen lateral en pantallas pequeñas */
+        flex-direction: row;
+    }
+
+    .explanation-image {
+        max-width: 100%; /* Hace que la imagen ocupe todo el ancho disponible en móviles */
+        margin-top: 1px; /* Añade un poco de espacio por encima de la imagen */
+        text-align: center; /* Centra el contenedor de la imagen */
+    }
+
+    .explanation-image img {
+        width: 100%; /* Hace que la imagen ocupe todo el ancho del contenedor */
+        max-width: 300px; /* Limita el tamaño máximo de la imagen en pantallas pequeñas */
+        height: auto; /* Mantiene la proporción de la imagen */
+    }
+
+    .explanation-content h1 {
+        font-size: 1em;
+        color: var(--text-color-light);
+        margin-bottom: 20px;
+    }
+    
+    .explanation-content .highlight {
+        color: var(--highlight-color); /* Color per a la part destacada del títol */
+    }
+    
+    .explanation-content p {
+        font-size: 1.2em;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    
 }
 
 .explanation-content {
     max-width: 50%; /* Ajusta l'amplada del contingut per deixar espai per la imatge */
-    margin-right: 20px; /* Espai entre el text i la imatge */
+    margin-right: 10px; /* Espai entre el text i la imatge */
 }
 
 .explanation-content h1 {
@@ -142,7 +190,6 @@ html {
     width: 600px; /* Assegura que la imatge ocupa tot l'espai disponible */
     height: auto; /* Manté la proporció de la imatge */
 }
-
 
 
 
@@ -257,7 +304,7 @@ html {
 .service-section {
     background-color: var(--background-mid);
     color: var(--text-color-dark);
-    padding: 40px 100px;
+    padding: 100px 100px; /* Reduce padding en los laterales para evitar desbordamientos */
     text-align: center;
 }
 
@@ -274,6 +321,7 @@ html {
     font-size: 1.2em;
 }
 
+/* Diseño de columnas para pantallas grandes */
 .service-columns {
     display: flex;
     justify-content: space-between;
@@ -281,6 +329,7 @@ html {
     margin-bottom: 150px;
 }
 
+/* Cada columna dentro de la sección de servicios */
 .service-column {
     flex: 1;
     display: flex;
@@ -294,16 +343,19 @@ html {
     gap: 30px;
 }
 
+/* Diseño de cada tarjeta de servicio */
 .service-item {
     background-color: var(--background-light);
     border-radius: 10px;
     box-shadow: 0 4px 8px var(--shadow-color);
     padding: 30px;
-    height: 300px;
+    min-height: 300px; /* Altura mínima para las tarjetas */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
+    box-sizing: border-box; /* Asegura que el padding esté dentro del ancho */
+    height: auto; /* Deja que la altura se ajuste al contenido */
 }
 
 .service-item img {
@@ -312,8 +364,7 @@ html {
     margin-bottom: 10px;
 }
 
-
-
+/* Descripción del servicio */
 .service-description {
     text-align: center;
     flex-grow: 1;
@@ -338,4 +389,49 @@ html {
 
 .services-closing h3 {
     font-size: 1.5em;
+}
+
+/* Media query para pantallas pequeñas (móviles y tablets) */
+@media (max-width: 768px) {
+    .service-section {
+        padding: 20px 10px; /* Reduce el padding en pantallas pequeñas para evitar desbordes */
+    }
+
+    .service-columns {
+        flex-direction: column; /* Las columnas se apilan verticalmente */
+        gap: 20px; /* Reduce el espacio entre las tarjetas en pantallas pequeñas */
+        margin-bottom: 50px; /* Reduce el margen inferior */
+    }
+
+    .service-item {
+        width: 100%; /* Asegura que la tarjeta ocupe todo el ancho disponible */
+        min-height: auto; /* Elimina la altura mínima en pantallas pequeñas */
+        padding: 20px; /* Ajusta el padding para adaptarse mejor a pantallas pequeñas */
+        height: auto; /* Permite que la altura se ajuste al contenido */
+    }
+
+    .service-item img {
+        width: 60px; /* Ajusta el tamaño de la imagen en pantallas pequeñas */
+        height: 60px;
+    }
+
+    .services-title h1 {
+        font-size: 2em; /* Reduce el tamaño del título en pantallas pequeñas */
+    }
+
+    .services-title p {
+        font-size: 1em; /* Ajusta el tamaño del subtítulo */
+    }
+
+    .service-description h3 {
+        font-size: 1.2em; /* Ajusta el tamaño de los títulos de las tarjetas */
+    }
+
+    .service-description p {
+        font-size: 0.9em; /* Ajusta el tamaño del texto de las descripciones */
+    }
+
+    .services-closing h3 {
+        font-size: 1.3em; /* Ajusta el tamaño del cierre de la sección */
+    }
 }

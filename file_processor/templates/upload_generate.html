@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generació de Documents{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <link rel="stylesheet" href="{% static 'service.css' %}">
+    <!-- Secció de generació de documents -->
+    <section id="upload_generate">
+        <div class="header-section">
+            <h1>Generació de Documents amb IA</h1>
+        </div>
+        <!-- Contenedor del formulari -->
+        <form action="{% url 'upload_generate' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="prompt">Introdueix el Prompt:</label>
+                    <textarea name="prompt" id="prompt" required placeholder="Escriu el que vols que el document contingui..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="file_type">Tipus de Document:</label>
+                    <select name="file_type" id="file_type">
+                        <option value="docx" selected>DOCX</option>
+                        <option value="pptx">PPTX</option>
+                        <!-- Aquí pots afegir més tipus de fitxers si és necessari -->
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-button">Generar Document</button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aquí podries afegir scripts addicionals si fos necessari
+    });
+</script>
+
+{% endblock %}

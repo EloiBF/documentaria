@@ -10,24 +10,28 @@
         <h2>Resultats d'Extracció</h2>
         <p>Les dades han estat extretes amb èxit.</p>
         
-        <table>
-            <thead>
-                <tr>
-                    <!-- Mostrar todas las preguntas como encabezados de columna -->
-                    {% for pregunta in extracted_data.keys %}
-                    <th>{{ pregunta }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <!-- Mostrar todas las respuestas en una fila -->
-                    {% for resposta in extracted_data.values %}
-                    <td>{{ resposta }}</td>
-                    {% endfor %}
-                </tr>
-            </tbody>
-        </table>
+        {% if data %}
+            <table>
+                <thead>
+                    <tr>
+                        <!-- Mostrar todas las preguntas como encabezados de columna -->
+                        {% for pregunta in data.keys %}
+                        <th>{{ pregunta }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <!-- Mostrar todas las respuestas en una fila -->
+                        {% for resposta in data.values %}
+                        <td>{{ resposta }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        {% else %}
+            <p>No s'han trobat dades per mostrar.</p>
+        {% endif %}
     </div>
 
     <script>

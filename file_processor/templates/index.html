@@ -54,18 +54,6 @@
                         </div>
                     </div>
                     <div class="service-item">
-                        <img src="{% static 'images/summary.png' %}" alt="Resum de documents">
-                        <div class="service-description">
-                            <h3>Resum de documents</h3>
-                            <p>Necessites treure conclusions de documents i informes?<br>Utilitza el resum automàtic amb IA.</p>
-                            <a href="{% url 'upload_summarize' %}" class="cta-button">Vull un resum</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="service-column">
-                <div class="service-list">
-                    <div class="service-item">
                         <img src="{% static 'images/translate.png' %}" alt="Traducció de documents">
                         <div class="service-description">
                             <h3>Traducció de Documents</h3>
@@ -79,6 +67,26 @@
                             <h3>Edició del contingut</h3>
                             <p>Transforma el contingut dels teus documents.<br>Modifica el to, ajusta la ortografia o reescriu de nou el document!</p>
                             <a href="{% url 'upload_edit' %}" class="cta-button">Vull editar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="service-column">
+                <div class="service-list">
+                    <div class="service-item">
+                        <img src="{% static 'images/generate.png' %}" alt="Generació de documents">
+                        <div class="service-description">
+                            <h3>Generació de Documents</h3>
+                            <p>Crea documents Word i PPT automàticament amb el contingut que desitges.<br>Només has d'introduir el prompt i escollir el tipus de document!</p>
+                            <a href="{% url 'upload_generate' %}" class="cta-button">Vull generar</a>
+                        </div>
+                    </div>
+                    <div class="service-item">
+                        <img src="{% static 'images/summary.png' %}" alt="Resum de documents">
+                        <div class="service-description">
+                            <h3>Resum de documents</h3>
+                            <p>Necessites treure conclusions de documents i informes?<br>Utilitza el resum automàtic amb IA.</p>
+                            <a href="{% url 'upload_summarize' %}" class="cta-button">Vull un resum</a>
                         </div>
                     </div>
                     <div class="service-item">

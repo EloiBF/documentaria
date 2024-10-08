@@ -40,6 +40,13 @@ urlpatterns = [
     path('download_transcribe/<str:filename>/', views.download_transcribe, name='download_transcribe'),  # Ruta de descarga para transcripción
     path('check_status_transcribe/<str:filename>/', views.check_status_transcribe, name='check_status_transcribe'),  # Check status
 
+    # Rutas para la generación de documentos
+    path('generate/', views.upload_generate, name='upload_generate'),
+    path('progress_generate/<str:filename>/', views.check_progress_generate, name='check_progress_generate'),
+    path('result_generate/<str:filename>/', views.result_generate, name='result_generate'),
+    path('download_generate/<str:filename>/', views.download_generate, name='download_generate'),  # Ruta de descarga para generación
+    path('check_status_generate/<str:filename>/', views.check_status_generate, name='check_status_generate'),  # Check status
+
     # Otras rutas de funciones adicionales (si tienes más funcionalidades)
     path('privacy-policy/', views.privacy_policy, name='privacy_policy'),  # Política de Privacidad
     path('terms-and-conditions/', views.terms_and_conditions, name='terms_and_conditions'),  # Términos y Condiciones

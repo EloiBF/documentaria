@@ -1,5 +1,5 @@
 # views.py
-
+import time
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse, Http404
 from django.core.files.storage import FileSystemStorage
@@ -7,11 +7,14 @@ import os
 import threading
 import json
 from pathlib import Path
-from file_processor.documentaria_scripts.doc_translator import traducir_doc
-from file_processor.documentaria_scripts.audio_transcribe import transcribe_audio
-from file_processor.documentaria_scripts.doc_editor import editar_doc
-from file_processor.documentaria_scripts.doc_summary import resumir_doc
-from file_processor.documentaria_scripts.doc_extract_info import extract_info_from_doc
+from file_processor.services.doc_translator import traducir_doc
+from file_processor.services.audio_transcribe import transcribe_audio
+from file_processor.services.doc_editor import editar_doc
+from file_processor.services.doc_summary import resumir_doc
+from file_processor.services.doc_extract_info import extract_info_from_doc
+from file_processor.services.doc_extract_info import extract_info_from_multiple_docs
+from file_processor.services.doc_generate import generate_and_create_file
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -202,12 +205,34 @@ class InformationExtractor(FileProcessor):
         except Exception as e:
             print(f"Error durante la extracción de información del archivo: {str(e)}")
 
+class DocumentGenerator(FileProcessor):
+    def __init__(self):
+        super().__init__(self.background_generation)
+
+    def get_result_filename(self, filename):
+        # EL NOMBRE DEL RESULT SERA EL MISMO QUE EL FILENAME (QUE SE GENERA AL UPLOAD_GENERATE)
+        return filename
+
+    def background_generation(self, prompt, result_file_path, file_type='docx'):
+        logger.info(f"Starting document generation with prompt: {prompt} to {result_file_path} as {file_type}")
+        try:
+            if os.path.exists(result_file_path):
+                os.remove(result_file_path)
+
+            # Llamar a la función que genera y crea el archivo
+            generate_and_create_file(prompt, file_type=file_type, output=result_file_path)
+        except Exception as e:
+            print(f"Error durante la generación del documento: {str(e)}")
+
+
+
 # Instancias para cada tipo de procesamiento
 translator = DocumentTranslator()
 transcriber = AudioTranscriber()
 editor = DocumentEditor()
 summarizer = DocumentSummarizer()
 extractor = InformationExtractor()
+generator = DocumentGenerator()
 
 # Rutas estáticas
 def index(request):
@@ -224,6 +249,7 @@ def about_us(request):
 
 def contact(request):
     return render(request, 'contact.html')
+
 
 # Rutas de traducción
 def upload_translate(request):
@@ -259,7 +285,6 @@ def upload_translate(request):
             return redirect('check_progress_translate', filename=result_filename)
 
     return render(request, 'upload_translate.html', {'max_file_size': MAX_CONTENT_LENGTH})
-
 
 def check_progress_translate(request, filename):
     result_filename = translator.get_result_filename(filename)
@@ -385,7 +410,6 @@ def upload_edit(request):
 
     return render(request, 'upload_edit.html', {'max_file_size': MAX_CONTENT_LENGTH})
 
-
 def check_progress_edit(request, filename):
     result_filename = editor.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
@@ -449,7 +473,6 @@ def upload_summarize(request):
             return redirect('check_progress_summarize', filename=result_filename)
 
     return render(request, 'upload_summarize.html', {'max_file_size': MAX_CONTENT_LENGTH})
-
 
 def check_progress_summarize(request, filename):
     result_filename = summarizer.get_result_filename(filename)
@@ -516,6 +539,7 @@ def upload_extract_info(request):
 
     return render(request, 'upload_extract_info.html', {'max_file_size': MAX_CONTENT_LENGTH})
 
+
 def check_progress_extract_info(request, filename):
     result_filename = extractor.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
@@ -523,17 +547,93 @@ def check_progress_extract_info(request, filename):
         return redirect('result_extract_info', filename=result_filename)
     return render(request, 'progress_extract_info.html', {'filename': filename})
 
+
 def result_extract_info(request, filename):
     result_filename = extractor.get_result_filename(filename)
     result_file_path = os.path.join(RESULT_FOLDER, result_filename)
 
     if os.path.exists(result_file_path):
-        return render(request, 'result_extract_info.html', {'filename': filename})
+        # Cargar el contenido del archivo JSON
+        with open(result_file_path, 'r') as json_file:
+            data = json.load(json_file)  # Cargar datos JSON
+
+        return render(request, 'result_extract_info.html', {'filename': filename, 'data': data})
     else:
         raise Http404("Archivo no encontrado")
+
 
 def download_extract_info(request, filename):
     return extractor.download_file(filename)
 
+
 def check_status_extract_info(request, filename):
     return extractor.check_status(filename)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Rutas para la generación de documentos
+def upload_generate(request):
+    if request.method == 'POST':
+        prompt = request.POST.get('prompt')
+        file_type = request.POST.get('pptx', 'docx')  # Puedes permitir que el usuario elija el tipo de archivo
+        
+        if not prompt:
+            error_message = "Falta el prompt"
+            return render(request, 'upload_generate.html', {'error_message': error_message})
+
+        # Generar un nombre de archivo único
+        filename = f"document_generated_{int(time.time())}.{file_type}"
+        result_file_path = os.path.join(RESULT_FOLDER, filename)
+
+        # Procesar el archivo en un hilo
+        threading.Thread(target=generator.process_func, args=(prompt, result_file_path, file_type)).start()
+
+        # Iniciar temporizador para eliminar el archivo de resultado
+        threading.Thread(target=FileProcessor.handle_file_removal, args=(None, result_file_path, DELAY_TIME)).start()
+
+        return redirect('check_progress_generate', filename=filename)
+
+    return render(request, 'upload_generate.html')
+
+def check_progress_generate(request, filename):
+    result_file_path = os.path.join(RESULT_FOLDER, filename)
+    if os.path.exists(result_file_path):
+        return redirect('result_generate', filename=filename)
+    return render(request, 'progress_generate.html', {'filename': filename})
+
+def result_generate(request, filename):
+    result_file_path = os.path.join(RESULT_FOLDER, filename)
+
+    if os.path.exists(result_file_path):
+        return render(request, 'result_generate.html', {'filename': filename})
+    else:
+        raise Http404("Archivo no encontrado")
+
+def download_generate(request, filename):
+    return generator.download_file(filename)
+
+def check_status_generate(request, filename):
+    return generator.check_status(filename)

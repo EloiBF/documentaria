@@ -1,6 +1,6 @@
 from groq import Groq
 import re
-from file_processor.documentaria_scripts.process_text_editor import Modify_Diccionarios, Modify_Bloques,Validar_Bloques, DOCX_process, PPTX_process, Excel_process, PDF_process, TXT_process, HTML_process
+from file_processor.services.process_text_editor import Modify_Diccionarios, Modify_Bloques,Validar_Bloques, DOCX_process, PPTX_process, Excel_process, PDF_process, TXT_process, HTML_process
 
 # Funcions específiques de la traducció de documents. Prompting i model IA.
 
@@ -180,12 +180,12 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
         print(textos_originales)
 
     elif extension == ".xlsx":
-        textos_originales = Excel_process.leer_doc(input_path, output_path, color_to_exclude, textos_traducidos_final=None, action="leer")
+        textos_originales = Excel_process.leer_doc(input_path, output_path, color_to_exclude,  textos_traducidos_final=None, action="leer")
         print("Diccionario textos_originales")
         print(textos_originales)
 
     elif extension == ".txt":
-        textos_originales = TXT_process.leer_doc(input_path, output_path, textos_traducidos_final=None, action="leer")
+        textos_originales = TXT_process.leer_doc(input_path, output_path,  textos_traducidos_final=None, action="leer")
         print("Diccionario textos_originales")
         print(textos_originales)
 

@@ -20,7 +20,7 @@ from chromadb.config import Settings
 
 
 # Funciones para leer diferentes tipos de archivos (mantenidas del original)
-from file_processor.documentaria_scripts.process_text_reader import read_document, read_docx, read_html, read_pdf, read_pptx, read_txt
+from file_processor.services.process_text_reader import read_document, read_docx, read_html, read_pdf, read_pptx, read_txt
 
 def read_document(file_path):
     """Lee el contenido del archivo especificado según su tipo y devuelve el texto y la extensión del archivo."""

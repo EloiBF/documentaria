@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% load static %}  <!-- Cargar el tag static -->
+{% load static %}
 
 {% block title %}Extracció d'Informació{% endblock %}
 
 {% block content %}
 <main class="main-content">
-    <link rel="stylesheet" href="{% static 'service.css' %}">  <!-- Usar el tag static para cargar CSS -->
+    <link rel="stylesheet" href="{% static 'service.css' %}">
     <!-- Secció d'extracció d'informació -->
     <section id="upload_extract_info">
         <div class="header-section">
@@ -19,13 +19,12 @@
                 <div class="upload-container">
                     <h2>Carrega els teus Documents</h2>
                     <div class="upload-area" id="upload-area">
-                        <!-- Permitir seleccionar múltiples archivos -->
                         <input type="file" name="file" id="file-input" multiple required>
-                        <label for="file-input" class="upload-label">Arrossega els teus arxius aquí o fes clic per seleccionar-los</label>
+                        <label for="file-input" class="upload-label">Arrossega el teu arxiu o fes click per seleccionar-lo</label>
                         <div class="file-info" id="file-info"></div>
                     </div>
                 </div>
-        
+
                 <!-- Aquí seguirán las preguntas como antes -->
                 <div class="form-options" id="questions-container">
                     <div class="form-group question-group">
@@ -45,6 +44,8 @@
                     </div>
                 </div>
         
+                <!-- Botón para agregar más preguntas -->
+                <button type="button" id="add-question" class="add-question-button">Afegir Pregunta</button>
                 <button type="submit" class="submit-button">Extracció d'Informació</button>
             </div>
         </form>
@@ -89,6 +90,7 @@
             handleFileSelect({ target: fileInput });
         });
 
+        // Manejo del botón "Afegir Pregunta"
         document.getElementById('add-question').addEventListener('click', function() {
             const questionContainer = document.getElementById('questions-container');
             const questionCount = questionContainer.children.length + 1; // Contador para preguntas

@@ -2,7 +2,7 @@ from groq import Groq
 import re
 
 # Cargamos las funciones de procesado de documento, que se usan para editar o traducir
-from file_processor.documentaria_scripts.process_text_editor import Modify_Diccionarios, Modify_Bloques, DOCX_process, PPTX_process, Excel_process, PDF_process, TXT_process, HTML_process
+from file_processor.services.process_text_editor import Modify_Diccionarios, Modify_Bloques, DOCX_process, PPTX_process, Excel_process, PDF_process, TXT_process, HTML_process
 
 # Funcions específiques de l'edició de documents. Prompting i model IA.
 
