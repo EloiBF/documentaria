@@ -99,7 +99,6 @@ html {
 
 /* Estils per la secció d'explicació */
 .explanation-section {
-    padding: 100px 0; /* Augmenta l'espai vertical per al contingut */
     background-color: var(--mid-color); /* Defineix un color de fons per la secció */
     color: var(--text-color-light); /* Color de text clar per contrastar amb el fons */
     display: flex;
@@ -111,9 +110,9 @@ html {
     align-items: flex-start; /* Alinea el contenido al principio (arriba) en pantallas anchas */
     justify-content: space-between; /* Distribuye espacio entre los elementos */
     text-align: left; /* Alinea el texto a la izquierda */
-    max-width: 100%; /* Hace que el contenedor ocupe el ancho completo */
+    max-width: 80%; /* Hace que el contenedor ocupe el ancho completo */
     margin: 0 auto; /* Centra el contenedor */
-    padding: 20px; /* Añade un poco de espacio alrededor del contenido */
+    padding: 100px 50px; /* Augmenta l'espai vertical per al contingut */
 }
 
 /* Media query para pantallas pequeñas (móviles) */
@@ -123,25 +122,23 @@ html {
         align-items: center; /* Alinea los elementos en el centro en el eje vertical */
         text-align: center; /* Alinea el texto al centro si es necesario */
         font-size: medium;
+        margin-right: 0; /* Elimina el margen lateral en pantallas pequeñas */
+        margin-left: 0; /* Elimina el margen lateral en pantallas pequeñas */
+
     }
 
     .explanation-content {
         max-width: 100%; /* Hace que el texto ocupe todo el ancho disponible */
         margin-right: 0; /* Elimina el margen lateral en pantallas pequeñas */
+        margin-left: 0; /* Elimina el margen lateral en pantallas pequeñas */
+
         flex-direction: row;
     }
 
     .explanation-image {
-        max-width: 100%; /* Hace que la imagen ocupe todo el ancho disponible en móviles */
-        margin-top: 1px; /* Añade un poco de espacio por encima de la imagen */
-        text-align: center; /* Centra el contenedor de la imagen */
+        display: none;
     }
 
-    .explanation-image img {
-        width: 100%; /* Hace que la imagen ocupe todo el ancho del contenedor */
-        max-width: 300px; /* Limita el tamaño máximo de la imagen en pantallas pequeñas */
-        height: auto; /* Mantiene la proporción de la imagen */
-    }
 
     .explanation-content h1 {
         font-size: 1em;
@@ -164,6 +161,7 @@ html {
 .explanation-content {
     max-width: 50%; /* Ajusta l'amplada del contingut per deixar espai per la imatge */
     margin-right: 10px; /* Espai entre el text i la imatge */
+    padding: 10px;
 }
 
 .explanation-content h1 {
@@ -326,7 +324,7 @@ html {
     display: flex;
     justify-content: space-between;
     gap: 40px;
-    margin-bottom: 150px;
+    margin-bottom: 100px;
 }
 
 /* Cada columna dentro de la sección de servicios */

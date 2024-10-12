@@ -1,300 +1,352 @@
+import re
 from docx import Document
-from docx.shared import RGBColor
+from docx.shared import RGBColor, Pt
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.enum.style import WD_STYLE_TYPE
 from pptx import Presentation
 from pptx.util import Inches
+from pptx.dml.color import RGBColor as PPTXRGBColor
 from groq import Groq
 
-def apply_color(paragraph, text, color):
-    run = paragraph.add_run(text)
-    rgb = tuple(map(int, color.split(',')))  # Convertir cadena de color a tupla RGB
-    run.font.color.rgb = RGBColor(*rgb)
 
-def add_bold_run(paragraph, text):
-    run = paragraph.add_run(text)
-    run.bold = True
 
-def add_italic_run(paragraph, text):
-    run = paragraph.add_run(text)
-    run.italic = True
 
-def create_docx_with_formatting(content, output_path='output.docx'):
-    """
-    Crea un archivo .docx a partir del contenido generado con formato.
+class DocxProcessor:
+    def __init__(self):
+        self.doc = Document()
+        self._create_styles()
 
-    Args:
-        content (str): El contenido generado con códigos de formato.
-        output_path (str): La ruta donde se guardará el archivo .docx.
-    
-    Returns:
-        str: La ruta del archivo generado.
-    """
-    doc = Document()
+    def _create_styles(self):
+        styles = self.doc.styles
+        h1_style = styles.add_style('H1', WD_STYLE_TYPE.PARAGRAPH)
+        h1_style.font.size = Pt(18)
+        h1_style.font.bold = True
 
-    # Definir los códigos de formato y sus acciones
-    formatting_codes = [
-        ("[H1]", "[/H1]", lambda p, text: add_bold_run(p, text)),  # Título principal en negrita
-        ("[H2]", "[/H2]", lambda p, text: add_bold_run(p, text)),  # Subtítulo en negrita
-        ("[BOLD]", "[/BOLD]", lambda p, text: add_bold_run(p, text)),  # Texto en negrita
-        ("[ITALIC]", "[/ITALIC]", lambda p, text: add_italic_run(p, text)),  # Texto en cursiva
-        ("[UL]", "[/UL]", lambda p, text: doc.add_paragraph(text, style='ListBullet')),  # Lista con viñetas
-        ("[COLOR:", "[/COLOR]", lambda p, text, color: apply_color(p, text, color))  # Texto coloreado
-    ]
+        h2_style = styles.add_style('H2', WD_STYLE_TYPE.PARAGRAPH)
+        h2_style.font.size = Pt(16)
+        h2_style.font.bold = True
 
-    for line in content.splitlines():
-        p = doc.add_paragraph()  # Crear un nuevo párrafo para cada línea
-        while line:
-            for start_code, end_code, action in formatting_codes:
-                if start_code in line:
-                    if start_code.startswith("[COLOR:") and end_code in line:
-                        color_start = line.index("[COLOR:") + len("[COLOR:")
-                        color_end = line.index("]", color_start)
-                        color_name = line[color_start:color_end]
-                        colored_text = line.split(f"[COLOR:{color_name}]")[1].split("[/COLOR]")[0]
+    def create_document(self, content, output_path='output.docx'):
+        self._process_content(content)
+        self._clean_document()
+        self.doc.save(output_path)
+        return output_path
 
-                        # Aplica el color y elimina la etiqueta
-                        action(p, colored_text, color_name)
-                        line = line.replace(f"[COLOR:{color_name}]{colored_text}[/COLOR]", "", 1)
-                        break
-
-                    elif end_code in line:
-                        formatted_text = line.split(start_code)[1].split(end_code)[0]
-
-                        # Aplica la acción y elimina la etiqueta
-                        action(p, formatted_text)
-                        line = line.replace(f"{start_code}{formatted_text}{end_code}", "", 1)
-                        break
+    def _process_content(self, content):
+        lines = content.splitlines()
+        current_table = None
+        for line in lines:
+            if "[TABLE]" in line:
+                current_table = []
+            elif "[/TABLE]" in line:
+                if current_table:
+                    self._create_table(current_table)
+                current_table = None
+            elif current_table is not None:
+                current_table.append(line)
             else:
-                # Si no hay más códigos, añadimos el texto restante
-                p.add_run(line)  # Añadir texto restante
-                line = ""  # Finaliza la línea actual
+                self._process_line(line)
 
-    doc.save(output_path)
-    return output_path
+    def _process_line(self, line):
+        if "[PAGEBREAK]" in line:
+            self.doc.add_page_break()
+            line = line.replace("[PAGEBREAK]", "")
+        
+        p = self.doc.add_paragraph()
+        self._process_formatting(p, line)
 
-def apply_color(paragraph, text, color_name):
-    """
-    Aplica color al texto dentro de un párrafo.
-
-    Args:
-        paragraph (docx.Paragraph): El párrafo donde se añadirá el texto.
-        text (str): El texto a colorear.
-        color_name (str): El nombre o valor RGB del color.
-    """
-    try:
-        # Supone que color_name viene en formato "R,G,B"
-        color = RGBColor(*[int(c) for c in color_name.split(',')])
-    except ValueError:
-        # Mapeo de colores por nombre si no es un formato RGB
+    def _get_color(self, color_name):
+        # Mapa de colores por nombre, devuelve instancias de RGBColor directamente
         color_mapping = {
-            'red': RGBColor(255, 0, 0),
-            'green': RGBColor(0, 255, 0),
-            'blue': RGBColor(0, 0, 255),
-            'yellow': RGBColor(255, 255, 0),
-            'orange': RGBColor(255, 165, 0),
-            'purple': RGBColor(128, 0, 128),
-            'black': RGBColor(0, 0, 0),
-            'white': RGBColor(255, 255, 255),
-            'grey': RGBColor(128, 128, 128)
+            'red': RGBColor(0xFF, 0x00, 0x00),
+            'green': RGBColor(0x00, 0xFF, 0x00),
+            'blue': RGBColor(0x00, 0x00, 0xFF),
+            'yellow': RGBColor(0xFF, 0xFF, 0x00),
+            'orange': RGBColor(0xFF, 0xA5, 0x00),
+            'purple': RGBColor(0x80, 0x00, 0x80),
+            'black': RGBColor(0x00, 0x00, 0x00),
+            'white': RGBColor(0xFF, 0xFF, 0xFF),
+            'grey': RGBColor(0x80, 0x80, 0x80)
         }
-        color = color_mapping.get(color_name.lower(), RGBColor(0, 0, 0))
 
-    run = paragraph.add_run(text)
-    run.font.color.rgb = color
+        # Verificar si el color es un valor hexadecimal de 6 dígitos
+        if re.match(r'^[0-9A-Fa-f]{6}$', color_name):
+            r = int(color_name[0:2], 16)
+            g = int(color_name[2:4], 16)
+            b = int(color_name[4:6], 16)
+            return RGBColor(r, g, b)
 
-def create_pptx_with_formatting(content, output_path='output.pptx'):
-    """
-    Crea un archivo .pptx a partir del contenido generado con formato.
+        # Si es un nombre de color, buscarlo en el mapa
+        return color_mapping.get(color_name.lower(), RGBColor(0x00, 0x00, 0x00))
 
-    Args:
-        content (str): El contenido generado con códigos de formato.
-        output_path (str): La ruta donde se guardará el archivo .pptx.
-    
-    Returns:
-        str: La ruta del archivo generado.
-    """
-    prs = Presentation()
+    def _process_formatting(self, paragraph, text):
+        # Diccionario de formatos
+        formats = {
+            'BOLD': False,
+            'ITALIC': False,
+            'COLOR': None
+        }
 
-    # Definir los códigos de formato para PPTX
-    formatting_codes = [
-        ("[H1]", "[/H1]", lambda s, text: s.shapes.title.text == text),  # Título principal
-        ("[H2]", "[/H2]", lambda s, text: s.shapes.add_textbox(Inches(1), Inches(1.5), Inches(8), Inches(1)).text == text),  # Subtítulo
-        ("[BOLD]", "[/BOLD]", lambda p, text: p.add_run(text).bold == True),  # Texto en negrita
-        ("[ITALIC]", "[/ITALIC]", lambda p, text: p.add_run(text).italic == True),  # Texto en cursiva
-        ("[UL]", "[/UL]", lambda p, text: p.add_paragraph(text, style='ListBullet')),  # Lista con viñetas
-        ("[COLOR:", "[/COLOR]", lambda p, text, color: apply_color_pptx(p, text, color))  # Texto coloreado
-        ]
+        pattern = r'\[(.*?)\]'
+        matches = list(re.finditer(pattern, text))
+        last_end = 0
 
-    for line in content.splitlines():
-        slide = prs.slides.add_slide(prs.slide_layouts[5])  # Slide layout en blanco
+        # Procesar los matches encontrados
+        for match in matches:
+            start, end = match.span()
+            tag = match.group(1)
+
+            # Agregar texto antes del tag encontrado
+            if last_end < start:
+                paragraph.add_run(text[last_end:start])
+
+            # Procesar el tag
+            if tag.startswith('COLOR:'):
+                color_value = tag.split(':')[1]
+                formats['COLOR'] = self._get_color(color_value)
+            elif tag == 'BOLD':
+                formats['BOLD'] = True
+            elif tag == 'ITALIC':
+                formats['ITALIC'] = True
+            elif tag == 'H1':
+                paragraph.style = 'H1'
+            elif tag == 'H2':
+                paragraph.style = 'H2'
+
+            last_end = end
+
+        # Agregar texto después del último tag
+        if last_end < len(text):
+            run = paragraph.add_run(text[last_end:])
+            if formats['COLOR']:
+
+                run.font.color.rgb = RGBColor.from_string('0000FF') ###############################################     
+            
+            if formats['BOLD']:
+                run.bold = True
+            if formats['ITALIC']:
+                run.italic = True
+
+    def _create_table(self, table_data):
+        if not table_data:
+            return
+
+        rows = [row.split(";") for row in table_data]
+        table = self.doc.add_table(rows=len(rows), cols=len(rows[0]))
+        table.style = 'Table Grid'
+
+        for i, row in enumerate(rows):
+            for j, cell in enumerate(row):
+                table.cell(i, j).text = cell.strip()
+
+    def _clean_document(self):
+        for paragraph in self.doc.paragraphs:
+            paragraph.text = self._remove_bracketed_text(paragraph.text)
+
+    def _remove_bracketed_text(self, content):
+        return re.sub(r'\[.*?\]', '', content).strip()
+
+class PptxProcessor:
+    def __init__(self):
+        self.prs = Presentation()
+
+    def create_presentation(self, content, output_path='output.pptx'):
+        self._process_content(content)
+        self.prs.save(output_path)
+        return output_path
+
+    def _process_content(self, content):
+        slides = content.split("[PAGEBREAK]")
+        for slide_content in slides:
+            self._create_slide(slide_content.strip())
+
+    def _create_slide(self, content):
+        slide = self.prs.slides.add_slide(self.prs.slide_layouts[5])
         text_frame = slide.shapes.add_textbox(Inches(1), Inches(1), Inches(8), Inches(5)).text_frame
         
-        while line:
-            for start_code, end_code, action in formatting_codes:
-                if start_code in line:
-                    # Para etiquetas de color, se necesita un manejo especial para extraer el color
-                    if start_code.startswith("[COLOR:") and end_code in line:
-                        color_start = line.index("[COLOR:") + len("[COLOR:")
-                        color_end = line.index("]", color_start)
-                        color_name = line[color_start:color_end]
-                        colored_text = line.split(f"[COLOR:{color_name}]")[1].split("[/COLOR]")[0]
+        lines = content.splitlines()
+        for line in lines:
+            self._process_line(text_frame, line)
 
-                        # Aplica la acción de color y elimina la etiqueta
-                        action(text_frame, colored_text, color_name)
-                        line = line.replace(f"[COLOR:{color_name}]{colored_text}[/COLOR]", "", 1)
-                        break
-
-                    # Para otros formatos estándar (H1, H2, BOLD, ITALIC, UL)
-                    elif start_code in line and end_code in line:
-                        formatted_text = line.split(start_code)[1].split(end_code)[0]
-                        
-                        # Aplica la acción y elimina la etiqueta
-                        action(text_frame, formatted_text)
-                        line = line.replace(f"{start_code}{formatted_text}{end_code}", "", 1)
-                        break
-            else:
-                # Si no hay más códigos, añadimos el texto restante y salimos del bucle
-                p = text_frame.add_paragraph()
-                p.text = line
-                line = ""
-    
-    prs.save(output_path)
-    return output_path
-
-def apply_color_pptx(text_frame, text, color_name):
-    """
-    Aplica color al texto dentro de un cuadro de texto en PPTX.
-
-    Args:
-        text_frame (pptx.text.TextFrame): El cuadro de texto donde se añadirá el texto.
-        text (str): El texto a colorear.
-        color_name (str): El nombre o valor RGB del color.
-    """
-    try:
-        # Supone que color_name viene en formato "R,G,B"
-        color = RGBColor(*[int(c) for c in color_name.split(',')])
-    except ValueError:
-        # Mapeo de colores por nombre si no es un formato RGB
-        color_mapping = {
-            'red': RGBColor(255, 0, 0),
-            'green': RGBColor(0, 255, 0),
-            'blue': RGBColor(0, 0, 255),
-            'yellow': RGBColor(255, 255, 0),
-            'orange': RGBColor(255, 165, 0),
-            'purple': RGBColor(128, 0, 128),
-            'black': RGBColor(0, 0, 0),
-            'white': RGBColor(255, 255, 255),
-            'grey': RGBColor(128, 128, 128)
+    def _process_line(self, text_frame, text):
+        p = text_frame.add_paragraph()
+        # Diccionario de formatos iniciales
+        formats = {
+            'BOLD': False,
+            'ITALIC': False,
+            'COLOR': None
         }
-        color = color_mapping.get(color_name.lower(), RGBColor(0, 0, 0))
 
-    p = text_frame.add_paragraph()
-    run = p.add_run(text)
-    run.font.color.rgb = color
+        # Patrón para encontrar etiquetas de formato
+        pattern = r'\[(.*?)\]'
+        matches = list(re.finditer(pattern, text))
+        last_end = 0
+
+        # Procesar las etiquetas encontradas
+        for match in matches:
+            start, end = match.span()
+            tag = match.group(1)
+
+            # Agregar el texto antes del tag encontrado
+            if last_end < start:
+                run = p.add_run()
+                run.text = text[last_end:start]
+
+                # Aplicar formatos si los hay
+                if formats['BOLD']:
+                    run.font.bold = True
+                if formats['ITALIC']:
+                    run.font.italic = True
+                if formats['COLOR']:
+                    run.font.color.rgb = formats['COLOR']
+
+            # Procesar el tag
+            if tag.startswith('COLOR:'):
+                color_value = tag.split(':')[1]
+                formats['COLOR'] = self._get_color(color_value)
+            elif tag == 'BOLD':
+                formats['BOLD'] = True
+            elif tag == 'ITALIC':
+                formats['ITALIC'] = True
+            elif tag == 'H1':
+                p = text_frame.add_paragraph()
+                p.text = ""
+                p.font.size = Pt(24)
+                p.font.bold = True
+            elif tag == 'H2':
+                p = text_frame.add_paragraph()
+                p.text = ""
+                p.font.size = Pt(20)
+                p.font.bold = True
+
+            last_end = end
+
+        # Agregar texto después del último tag
+        if last_end < len(text):
+            run = p.add_run()
+            run.text = text[last_end:]
+            if formats['BOLD']:
+                run.font.bold = True
+            if formats['ITALIC']:
+                run.font.italic = True
+            if formats['COLOR']:
+                run.font.color.rgb = formats['COLOR']
+
+    def _get_color(self, color_name):
+        color_mapping = {
+            'red': PPTXRGBColor(255, 0, 0),
+            'green': PPTXRGBColor(0, 255, 0),
+            'blue': PPTXRGBColor(0, 0, 255),
+            'yellow': PPTXRGBColor(255, 255, 0),
+            'orange': PPTXRGBColor(255, 165, 0),
+            'purple': PPTXRGBColor(128, 0, 128),
+            'black': PPTXRGBColor(0, 0, 0),
+            'white': PPTXRGBColor(255, 255, 255),
+            'grey': PPTXRGBColor(128, 128, 128)
+        }
+
+        # Verificar si el color es un valor hexadecimal de 6 dígitos
+        if re.match(r'^[0-9A-Fa-f]{6}$', color_name):
+            r = int(color_name[0:2], 16)
+            g = int(color_name[2:4], 16)
+            b = int(color_name[4:6], 16)
+            return PPTXRGBColor(r, g, b)
+
+        # Si es un nombre de color, buscarlo en el mapa
+        return color_mapping.get(color_name.lower(), PPTXRGBColor(0, 0, 0))
+
 
 
 def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama-3.1-70b-versatile'):
-    """
-    Generates document or presentation content from a prompt using a language model.
-
-    Args:
-        prompt (str): The base text for generation.
-        api_key_file (str): File containing the API key for the model.
-        model (str): The language model to be used for generation.
-
-    Returns:
-        str: Generated content in text format with formatting codes.
-    """
     try:
         with open(api_key_file, 'r') as file:
             api_key = file.read().strip()
 
         client = Groq(api_key=api_key)
 
-        # List of formatting codes and their meanings
         formatting_codes = [
             ("[H1]", "[/H1]"),  # Título principal en negrita
             ("[H2]", "[/H2]"),  # Subtítulo en negrita
             ("[BOLD]", "[/BOLD]"),  # Texto en negrita
             ("[ITALIC]", "[/ITALIC]"),  # Texto en cursiva
-            ("[UL]", "[/UL]"),  # Lista con viñetas
-            ("[OL]", "[/OL]"),  # Lista numerada
-            ("[COLOR:", "[/COLOR]")  # Texto coloreado
+            ("[COLOR:color_name]", "[/COLOR]"),  # Texto en color
+            ("[PAGEBREAK]", ""),  # Salto de página
+            ("[TABLE]", "[/TABLE]")  # Tabla
         ]
 
-        # Formato de la cadena de formato para el prompt
-        formatting_codes_str = "\n".join([f"- {code[0]}: {code[1].__doc__}" for code in formatting_codes])
+        formatting_codes_str = "\n".join([f"- {code[0]}: {code[1]}" for code in formatting_codes])
 
-        # Ajusta el prompt para incluir la lista de códigos
         full_prompt = f"""
-        Generate a structured content for a {file_type} document based on the following prompt:
+        Generate structured content for a {file_type} document based on the following prompt:
         - Use the formatting codes provided below where appropriate. Always add start and end codes.
         Here are the formatting codes and their meanings:
         {formatting_codes_str}
+        - For page or slide breaks, simply use [PAGEBREAK].
         - Do not use other formatting codes not provided.
-        - For presentations (pptx), include a title and bullet points for each slide with appropriate formatting.
-        - For text documents (docx), include a title and paragraphs with appropriate formatting.
+        - For presentations (pptx), include a title for each slide with appropriate formatting (H1).
+        - For text documents (docx), include title after a pagebreak and paragraphs with appropriate formatting.
+        - You can combine multiple formatting codes, for example: [BOLD][COLOR:red]This is bold and red text[/COLOR][/BOLD]
+        - Available colors: red, green, blue, yellow, orange, purple, black, white, grey
+        - For tables, use the format:
+          [TABLE]
+          Header1;Header2
+          Row1Col1;Row1Col2
+          Row2Col1;Row2Col2
+          [/TABLE]
         - Example of formatted output:
           [H1]Exploring the World of Science[/H1]
-          [BOLD]Science is a way of learning about the world around us. [/BOLD]
-          [UL]
+          [BOLD]Science is a way of learning about the world around us.[/BOLD]
           [ITALIC]This is a bulleted list item.[/ITALIC]
-          [/UL]
-
-        Always write content in same language from given instructions.
+          [COLOR:blue]- Item 1[/COLOR]
+          [COLOR:green]- Item 2[/COLOR]
+          [PAGEBREAK]
+          [TABLE]
+          Animals;Habitat
+          Lion;Savannah
+          Tiger;Forest
+          Whale;Ocean
+          [/TABLE]
+        Do not add any comment rather than the content asked, also do not repeat the prompt or any instruction.
+        Always write content in the same language as given instructions.
         These are the given instructions for the content:
         {prompt}
         """
 
         chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": full_prompt
-                }
-            ],
+            messages=[{"role": "user", "content": full_prompt}],
             model=model
         )
         content = chat_completion.choices[0].message.content.strip()
-        
-        # Return the generated content with color mapping
-        print(content)
         return content
 
     except Exception as e:
         raise RuntimeError(f"Error generating content: {e}")
-    
 
-def generate_and_create_file(prompt,file_type,output):
-    """
-    Genera contenido y crea un archivo según el tipo especificado.
 
-    Args:
-        file_type (str): Tipo de archivo a generar ('docx' o 'pptx').
-        prompt (str): El texto que se usará como prompt para la generación de contenido.
-    
-    Returns:
-        str: La ruta del archivo generado.
-    """
+def generate_and_create_file(prompt, file_type, output):
     content = generate_content(prompt, file_type)
+    print(content)
 
     if file_type.lower() == 'docx':
-        return create_docx_with_formatting(content,output)
+        processor = DocxProcessor()
+        return processor.create_document(content, output)
     elif file_type.lower() == 'pptx':
-        return create_pptx_with_formatting(content,output)
+        processor = PptxProcessor()
+        return processor.create_presentation(content, output)
     else:
         raise ValueError("Tipo de archivo no soportado. Usa 'docx' o 'pptx'.")
 
 
+def generate_and_create_file(prompt, file_type, output):
+    content = generate_content(prompt, file_type)
+    print(content)
 
-
-
-
-
-
-
-
-
-
-
-
-
+    if file_type.lower() == 'docx':
+        processor = DocxProcessor()
+        return processor.create_document(content, output)
+    elif file_type.lower() == 'pptx':
+        processor = PptxProcessor()
+        return processor.create_presentation(content, output)
+    else:
+        raise ValueError("Tipo de archivo no soportado. Usa 'docx' o 'pptx'.")
