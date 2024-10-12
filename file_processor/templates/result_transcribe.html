@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Transcripció Completa{% endblock %}
 
 {% block content %}
 <main>
-    <link rel="stylesheet" href="{{ url_for('static', filename='result.css') }}">
+    <link rel="stylesheet" href="{% static 'result.css' %}">
     <div class="result-container">
         <h2>Transcripció Completa</h2>
         <p>El teu fitxer d'àudio ha estat transcrit amb èxit.</p>
-        <textarea readonly class="transcription-textarea">{{ transcription }}</textarea>
+        <textarea readonly class="transcription-textarea">{{ transcription }}</textarea> <!-- Mostrar contenido de la transcripción -->
         <button onclick="copyText()" class="copy-button">Copiar Transcripció</button>
     </div>
 

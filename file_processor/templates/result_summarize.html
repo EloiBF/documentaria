@@ -1,17 +1,16 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Resum Completo{% endblock %}
 
 {% block content %}
 <main>
-    <link rel="stylesheet" href="{{ url_for('static', filename='result.css') }}">
+    <link rel="stylesheet" href="{% static 'result.css' %}">
     <div class="result-container">
         <h2>Resum Complet</h2>
         <p>El teu document ha estat resumit amb èxit.</p>
-        <textarea readonly class="summary-textarea">{{ summary }}</textarea>
+        <textarea readonly class="summary-textarea">{{ summary }}</textarea> <!-- Mostrar contenido del resumen -->
         <button onclick="copySummary()" class="copy-button">Copiar Resum</button>
-        <p>Pots descarregar-lo utilitzant l'enllaç següent:</p>
-        <a href="{{ url_for('download_file', process_type='summary', filename=filename) }}" class="download-button">Descarregar Resum</a>
     </div>
 
     <script>

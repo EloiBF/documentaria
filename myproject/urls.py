@@ -21,10 +21,10 @@ urlpatterns = [
 
     # Rutas para la extracción de información (Base de datos)
     path('extract/', views.upload_extract_info, name='upload_extract_info'),
-    path('progress_extract/<str:filename>/', views.check_progress_extract_info, name='check_progress_extract_info'),
+    path('progress_extract/<str:filename>/', views.check_progress_extract, name='check_progress_extract'),
     path('result_extract/<str:filename>/', views.result_extract_info, name='result_extract_info'),
-    path('download_extract/<str:filename>/', views.download_extract_info, name='download_extract_info'),  # Ruta de descarga para extracción
-    path('check_status_extract/<str:filename>/', views.check_status_extract_info, name='check_status_extract_info'),  # Check status
+    path('download_extract/<str:filename>/', views.download_extract_info, name='download_extract_info'),
+    path('check_status_extract/<str:filename>/', views.check_status_extract_info, name='check_status_extract_info'),
 
     # Rutas para la edición de documentos
     path('edit/', views.upload_edit, name='upload_edit'),

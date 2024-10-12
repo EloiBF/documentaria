@@ -16,22 +16,24 @@
 
     <script>
         const filename = "{{ filename }}";
-        const processType = "edit";
         const statusMessage = document.getElementById('status-message');
 
         function checkStatus() {
-            fetch(`/check_status/${processType}/${filename}`)
+            fetch("{% url 'check_status_edit' filename=filename %}")  // Actualiza la URL para que coincida con la ruta correcta
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'completed') {
-                        window.location.href = `/result_${processType}/${filename}`;
+                        window.location.href = "{% url 'result_edit' filename=filename %}";  // Redirigir a la página de resultados
                     } else {
-                        setTimeout(checkStatus, 5000); // Check status every 5 seconds
+                        setTimeout(checkStatus, 5000); // Comprobar el estado cada 5 segundos
                     }
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
                 });
         }
 
-        checkStatus();
+        checkStatus();  // Inicia el proceso de verificación
     </script>
 </main>
 {% endblock %}

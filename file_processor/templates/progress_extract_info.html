@@ -15,23 +15,24 @@
     </div>
 
     <script>
-        const filename = "{{ filename }}";
-        const processType = "extract";
-        const statusMessage = document.getElementById('status-message');
-
         function checkStatus() {
-            fetch("{% url 'check_status_extract_info' filename=filename %}")
+            fetch("{% url 'check_status_extract_info' filename='RESULTADO.json' %}")  // Usamos el nombre fijo
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'completed') {
-                        window.location.href = "{% url 'result_extract_info' filename=filename %}";
+                        window.location.href = "{% url 'result_extract_info' filename='RESULTADO.json' %}";  // Redirigir a resultados
                     } else {
-                        setTimeout(checkStatus, 5000); // Check status every 5 seconds
+                        setTimeout(checkStatus, 5000); // Comprobar estado cada 5 segundos
                     }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                    setTimeout(checkStatus, 5000); // Reintentar tras 5 segundos en caso de error
                 });
         }
 
-        checkStatus();
+        checkStatus();  // Iniciar la verificación del estado
     </script>
+
 </main>
 {% endblock %}

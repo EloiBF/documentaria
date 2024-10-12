@@ -147,88 +147,96 @@ def reflexionar_respuestas(respuestas, prompt, tipo_respuesta):
 
 import json
 
-def extract_info_from_doc(input_path, output_path, prompts, tipos_respuesta, ejemplos_respuesta=None, max_retries=10):
-    """Función principal para extraer información de un documento usando múltiples prompts y tipos de respuesta."""
-    try:
-        # Leer el documento y obtener el tipo de archivo
-        text, file_type = read_document(input_path)
-        
-        # Dividir el texto en bloques si es necesario
-        blocks = split_text(text)
-        
-        # Diccionario para almacenar respuestas por cada pregunta
-        respuestas_por_prompt = {prompt: [] for prompt in prompts}
-        
-        # Iterar por cada bloque y extraer información
-        for block in blocks:
-            print(f"Procesando bloque de texto...")
-            
-            for prompt, tipo in zip(prompts, tipos_respuesta or []):
-                # Llamada a la nueva función con reintentos
-                extracted_info = extract_with_retry(
-                    texto=block,
-                    prompt=prompt,
-                    respuesta_tipo=tipo,
-                    ejemplo_respuesta=None,
-                    file_type=file_type,
-                    max_retries=max_retries
-                )
-                
-                # Guardar la respuesta parcial en el diccionario
-                respuestas_por_prompt[prompt].append(extracted_info)
+def extract_info_from_docs(input_paths, output_path, prompts, tipos_respuesta, ejemplos_respuesta=None, max_retries=10):
+    """Función principal para extraer información de múltiples documentos usando múltiples prompts y tipos de respuesta."""
+    final_results = {}
 
-        # Reflexionar sobre las respuestas y obtener una respuesta final por pregunta
-        final_results = {}
-        
-        for prompt, tipo in zip(prompts, tipos_respuesta):
-            respuestas = respuestas_por_prompt[prompt]
-            intentos = 0
+    for input_path in input_paths:
+        try:
+            # Obtener solo el nombre del archivo sin la ruta
+            file_name = os.path.basename(input_path)
             
-            while True:
-                # Reflexionar sobre las respuestas y generar una respuesta consolidada
-                respuesta_final = reflexionar_respuestas(respuestas, prompt, tipo)
+            # Leer el documento y obtener el tipo de archivo
+            text, file_type = read_document(input_path)
+            
+            # Dividir el texto en bloques si es necesario
+            blocks = split_text(text)
+            
+            # Diccionario para almacenar respuestas por cada pregunta
+            respuestas_por_prompt = {prompt: [] for prompt in prompts}
+            
+            # Iterar por cada bloque y extraer información
+            for block in blocks:
+                print(f"Procesando bloque de texto de {file_name}...")
                 
-                if validar_respuesta(respuesta_final, tipo):
-                    final_results[prompt] = respuesta_final
-                    break  # Salir del bucle si la validación es correcta
-                else:
-                    print(f"Verificación fallida para el prompt: {prompt}. Reiniciando el procesamiento...")
-                    intentos += 1
+                for prompt, tipo in zip(prompts, tipos_respuesta or []):
+                    # Llamada a la nueva función con reintentos
+                    extracted_info = extract_with_retry(
+                        texto=block,
+                        prompt=prompt,
+                        respuesta_tipo=tipo,
+                        ejemplo_respuesta=ejemplos_respuesta,
+                        file_type=file_type,
+                        max_retries=max_retries
+                    )
                     
-                    # Reiniciar el procesamiento si la validación falla
-                    respuestas_por_prompt[prompt] = []  # Limpiar respuestas para esa pregunta
-                    
-                    # Procesar nuevamente todos los bloques para esa pregunta
-                    for block in blocks:
-                        extracted_info = extract_with_retry(
-                            texto=block,
-                            prompt=prompt,
-                            respuesta_tipo=tipo,
-                            ejemplo_respuesta=None,
-                            file_type=file_type,
-                            max_retries=max_retries
-                        )
-                        respuestas_por_prompt[prompt].append(extracted_info)
-                    
-                    # Si se alcanzan los reintentos, asignar 'N/D'
-                    if intentos >= max_retries:
-                        final_results[prompt] = 'N/D'
-                        break
-        
-        print(final_results)
-        
-        # Guardar el resultado en un archivo JSON
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(final_results, f, ensure_ascii=False, indent=4)
-        
-        print(f"Resultados guardados en {output_path}")
-        
-        return final_results
+                    # Guardar la respuesta parcial en el diccionario
+                    respuestas_por_prompt[prompt].append(extracted_info)
 
-    except Exception as e:
-        print(f"Ocurrió un error: {e}")
-        return None
-  
+            # Reflexionar sobre las respuestas y obtener una respuesta final por pregunta
+            for prompt, tipo in zip(prompts, tipos_respuesta):
+                respuestas = respuestas_por_prompt[prompt]
+                intentos = 0
+                
+                while True:
+                    # Reflexionar sobre las respuestas y generar una respuesta consolidada
+                    respuesta_final = reflexionar_respuestas(respuestas, prompt, tipo)
+                    
+                    if validar_respuesta(respuesta_final, tipo):
+                        # Agregar la respuesta final al diccionario usando solo el nombre del archivo
+                        if file_name not in final_results:
+                            final_results[file_name] = {}
+                        final_results[file_name][prompt] = respuesta_final  # Guardar como cadena
+                        break  # Salir del bucle si la validación es correcta
+                    else:
+                        print(f"Verificación fallida para el prompt: {prompt}. Reiniciando el procesamiento...")
+                        intentos += 1
+                        
+                        # Reiniciar el procesamiento si la validación falla
+                        respuestas_por_prompt[prompt] = []  # Limpiar respuestas para esa pregunta
+                        
+                        # Procesar nuevamente todos los bloques para esa pregunta
+                        for block in blocks:
+                            extracted_info = extract_with_retry(
+                                texto=block,
+                                prompt=prompt,
+                                respuesta_tipo=tipo,
+                                ejemplo_respuesta=ejemplos_respuesta,
+                                file_type=file_type,
+                                max_retries=max_retries
+                            )
+                            respuestas_por_prompt[prompt].append(extracted_info)
+                        
+                        # Si se alcanzan los reintentos, asignar 'N/D'
+                        if intentos >= max_retries:
+                            final_results[file_name][prompt] = 'N/D'  # Guardar 'N/D' como cadena
+                            break
+            
+            print(final_results)
+
+        except Exception as e:
+            print(f"Ocurrió un error procesando el archivo {input_path}: {e}")
+    
+    # Guardar el resultado en el archivo JSON especificado por output_path
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(final_results, f, ensure_ascii=False, indent=4)
+    
+    print(f"Resultados guardados en {output_path}")
+    
+    return final_results
+
+
+
 def extract_info_from_multiple_docs(input_dir, output_dir, prompts, tipos_respuesta, ejemplos_respuesta=None, max_retries=10):
     """Función para procesar todos los archivos en un directorio y extraer información."""
     resultados_totales = {}

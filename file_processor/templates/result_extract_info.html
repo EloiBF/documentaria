@@ -8,40 +8,15 @@
     <link rel="stylesheet" href="{% static 'result.css' %}">
     <div class="result-container">
         <h2>Resultats d'Extracció</h2>
-        <p>Les dades han estat extretes amb èxit.</p>
         
-        {% if data %}
-            <table>
-                <thead>
-                    <tr>
-                        <!-- Mostrar todas las preguntas como encabezados de columna -->
-                        {% for pregunta in data.keys %}
-                        <th>{{ pregunta }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <!-- Mostrar todas las respuestas en una fila -->
-                        {% for resposta in data.values %}
-                        <td>{{ resposta }}</td>
-                        {% endfor %}
-                    </tr>
-                </tbody>
-            </table>
+        {% if result_table %}
+            <p>Les dades han estat extretes amb èxit.</p>
+            <div>
+                {{ result_table|safe }}  {# Usar 'safe' para renderizar el HTML sin escapar #}
+            </div>
         {% else %}
             <p>No s'han trobat dades per mostrar.</p>
         {% endif %}
     </div>
-
-    <script>
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Resposta copiada: ' + text);
-            }, (err) => {
-                console.error('Error al copiar: ', err);
-            });
-        }
-    </script>
 </main>
 {% endblock %}
