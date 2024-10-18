@@ -1,0 +1,126 @@
+services:
+  # Servicio de Django (backend)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app  # Monta el código de la aplicación en el contenedor
+    ports:
+      - "8000:8000"  # Mapea el puerto 8000 del contenedor al puerto 8000 del host
+    environment:
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+
+  # # Servicio de la Base de Datos (PostgreSQL)
+  # # NO NECESARIO DE MOMENTO AL USAR SQLITE
+  # #db:
+  #   # image: postgres:14
+  #   # volumes:
+  #   #   - postgres_data:/var/lib/postgresql/data
+  #   # env_file:
+  #   #   - .env  # Configura las credenciales de la base de datos desde el archivo .env
+  #   # environment:
+  #   #   - POSTGRES_DB=${DATABASE_NAME}
+  #   #   - POSTGRES_USER=${DATABASE_USER}
+  #   #   - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+  #   # ports:
+  #   #   - "5432:5432"  # Mapea el puerto 5432 del contenedor al puerto 5432 del host
+
+  # # # Servicio del Frontend (si usas un framework de JavaScript como React, Angular, etc.)
+  # # frontend:
+  # #   build:
+  # #     context: ./frontend
+  # #     dockerfile: Dockerfile
+  # #   ports:
+  # #     - "3000:3000"  # Mapea el puerto 3000 del contenedor al puerto 3000 del host
+  # #   volumes:
+  # #     - ./frontend:/app  # Monta el código del frontend en el contenedor
+  # #   stdin_open: true
+  # #   tty: true
+
+  # # Servicio 1 de análisis de documentos
+  # doc_analyze:
+  #   build:
+  #     context: ./doc_analyze
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./doc_analyze:/app
+  #   ports:
+  #     - "8001:8000"
+  #   depends_on:
+  #     - backend
+
+  # # Servicio 2 de edición de documentos
+  # doc_editor:
+  #   build:
+  #     context: ./doc_editor
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./doc_editor:/app
+  #   ports:
+  #     - "8002:8000"
+  #   depends_on:
+  #     - backend
+
+  # # Servicio 3 de generación de documentos
+  # doc_generate:
+  #   build:
+  #     context: ./doc_generate
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./doc_generate:/app
+  #   ports:
+  #     - "8003:8000"
+  #   depends_on:
+  #     - backend
+
+  # # Servicio 4 de resumen de documentos
+  # doc_summarizer:
+  #   build:
+  #     context: ./doc_summarizer
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./doc_summarizer:/app
+  #   ports:
+  #     - "8004:8000"
+  #   depends_on:
+  #     - backend
+
+  # # Servicio 5 de transcripción de audio
+  # doc_transcriber:
+  #   build:
+  #     context: ./doc_transcriber
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./doc_transcriber:/app
+  #   ports:
+  #     - "8005:8000"
+  #   depends_on:
+  #     - backend
+
+  # Servicio 6 de traducción
+  doc_translator:
+    build:
+      context: ./doc_translator
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./doc_translator:/app
+    ports:
+      - "8006:8000"
+    depends_on:
+      - backend
