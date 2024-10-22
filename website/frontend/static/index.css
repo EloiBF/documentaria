@@ -1,0 +1,429 @@
+/* index.css */
+
+html {
+    scroll-behavior: smooth;
+}
+
+.hero-section {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    background-image: url('/static/images/background.jpg');
+    background-size: cover;
+    background-position: center 8%;
+    background-repeat: no-repeat;
+    color: var(--text-color-dark);
+    text-align: center;
+    padding-top: 100px;
+    z-index: 0;
+}
+
+.hero-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(216, 216, 216, 0.2); /* Color negro con transparencia (0.5) */
+    z-index: 1; /* Coloca la capa de transparencia detrás del contenido */
+}
+
+.hero-content span.highlight {
+    color: var(--mid-color); /* Color de tu elección */
+}
+
+.hero-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+    z-index: 2; /* Asegúrate de que el contenido esté por encima de la capa de transparencia */
+}
+
+.hero-content {
+    max-width: 1000px;
+    padding: 20px;
+    flex: 1;
+}
+
+.hero-content h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+
+.hero-content p {
+    font-size: 1.3em;
+    margin-bottom: 30px;
+}
+
+.hero-group-button {
+    display: flex;
+    flex-direction: column;
+}
+
+.cta-button {
+    background-color: var(--mid-color);
+    color: var(--text-color-light);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    display: inline-block; /* Cambiado a inline-block para ajustarse al tamaño del texto */
+    margin: 20px auto 0;
+    transition: background-color 0.3s ease; /* Cambiado a background-color para que el hover funcione correctamente */
+    text-decoration: none; /* Asegura que no haya subrayado en los enlaces dentro de los botones */
+    font: inherit;
+    min-width: 120px; /* Establece un ancho mínimo para el botón */
+    text-align: center; /* Alinea el texto en el centro */
+}
+
+
+.cta-button:hover {
+    background-color: var(--dark-color); /* Substitueix amb el color fosc per al hover */
+}
+
+
+
+
+
+/* Estils per la secció d'explicació */
+.explanation-section {
+    background-color: var(--mid-color); /* Defineix un color de fons per la secció */
+    color: var(--text-color-light); /* Color de text clar per contrastar amb el fons */
+    display: flex;
+}
+
+.explanation-container {
+    display: flex;
+    flex-direction: row; /* Alineación horizontal (por defecto) */
+    align-items: flex-start; /* Alinea el contenido al principio (arriba) en pantallas anchas */
+    justify-content: space-between; /* Distribuye espacio entre los elementos */
+    text-align: left; /* Alinea el texto a la izquierda */
+    max-width: 80%; /* Hace que el contenedor ocupe el ancho completo */
+    margin: 0 auto; /* Centra el contenedor */
+    padding: 100px 50px; /* Augmenta l'espai vertical per al contingut */
+}
+
+/* Media query para pantallas pequeñas (móviles) */
+@media (max-width: 768px) {
+    .explanation-container {
+        flex-direction: column; /* Cambia a disposición vertical */
+        align-items: center; /* Alinea los elementos en el centro en el eje vertical */
+        text-align: center; /* Alinea el texto al centro si es necesario */
+        font-size: medium;
+        margin-right: 0; /* Elimina el margen lateral en pantallas pequeñas */
+        margin-left: 0; /* Elimina el margen lateral en pantallas pequeñas */
+
+    }
+
+    .explanation-content {
+        max-width: 100%; /* Hace que el texto ocupe todo el ancho disponible */
+        margin-right: 0; /* Elimina el margen lateral en pantallas pequeñas */
+        margin-left: 0; /* Elimina el margen lateral en pantallas pequeñas */
+
+        flex-direction: row;
+    }
+
+    .explanation-image {
+        display: none;
+    }
+
+
+    .explanation-content h1 {
+        font-size: 1em;
+        color: var(--text-color-light);
+        margin-bottom: 20px;
+    }
+    
+    .explanation-content .highlight {
+        color: var(--highlight-color); /* Color per a la part destacada del títol */
+    }
+    
+    .explanation-content p {
+        font-size: 1.2em;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    
+}
+
+.explanation-content {
+    max-width: 50%; /* Ajusta l'amplada del contingut per deixar espai per la imatge */
+    margin-right: 10px; /* Espai entre el text i la imatge */
+    padding: 10px;
+}
+
+.explanation-content h1 {
+    font-size: 3em;
+    color: var(--text-color-light);
+    margin-bottom: 20px;
+}
+
+.explanation-content .highlight {
+    color: var(--highlight-color); /* Color per a la part destacada del títol */
+}
+
+.explanation-content p {
+    font-size: 1.2em;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.explanation-image {
+    max-width: 50%; /* Ajusta l'amplada màxima de la imatge per adaptar-se al contingut */
+}
+
+.explanation-image img {
+    width: 600px; /* Assegura que la imatge ocupa tot l'espai disponible */
+    height: auto; /* Manté la proporció de la imatge */
+}
+
+
+
+/* Estil de la secció sobre nosaltres */
+#about-us {
+    padding: 60px 5%; /* Espai interior ajustat */
+    background-color: var(--background-dark); /* Color de fons ajustat */
+    text-align: center; /* Centra el text */
+}
+
+#about-us h2 {
+    font-size: 2.5em; /* Mida del títol */
+    color: var(--text-color-dark);
+    margin-bottom: 20px; /* Espai inferior entre el títol i el text */
+}
+
+#about-us p {
+    font-size: 1.1em; /* Mida del text per a millor llegibilitat */
+    color: var(--text-color-dark);
+    line-height: 1.6; /* Espai entre línies per a millor llegibilitat */
+    margin-bottom: 20px; /* Espai inferior entre els paràgrafs */
+    max-width: 800px; /* Amplada màxima del text per a millor legibilitat */
+    margin-left: auto; /* Centrar el text */
+    margin-right: auto; /* Centrar el text */
+}
+
+
+
+
+
+
+
+/* Estil de la secció de contacte */
+#contact {
+    padding: 60px 5%; /* Espai interior ajustat */
+    background-color: var(--background-mid); /* Color de fons igual que la secció de serveis */
+    text-align: center; /* Centra el text */
+}
+
+#contact h2 {
+    font-size: 2.5em; /* Mida del títol */
+    color: var(--text-color-dark);
+    margin-bottom: 20px; /* Espai inferior entre el títol i el text */
+}
+
+#contact p {
+    font-size: 1.1em; /* Mida del text per a millor llegibilitat */
+    color: var(--text-color);
+    line-height: 1.6; /* Espai entre línies per a millor llegibilitat */
+    margin-bottom: 20px; /* Espai inferior entre els paràgrafs */
+    max-width: 800px; /* Amplada màxima del text per a millor legibilitat */
+    margin-left: auto; /* Centrar el text */
+    margin-right: auto; /* Centrar el text */
+}
+
+.contact-container {
+    max-width: 800px; /* Amplada màxima del formulari */
+    margin-left: auto; /* Centrar el formulari */
+    margin-right: auto; /* Centrar el formulari */
+}
+
+.contact-container form {
+    display: flex;
+    flex-direction: column; /* Col·loca els elements del formulari en columna */
+    gap: 20px; /* Espai entre els elements del formulari */
+}
+
+.contact-container .form-group {
+    display: flex;
+    flex-direction: column; /* Col·loca les etiquetes i els camps en columna */
+}
+
+.contact-container .form-group label {
+    font-size: 1em; /* Mida de la lletra per a les etiquetes */
+    color: var(--text-color-dark);
+    margin-bottom: 5px; /* Espai entre l'etiqueta i el camp d'entrada */
+}
+
+.contact-container .form-group input,
+.contact-container .form-group textarea {
+    padding: 10px; /* Espai interior dels camps */
+    font-size: 1em; /* Mida del text dins dels camps */
+    border: 1px solid var(--border-color); /* Borde per als camps */
+    border-radius: 4px; /* Esquerres lleugerament arrodonides */
+    width: 100%; /* Amplada completa dels camps */
+    box-sizing: border-box; /* Inclou el padding i el borde en l'amplada total */
+}
+
+.contact-container .submit-button {
+    padding: 12px 20px; /* Espai interior del botó */
+    background-color: var(--mid-color); /* Ajustado con la paleta de colores */
+    color: var(--text-color-light);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1.1em; /* Mida del text del botó */
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.contact-container .submit-button:hover {
+    background-color: var(--dark-color);
+    transform: scale(1.05); /* Lleuger efecte d'agrandament en hover */
+}
+
+
+
+
+
+
+
+/* Estilos para la sección de servicios */
+.service-section {
+    background-color: var(--background-mid);
+    color: var(--text-color-dark);
+    padding: 100px 100px; /* Reduce padding en los laterales para evitar desbordamientos */
+    text-align: center;
+}
+
+.services-title {
+    margin-bottom: 50px;
+}
+
+.services-title h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+}
+
+.services-title p {
+    font-size: 1.2em;
+}
+
+/* Diseño de columnas para pantallas grandes */
+.service-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    margin-bottom: 100px;
+}
+
+/* Cada columna dentro de la sección de servicios */
+.service-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Diseño de cada tarjeta de servicio */
+.service-item {
+    background-color: var(--background-light);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    padding: 30px;
+    min-height: 300px; /* Altura mínima para las tarjetas */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box; /* Asegura que el padding esté dentro del ancho */
+    height: auto; /* Deja que la altura se ajuste al contenido */
+}
+
+.service-item img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+}
+
+/* Descripción del servicio */
+.service-description {
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.service-description h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.service-description p {
+    font-size: 1em;
+    margin-bottom: 10px;
+}
+
+.services-closing {
+    margin-top: 50px;
+}
+
+.services-closing h3 {
+    font-size: 1.5em;
+}
+
+/* Media query para pantallas pequeñas (móviles y tablets) */
+@media (max-width: 768px) {
+    .service-section {
+        padding: 20px 10px; /* Reduce el padding en pantallas pequeñas para evitar desbordes */
+    }
+
+    .service-columns {
+        flex-direction: column; /* Las columnas se apilan verticalmente */
+        gap: 20px; /* Reduce el espacio entre las tarjetas en pantallas pequeñas */
+        margin-bottom: 50px; /* Reduce el margen inferior */
+    }
+
+    .service-item {
+        width: 100%; /* Asegura que la tarjeta ocupe todo el ancho disponible */
+        min-height: auto; /* Elimina la altura mínima en pantallas pequeñas */
+        padding: 20px; /* Ajusta el padding para adaptarse mejor a pantallas pequeñas */
+        height: auto; /* Permite que la altura se ajuste al contenido */
+    }
+
+    .service-item img {
+        width: 60px; /* Ajusta el tamaño de la imagen en pantallas pequeñas */
+        height: 60px;
+    }
+
+    .services-title h1 {
+        font-size: 2em; /* Reduce el tamaño del título en pantallas pequeñas */
+    }
+
+    .services-title p {
+        font-size: 1em; /* Ajusta el tamaño del subtítulo */
+    }
+
+    .service-description h3 {
+        font-size: 1.2em; /* Ajusta el tamaño de los títulos de las tarjetas */
+    }
+
+    .service-description p {
+        font-size: 0.9em; /* Ajusta el tamaño del texto de las descripciones */
+    }
+
+    .services-closing h3 {
+        font-size: 1.3em; /* Ajusta el tamaño del cierre de la sección */
+    }
+}

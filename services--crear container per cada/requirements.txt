@@ -1,0 +1,15 @@
+python-pptx
+python-docx
+python-dateutil
+pdf2docx
+groq
+chardet
+beautifulsoup4
+lxml
+html5lib
+PyPDF2
+html2text
+openpyxl
+pandas
+# chroma
+# sentence_transformers

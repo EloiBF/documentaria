@@ -1,0 +1,9 @@
+generate
+translate
+edit
+analyze
+summarize
+transcribe
+
+doc_ --> function
+service_ ---> folder/container
