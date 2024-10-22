@@ -258,7 +258,7 @@ class PptxProcessor:
 
 
 
-def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama-3.2-90b-vision-preview'):
+def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama-3.1-70b-versatile'):
     try:
         with open(api_key_file, 'r') as file:
             api_key = file.read().strip()

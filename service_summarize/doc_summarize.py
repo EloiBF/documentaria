@@ -6,7 +6,7 @@ from process_text_reader import read_document, split_text
 # Funcions específiques per generar un resum del text d'un document.
 
 
-def summarize_text(texto, file_type=None, model='llama-3.2-90b-vision-preview', api_key_file='API_KEY.txt', num_words=None , summary_language="auto", add_prompt=""):
+def summarize_text(texto, file_type=None, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt', num_words=None , summary_language="auto", add_prompt=""):
     try:
         with open(api_key_file, 'r') as fichero:
             api_key = fichero.read().strip()

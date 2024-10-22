@@ -9,7 +9,7 @@ from process_text_reader import read_document, split_text
 
 tipos_respuesta = ["SI/NO","text","num","date"]
 
-def model_exctact_info(texto, prompt, respuesta_tipo, ejemplo_respuesta=None, file_type=None, model='llama-3.2-90b-vision-preview', api_key_file='API_KEY.txt'):
+def model_exctact_info(texto, prompt, respuesta_tipo, ejemplo_respuesta=None, file_type=None, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
     try:
         # Inicializa el cliente de Groq
         with open(api_key_file, 'r') as fichero:
@@ -97,7 +97,7 @@ def validar_respuesta(respuesta, tipo):
         print(f"Tipo de respuesta desconocido: {tipo}. Debe ser: text, num, SI/NO, o date")
         return False
 
-def extract_with_retry(texto, prompt, respuesta_tipo, ejemplo_respuesta=None, file_type=None, model='llama-3.2-90b-vision-preview', api_key_file='API_KEY.txt', max_retries=3):
+def extract_with_retry(texto, prompt, respuesta_tipo, ejemplo_respuesta=None, file_type=None, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt', max_retries=3):
     """
     Intenta extraer información del texto con reintentos en caso de fallo.
     """
@@ -140,7 +140,7 @@ def reflexionar_respuestas(respuestas, prompt, tipo_respuesta):
         texto="",
         prompt=prompt_reflexion,
         respuesta_tipo=tipo_respuesta,
-        model='llama-3.2-90b-vision-preview',  # Ajusta según el modelo que estás utilizando
+        model='llama-3.1-70b-versatile',  # Ajusta según el modelo que estás utilizando
         api_key_file='API_KEY.txt'
     )
     return respuesta_consolidada.strip()

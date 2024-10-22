@@ -7,7 +7,7 @@ from process_text_editor import Modify_Diccionarios, Modify_Bloques,Validar_Bloq
 class Aplicar_Modelo:
 
     #  Función genérica para traducir con IA, con soporte para contexto
-    def modelo_traduccion_contexto(texto, origin_language, destination_language, add_prompt, file_type, model='llama-3.2-90b-vision-preview', api_key_file='API_KEY.txt'):
+    def modelo_traduccion_contexto(texto, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
         """
         Traduce el texto utilizando el cliente de Groq con el contexto anterior y siguiente.
         """
@@ -68,7 +68,7 @@ class Aplicar_Modelo:
             raise RuntimeError(f"Error during translation: {e}")
 
     #  Función genérica para traducir con IA, con soporte para contexto
-    def modelo_traduccion_placeholders(texto, texto_traducido, texto_original, origin_language, destination_language, add_prompt, model='llama-3.2-90b-vision-preview', api_key_file='API_KEY.txt'):
+    def modelo_traduccion_placeholders(texto, texto_traducido, texto_original, origin_language, destination_language, add_prompt, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
         """
         Revisa el texto traducido utilizando el cliente de Groq comparándolo con el texto original.
         """
