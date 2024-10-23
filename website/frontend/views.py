@@ -11,6 +11,8 @@ import json
 # Carpeta donde se guardarán los documentos generados temporalmente
 RESULT_FOLDER = settings.DOWNLOADS_ROOT
 os.makedirs(RESULT_FOLDER, exist_ok=True)
+DELETE_TIME = settings.DELETE_TIME
+
 
 class DocumentService:
     ALLOWED_EXTENSIONS = ['pdf', 'docx', 'xlsx', 'pptx', 'txt', 'html']
@@ -129,12 +131,13 @@ class API_GENERATE(DocumentService):
             # Crear el payload que se envía a la API
             request_data = {
                 'file_path': result_file_path,  # Ruta fichero Resultado
-                'data': {'prompt': prompt,
-                'file_type': file_type},
+                'data': {'prompt': prompt, 'file_type': file_type},
             }
 
             thread = threading.Thread(target=self.call_api, args=(request_data,))
             thread.start()
+
+            threading.Thread(target=self.remove_file, args=(result_file_path, DELETE_TIME)).start()
 
             return redirect('progress_generate', filename=result_filename)
 
@@ -193,6 +196,8 @@ class API_TRANSLATE(DocumentService):
                 # Llamada a la API y guardado del archivo en un hilo separado.
                 thread = threading.Thread(target=self.call_api, args=(request_data,))
                 thread.start()
+                # Programar eliminación del archivo después de XX segundos
+                threading.Thread(target=self.remove_file, args=(result_file_path, DELETE_TIME)).start()
 
                 return redirect('progress_translate', filename=result_filename)
 
@@ -243,6 +248,9 @@ class API_EDIT(DocumentService):
             thread = threading.Thread(target=self.call_api, args=(request_data,))
             thread.start()
 
+            # Programar eliminación del archivo después de 120 segundos
+            threading.Thread(target=self.remove_file, args=(result_file_path, DELETE_TIME)).start()
+
             return redirect('progress_edit', filename=result_filename)
 
         return render(request, 'upload_edit.html')
@@ -284,24 +292,52 @@ class API_TRANSCRIBE(DocumentService):
             thread = threading.Thread(target=self.call_api, args=(request_data,))
             thread.start()
 
+            # Programar eliminación del archivo después de 120 segundos
+            threading.Thread(target=self.remove_file, args=(result_file_path, DELETE_TIME)).start()
+
             return redirect('progress_transcribe', filename=result_filename)
 
         return render(request, 'upload_transcribe.html')
 
 class API_ANALYZE(DocumentService):
     def __init__(self):
-        super().__init__('analyze', 'http://service_analyze:5004/extract-info')
+        super().__init__('analyze', 'http://service_analyze:5004/analyze')
 
     def generate_unique_filename(self, original_name):
         base_name = os.path.splitext(original_name)[0]
         timestamp = int(time.time())
         return f"{base_name}_analysis_{timestamp}.json"
 
+    def save_file(self, file):
+        """Guardar el archivo subido temporalmente y devolver su ruta."""
+        file_path = os.path.join(RESULT_FOLDER, file.name)
+        with open(file_path, 'wb') as dest:
+            for chunk in file.chunks():
+                dest.write(chunk)
+        return file_path
+
+    def call_api(self, request_data):
+        """Enviar los archivos y datos al servicio externo."""
+        try:
+            files = request_data.pop('files')  # Extraer los archivos del payload
+
+            # Enviar el request con multipart/form-data
+            response = requests.post(self.api_url, files=files, data=request_data['data'])
+            
+            if response.status_code == 200:
+                with open(request_data['file_path'], 'wb') as f:
+                    f.write(response.content)
+                print(f"Resultado guardado en {request_data['file_path']}")
+            else:
+                print(f"Error en la API: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"Error durante la llamada a la API: {str(e)}")
+
     def handle_request(self, request):
         if request.method == 'POST':
             files = request.FILES.getlist('files')
             prompts = request.POST.getlist('prompts')
-            tipos_respuesta = request.POST.getlist('tipos_respuesta')
+            tipos_respuesta = request.POST.getlist('response_types')
             ejemplos_respuesta = request.POST.getlist('ejemplos_respuesta', None)
 
             if not files or not prompts or not tipos_respuesta:
@@ -311,19 +347,23 @@ class API_ANALYZE(DocumentService):
             result_filename = self.generate_unique_filename(files[0].name)
             result_file_path = os.path.join(RESULT_FOLDER, result_filename)
 
-            # Crear el payload directamente en handle_request
+            # Preparar archivos y datos para el payload, sin pasar los nombres originales
             request_data = {
-                'files': [('files', open(file_path, 'rb')) for file_path in file_paths],
-                'file_path': result_file_path,             
+                'files': [('files', open(file_path, 'rb')) for file_path in file_paths],  # Lista de archivos a enviar
+                'file_path': result_file_path,  # Ruta donde se guardará el resultado
                 'data': {
                     'prompts': prompts,
                     'tipos_respuesta': tipos_respuesta,
-                    'ejemplos_respuesta': ejemplos_respuesta if ejemplos_respuesta else []
-                },
+                    'ejemplos_respuesta': ejemplos_respuesta if ejemplos_respuesta else [],
+                }
             }
 
+            # Iniciar el thread para llamar a la API sin bloquear el flujo principal
             thread = threading.Thread(target=self.call_api, args=(request_data,))
             thread.start()
+
+            # Programar eliminación del archivo después de 120 segundos
+            threading.Thread(target=self.remove_file, args=(result_file_path, DELETE_TIME)).start()
 
             return redirect('progress_analyze', filename=result_filename)
 
@@ -366,10 +406,12 @@ class API_SUMMARIZE(DocumentService):
             thread = threading.Thread(target=self.call_api, args=(request_data,))
             thread.start()
 
+            # Programar eliminación del archivo después de 120 segundos
+            threading.Thread(target=self.remove_file, args=(result_file_path, DELETE_TIME)).start()
+
             return redirect('progress_summarize', filename=result_filename)
 
         return render(request, 'upload_summarize.html')
-
 
 
 
@@ -472,7 +514,6 @@ def upload_analyze(request):
 def progress_analyze(request, filename):
     return render(request, 'progress_analyze.html', {'filename': filename})
 
-# Función para mostrar el resultado del análisis
 def result_analyze(request, filename):
     result_file_path = os.path.join(RESULT_FOLDER, filename)
 
@@ -483,8 +524,33 @@ def result_analyze(request, filename):
     else:
         result_data = None
 
+    # Procesar result_data para generar una tabla
+    result_table = ""
+    if isinstance(result_data, dict) and len(result_data) > 0:  # Asegúrate de que es un diccionario no vacío
+        # Obtener las claves del primer archivo para los encabezados
+        first_key = next(iter(result_data))  # Obtener la primera clave
+        headers = ["Document"] + list(result_data[first_key].keys())  # Agregar encabezado para el nombre del archivo
+
+        result_table += "<table><thead><tr>"
+        for header in headers:
+            result_table += f"<th>{header}</th>"
+        result_table += "</tr></thead><tbody>"
+
+        # Iterar sobre cada archivo y sus datos
+        for file_name, file_data in result_data.items():
+            result_table += "<tr>"
+            result_table += f"<td>{file_name}</td>"  # Añadir el nombre del archivo como primera columna
+            for value in file_data.values():
+                result_table += f"<td>{value}</td>"
+            result_table += "</tr>"
+        result_table += "</tbody></table>"
+    else:
+        # Si no hay datos válidos, puedes manejarlo aquí
+        result_table = "<p>No s'han trobat dades per mostrar.</p>"
+
     # Renderiza la plantilla y pasa los datos del análisis
-    return render(request, 'result_analyze.html', {'result_data': result_data})
+    return render(request, 'result_analyze.html', {'result_table': result_table})
+
 
 
 # Vistas Summarize

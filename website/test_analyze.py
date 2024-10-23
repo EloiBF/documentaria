@@ -1,7 +1,8 @@
 import requests
+import os
 
 # URL del servicio Flask de análisis de documentos
-url = "http://service_analyze:5004/extract-info"  # Cambia el nombre del servicio según corresponda
+url = "http://service_analyze:5004/analyze"  # Cambia el nombre del servicio según corresponda
 
 # Rutas de los archivos a analizar
 file_paths = ["documents/test/in/PRUEBA 2.pptx", "documents/test/in/pdf_largo.pdf"]  # Cambia esto según tus archivos de prueba
@@ -10,8 +11,11 @@ file_paths = ["documents/test/in/PRUEBA 2.pptx", "documents/test/in/pdf_largo.pd
 data = {
     "prompts": ["¿Cuál es el tema principal del documento? En tres palabras.", "Cual es el año del documento?"],  # Prompts para extraer información
     "tipos_respuesta": ["text", "num"],  # Tipos de respuesta para cada prompt
-    "ejemplos_respuesta": ["Felicidad, diversión, jugar", "2020"]  # Ejemplos opcionales
+    "ejemplos_respuesta": ["Felicidad, diversión, jugar", "2020"],  # Ejemplos opcionales
+    "original_filenames": [os.path.basename(file) for file in file_paths]  # Usar nombres originales
 }
+
+print(data)
 
 # Crear la lista de archivos
 files = [('files', (open(file, 'rb'))) for file in file_paths]

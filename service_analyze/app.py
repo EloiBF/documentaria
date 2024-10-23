@@ -6,27 +6,28 @@ from doc_analyze import extract_info_from_docs
 
 app = Flask(__name__)
 
-@app.route('/extract-info', methods=['POST'])
-def extract_info():
+def save_temp_file(file):
+    """Guardar el archivo subido en un archivo temporal y devolver su ruta."""
+    extension = os.path.splitext(file.filename)[1].lower()
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
+    file.save(temp_file.name)
+    return temp_file.name
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
     try:
         # Obtener los datos del request
-        files = request.files.getlist('files')  # Lista de archivos
-        prompts = request.form.getlist('prompts')  # Lista de prompts
-        tipos_respuesta = request.form.getlist('tipos_respuesta')  # Lista de tipos de respuesta
-        ejemplos_respuesta = request.form.getlist('ejemplos_respuesta')  # Ejemplos de respuesta opcionales (puede ser vacío)
+        files = request.files.getlist('files')  
+        prompts = request.form.getlist('prompts')  
+        tipos_respuesta = request.form.getlist('tipos_respuesta')  
+        ejemplos_respuesta = request.form.getlist('ejemplos_respuesta')  # Opcional
 
         # Verificar que todos los parámetros necesarios estén presentes
         if not files or not prompts or not tipos_respuesta:
             return jsonify({'error': 'Missing parameters'}), 400
 
-        # Crear archivos temporales para los archivos subidos
-        input_paths = []
-        for file in files:
-            extension = os.path.splitext(file.filename)[1].lower()
-            with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as temp_input_file:
-                input_path = temp_input_file.name
-                file.save(input_path)
-                input_paths.append(input_path)
+        # Guardar los archivos subidos en archivos temporales
+        input_paths = [save_temp_file(file) for file in files]
 
         # Crear un archivo temporal para guardar el resultado
         with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_output_file:
@@ -38,7 +39,8 @@ def extract_info():
             output_path=output_path,
             prompts=prompts,
             tipos_respuesta=tipos_respuesta,
-            ejemplos_respuesta=ejemplos_respuesta if ejemplos_respuesta else None
+            ejemplos_respuesta=ejemplos_respuesta or None,
+            original_filenames=[file.filename for file in files]
         )
 
         # Devolver el archivo JSON resultante
