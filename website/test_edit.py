@@ -9,14 +9,21 @@ file_path = "documents/test/in/song.txt"  # Cambia esto según tu archivo de pru
 # Datos de configuración de la edición
 data = {
     "color_to_exclude": "#FFFFFF",  # Ejemplo de color a excluir (puedes ajustar según tu necesidad)
-    "add_prompt": "Por favor, edita el documento manteniendo el contexto."  # Instrucción adicional para el modelo de edición
+    "add_prompt": "Por favor, pon todo el texto en mayúsculas"  # Instrucción adicional para el modelo de edición
 }
 
 try:
     # Realizar la solicitud POST con el archivo y los datos
     with open(file_path, 'rb') as f:
         files = {'file': f}  # El archivo se envía con la clave 'file'
-        response = requests.post(url, data=data, files=files)
+        response = requests.post(
+            url, 
+            files=files, 
+            data={
+                'color_to_exclude': data['color_to_exclude'],
+                'add_prompt': data['add_prompt']
+            }
+        )
 
     # Verificar el estado de la respuesta
     if response.status_code == 200:

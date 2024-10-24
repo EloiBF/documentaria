@@ -205,7 +205,7 @@ class API_TRANSLATE(DocumentService):
 
 class API_EDIT(DocumentService):
     def __init__(self):
-        super().__init__('translate', 'http://service_translate:5002/edit')
+        super().__init__('translate', 'http://service_edit:5002/edit')
 
     def generate_unique_filename(self, original_name):
         base_name = os.path.splitext(original_name)[0]

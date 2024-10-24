@@ -49,6 +49,9 @@ textarea#add_prompt {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
+    display: flex;
+    flex-direction: column; /* Asegura que los elementos estén en columna */
+    gap: 20px; /* Espaciado entre cada elemento del formulario */
 }
 
 .upload-area {
@@ -101,6 +104,16 @@ textarea#add_prompt {
     color: red;
     margin-top: 10px;
 }
+
+
+.form-container {
+    display: flex;
+    flex-direction: column; /* Asegura que los elementos estén en columna */
+    gap: 20px; /* Espaciado entre cada elemento del formulario */
+}
+
+
+
 
 
 

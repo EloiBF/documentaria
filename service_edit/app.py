@@ -8,8 +8,10 @@ app = Flask(__name__)
 @app.route('/edit', methods=['POST'])
 def edit_file():
     try:
-        # Obtener datos del request
+        # Obtener archivo del request
         file = request.files['file']
+        
+        # Obtener parámetros individuales del request.form
         color_to_exclude = request.form.get('color_to_exclude', None)
         add_prompt = request.form.get('add_prompt', '')
 

@@ -25,7 +25,7 @@
     <section class="explanation-section">
         <div class="explanation-container">
             <div class="explanation-content">
-                <h2>Genera, tradueix i analitza documents amb tecnologia d'última generació.</h2>
+                <h2>Analitza, tradueix i genera documents amb tecnologia d'última generació.</h2>
                 <p>A la nostra plataforma, oferim eines accessibles per a tothom, des de la creació automàtica de documents a l'anàlisi Big Data de fitxers de text o àudio.</p> 
                 <p>Utilitzem algoritmes i models d'intel·ligència artificial per traduir i editar el contingut, assegurant que el disseny original es mantingui intacte.</p>            
                 </div>
@@ -49,22 +49,22 @@
                         <img src="{% static 'images/extract_info.png' %}" alt="Prompt Analytics">
                         <div class="service-description">
                             <h3>Prompt Analytics</h3>
-                            <p>Genera bases de dades i KPIs a partir de text i àudio.<br>Només cal definir els prompts i el tipus de dades que vols obtenir.</p>
+                            <p>Genera bases de dades i segueix KPIs a partir de text i àudio.<br>Només cal definir els prompts i el tipus de dades que vols obtenir.</p>
                             <a href="{% url 'upload_analyze' %}" class="cta-button">Vull analitzar</a>
                         </div>
                     </div>
                     <div class="service-item">
-                        <img src="{% static 'images/translate.png' %}" alt="Traducció de documents">
+                        <img src="{% static 'images/generate.png' %}" alt="Generació de documents">
                         <div class="service-description">
-                            <h3>Traducció de Documents</h3>
-                            <p>Tradueix documents amb la millor qualitat i rapidesa.<br>Mantenint el format i disseny original!</p>
-                            <a href="{% url 'upload_translate' %}" class="cta-button">Vull traduir</a>
+                            <h3>Generació de Fitxers</h3>
+                            <p>Crea documents Word, PPT, html... automàticament.<br>La IA genera per tu documents basats en el context proporcionat.</p>
+                            <a href="{% url 'upload_generate' %}" class="cta-button">Vull generar</a>
                         </div>
                     </div>
                     <div class="service-item">
                         <img src="{% static 'images/editing.png' %}" alt="Edició de documents">
                         <div class="service-description">
-                            <h3>Edició de documents</h3>
+                            <h3>Edició de Contingut i Format</h3>
                             <p>Modifica el contingut i el format de documents Word o PPT.<br>Modifica l'estil, destaca paraules clau o reescriu de nou el document!</p>
                             <a href="{% url 'upload_edit' %}" class="cta-button">Vull editar</a>
                         </div>
@@ -74,17 +74,17 @@
             <div class="service-column">
                 <div class="service-list">
                     <div class="service-item">
-                        <img src="{% static 'images/generate.png' %}" alt="Generació de documents">
+                        <img src="{% static 'images/translate.png' %}" alt="Traducció de documents">
                         <div class="service-description">
-                            <h3>Generació de Documents</h3>
-                            <p>Crea documents Word, PPT, html... automàticament.<br>La IA genera per tu documents basats en el context proporcionat.</p>
-                            <a href="{% url 'upload_generate' %}" class="cta-button">Vull generar</a>
+                            <h3>Traducció de Documents</h3>
+                            <p>Tradueix documents amb la millor qualitat i rapidesa.<br>Mantenint el format i disseny original!</p>
+                            <a href="{% url 'upload_translate' %}" class="cta-button">Vull traduir</a>
                         </div>
                     </div>
                     <div class="service-item">
                         <img src="{% static 'images/summary.png' %}" alt="Resum de documents">
                         <div class="service-description">
-                            <h3>Resum de documents</h3>
+                            <h3>Resum Automàtic</h3>
                             <p>Necessites treure conclusions de documents o informes?<br>Utilitza el resum automàtic amb IA.</p>
                             <a href="{% url 'upload_summarize' %}" class="cta-button">Vull un resum</a>
                         </div>
@@ -131,4 +131,3 @@
     </section>
 </main>
 {% endblock %}
-
