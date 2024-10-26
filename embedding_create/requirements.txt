@@ -11,5 +11,6 @@ PyPDF2
 html2text
 openpyxl
 pandas
-# chroma
-# sentence_transformers
+fastapi
+uvicorn
+sentence-transformers

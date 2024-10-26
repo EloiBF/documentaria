@@ -320,8 +320,6 @@ def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama
     except Exception as e:
         raise RuntimeError(f"Error generating content: {e}")
 
-
-
 def generate_and_create_file(prompt, file_type, output):
     content = generate_content(prompt, file_type)
     print(content)

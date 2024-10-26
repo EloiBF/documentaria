@@ -1,4 +1,5 @@
 services:
+
   website:
     build: ./website
     ports:
@@ -54,3 +55,30 @@ services:
     volumes:
       - ./service_summarize:/app  
     command: python app.py
+
+  embedding_search:
+    build: ./embedding_search
+    ports:
+      - "5020:5020"
+    volumes:
+      - ./embedding_search:/app  
+    command: python app.py
+
+  embedding_create:
+    build: ./embedding_create
+    ports:
+      - "5021:5021"
+    volumes:
+      - ./embedding_create:/app  
+    command: python app.py
+
+
+
+
+
+
+
+
+volumes:
+  shared_DB:   # Definición del volumen compartido
+    driver: local

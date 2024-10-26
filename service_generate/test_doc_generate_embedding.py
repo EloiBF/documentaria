@@ -1,4 +1,8 @@
+import numpy as np
+import sqlite3
+from sentence_transformers import SentenceTransformer
 import re
+import os
 from docx import Document
 from docx.shared import RGBColor, Pt
 from docx.oxml import OxmlElement
@@ -8,8 +12,6 @@ from pptx import Presentation
 from pptx.util import Inches
 from pptx.dml.color import RGBColor as PPTXRGBColor
 from groq import Groq
-
-
 
 
 class DocxProcessor:
@@ -257,6 +259,38 @@ class PptxProcessor:
         return color_mapping.get(color_name.lower(), PPTXRGBColor(0, 0, 0))
 
 
+# Define la ruta de la base de datos en el volumen compartido
+DB_PATH = os.path.join('..', 'shared_DB', 'embeddings.db')  # Ajusta la ruta según la estructura de tu proyecto
+
+# Conexión a SQLite
+def get_db_connection(db_file=DB_PATH):
+    conn = sqlite3.connect(db_file)
+    return conn
+
+def get_embedding_examples(query, k=3):
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    query_embedding = model.encode(query).astype(np.float32)
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Obtener todos los embeddings de la base de datos
+    cur.execute("SELECT id, text, language, document, id_pos, embedding FROM document_embeddings")
+    rows = cur.fetchall()
+
+    # Calcular distancias
+    distances = []
+    for row in rows:
+        embedding = np.frombuffer(row[5], dtype=np.float32)
+        distance = np.linalg.norm(query_embedding - embedding)
+        distances.append((row, distance))
+
+    # Ordenar por distancia
+    distances.sort(key=lambda x: x[1])
+
+    # Obtener los k resultados más cercanos
+    closest_results = distances[:k]
+    return closest_results
 
 def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama-3.1-70b-versatile'):
     try:
@@ -264,6 +298,13 @@ def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama
             api_key = file.read().strip()
 
         client = Groq(api_key=api_key)
+
+        # Aquí podrías definir un query para obtener ejemplos de embeddings
+        query_for_examples = "Proporciona un contexto sobre el tema en cuestión."  # Modifica esto según tus necesidades
+        embedding_examples = get_embedding_examples(query_for_examples)
+
+        # Formatear ejemplos de embeddings para incluirlos en el prompt
+        example_texts = "\n".join([f"- {example[0][1]} (ID: {example[0][0]})" for example in embedding_examples])
 
         formatting_codes = [
             ("[H1]", "[/H1]"),  # Título principal en negrita
@@ -307,11 +348,17 @@ def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama
           Tiger;Forest
           Whale;Ocean
           [/TABLE]
+        - Here are some examples of related content for context:
+        {example_texts}
         Do not add any comment rather than the content asked, also do not repeat the prompt or any instruction.
         Always write content in the same language as given instructions.
         These are the given instructions for the content:
         {prompt}
         """
+
+
+        print(full_prompt)
+
 
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": full_prompt}],
@@ -322,8 +369,6 @@ def generate_content(prompt, file_type, api_key_file='API_KEY.txt', model='llama
 
     except Exception as e:
         raise RuntimeError(f"Error generating content: {e}")
-
-
 
 def generate_and_create_file(prompt, file_type, output):
     content = generate_content(prompt, file_type)

@@ -149,3 +149,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Tiempo borrado archivos
 
 DELETE_TIME = 120
+
+
+# Define el directorio para los embeddings
+
+EMBEDDINGS_DIRECTORY = os.path.join(BASE_DIR, 'documents', 'embedding', 'translation')
