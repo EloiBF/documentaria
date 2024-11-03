@@ -11,6 +11,5 @@ PyPDF2
 html2text
 openpyxl
 pandas
-fastapi
-uvicorn
-sentence-transformers
+Flask
+requests

@@ -1,5 +1,5 @@
 FROM python:3.9-slim
-ENV PYHTONBUFFERED=1
+ENV PYTHONUNBUFFERED=1
 WORKDIR /website
 COPY . /website
 COPY requirements.txt requirements.txt

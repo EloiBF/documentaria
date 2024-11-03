@@ -11,7 +11,7 @@ PyPDF2
 html2text
 openpyxl
 pandas
+fastapi
+uvicorn
+fastembed
 Flask
-requests
-# chroma
-# sentence_transformers

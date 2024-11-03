@@ -112,7 +112,7 @@ class DocumentService:
 
 class API_GENERATE(DocumentService):
     def __init__(self):
-        super().__init__('generate', 'http://service_generate:5000/generate')
+        super().__init__('generate', 'http://agents:5000/generate')
 
     def generate_unique_filename(self, file_type):
         return f"document_generated_{int(time.time())}.{file_type}"
@@ -145,7 +145,7 @@ class API_GENERATE(DocumentService):
 
 class API_TRANSLATE(DocumentService):
     def __init__(self):
-        super().__init__('translate', 'http://service_translate:5001/translate')
+        super().__init__('translate', 'http://agents:5000/translate')
 
     def generate_unique_filename(self, original_name):
         """Genera un nombre único basado en el nombre del archivo original y un timestamp.
@@ -205,7 +205,7 @@ class API_TRANSLATE(DocumentService):
 
 class API_EDIT(DocumentService):
     def __init__(self):
-        super().__init__('translate', 'http://service_edit:5002/edit')
+        super().__init__('translate', 'http://agents:5000/edit')
 
     def generate_unique_filename(self, original_name):
         base_name = os.path.splitext(original_name)[0]
@@ -257,7 +257,7 @@ class API_EDIT(DocumentService):
     
 class API_TRANSCRIBE(DocumentService):
     def __init__(self):
-        super().__init__('transcribe', 'http://service_transcribe:5003/transcribe')
+        super().__init__('transcribe', 'http://agents:5000/transcribe')
 
     def generate_unique_filename(self, original_name):
         base_name = os.path.splitext(original_name)[0]
@@ -301,7 +301,7 @@ class API_TRANSCRIBE(DocumentService):
 
 class API_ANALYZE(DocumentService):
     def __init__(self):
-        super().__init__('analyze', 'http://service_analyze:5004/analyze')
+        super().__init__('analyze', 'http://agents:5000/analyze')
 
     def generate_unique_filename(self, original_name):
         base_name = os.path.splitext(original_name)[0]
@@ -371,7 +371,7 @@ class API_ANALYZE(DocumentService):
 
 class API_SUMMARIZE(DocumentService):
     def __init__(self):
-        super().__init__('summarize', 'http://service_summarize:5005/summarize')
+        super().__init__('summarize', 'http://agents:5000/summarize')
 
     def generate_unique_filename(self, original_name):
         base_name = os.path.splitext(original_name)[0]

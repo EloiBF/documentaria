@@ -6,3 +6,4 @@ API_KEY.txt
 .vscode
 test/out
 embedding/chroma_db/
+.env

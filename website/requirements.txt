@@ -1,5 +1,3 @@
 django
 pandas
 requests
-# chroma
-# sentence_transformers

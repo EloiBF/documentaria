@@ -5,80 +5,22 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./website:/website  # Mapea tu carpeta local 'website' al '/website' en el contenedor
+      - ./website:/website 
     command: python manage.py runserver 0.0.0.0:8000
 
-  service_generate:
-    build: ./service_generate
+  agents:
+    build: ./agents
     ports:
       - "5000:5000"
     volumes:
-      - ./service_generate:/app  
-    command: python app.py
+      - ./agents:/agents  
+    command: python app.py runserver 0.0.0.0:5000
 
-  service_translate:
-    build: ./service_translate
+  embedding:
+    build: ./embedding
     ports:
-      - "5001:5001"
+      - "6000:6000"
     volumes:
-      - ./service_translate:/app  
-    command: python app.py
+      - ./embedding:/embedding  
+    command: python app.py runserver 0.0.0.0:6000
 
-  service_edit:
-    build: ./service_edit
-    ports:
-      - "5002:5002"
-    volumes:
-      - ./service_edit:/app  
-    command: python app.py
-
-  service_transcribe:
-    build: ./service_transcribe
-    ports:
-      - "5003:5003"
-    volumes:
-      - ./service_transcribe:/app  
-    command: python app.py
-
-  service_analyze:
-    build: ./service_analyze
-    ports:
-      - "5004:5004"
-    volumes:
-      - ./service_analyze:/app  
-    command: python app.py
-
-  service_summarize:
-    build: ./service_summarize
-    ports:
-      - "5005:5005"
-    volumes:
-      - ./service_summarize:/app  
-    command: python app.py
-
-  embedding_search:
-    build: ./embedding_search
-    ports:
-      - "5020:5020"
-    volumes:
-      - ./embedding_search:/app  
-    command: python app.py
-
-  embedding_create:
-    build: ./embedding_create
-    ports:
-      - "5021:5021"
-    volumes:
-      - ./embedding_create:/app  
-    command: python app.py
-
-
-
-
-
-
-
-
-volumes:
-  shared_DB:   # Definición del volumen compartido
-    driver: local
