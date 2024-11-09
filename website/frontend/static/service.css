@@ -18,6 +18,7 @@
     box-shadow: 0 4px 8px var(--shadow-color);
     margin: 0 auto;
     max-width: 800px;
+    gap: 15px; /* Espaciado entre los elementos dentro del formulario */
 }
 
 /* Additional Options */
@@ -27,9 +28,20 @@
     margin-bottom: 10px;
 }
 
+/* Alineación y estilo de los botones de radio */
 .form-group {
     display: flex;
     flex-direction: column;
+    gap: 8px; /* Espacio entre el radio button y las etiquetas */
+}
+
+.form-group label {
+    margin-left: 5px; /* Espaciado entre el botón de radio y la etiqueta */
+}
+
+/* Estilo de los radio buttons */
+.form-group input[type="radio"] {
+    margin-right: 10px; /* Espaciado entre los radio buttons y las etiquetas */
 }
 
 textarea#add_prompt {
@@ -37,6 +49,26 @@ textarea#add_prompt {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+/* Alineación y estilo del enlace */
+.example-link-container {
+    margin-top: 10px; /* Espacio entre las opciones y el enlace */
+}
+
+.example-link {
+    font-size: 14px;
+    color: #007BFF; /* Color azul para el enlace */
+    text-decoration: none;
+    display: inline-block; /* Asegura que se quede en la misma línea */
+}
+
+/* Efecto de hover sobre el enlace */
+.example-link:hover {
+    color: #0056b3; /* Azul más oscuro al pasar el cursor */
+    text-decoration: underline; /* Subrayado al pasar el cursor */
+}
+
+
 
 /* Contenidor de càrrega de fitxers */
 /* Ocultar el input de tipo file */

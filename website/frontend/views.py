@@ -7,6 +7,11 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404, JsonResponse
 from django.conf import settings
 import json
+import tempfile
+import shutil
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Carpeta donde se guardarán los documentos generados temporalmente
 RESULT_FOLDER = settings.DOWNLOADS_ROOT
@@ -169,6 +174,9 @@ class API_TRANSLATE(DocumentService):
                 source_language = request.POST.get('source_language')
                 color_to_exclude = request.POST.get('color_to_exclude', None)
                 add_prompt = request.POST.get('add_prompt', '')
+                use_embedding = request.POST.get('use_embedding', 'NO') 
+
+                print(use_embedding)
 
                 if not file or not target_language or not source_language:
                     return render(request, 'upload_translate.html', {'error_message': "Faltan parámetros: asegúrate de que se haya cargado un archivo y que se hayan especificado los idiomas."})
@@ -184,12 +192,13 @@ class API_TRANSLATE(DocumentService):
                 # Configuración de los datos de la solicitud a la API de traducción
                 request_data = {
                     'files': {'file': open(file_path, 'rb')},
-                    'file_path': result_file_path ,  # Ruta Archivo resultante. call_API lo crea y procesa el borrado.                  
+                    'file_path': result_file_path ,  # Ruta Archivo resultante. app.py de agents lo crea y procesa el borrado.                  
                     'data': {
                         'origin_language': source_language,
                         'destination_language': target_language,
                         'color_to_exclude': color_to_exclude,
-                        'add_prompt': add_prompt
+                        'add_prompt': add_prompt,
+                        'use_embedding':use_embedding
                     },
                 }
 
@@ -413,6 +422,49 @@ class API_SUMMARIZE(DocumentService):
 
         return render(request, 'upload_summarize.html')
 
+class API_SUMMARIZE(DocumentService):
+    def __init__(self):
+        super().__init__('summarize', 'http://agents:5000/summarize')
+
+    def generate_unique_filename(self, original_name):
+        base_name = os.path.splitext(original_name)[0]
+        timestamp = int(time.time())
+        return f"{base_name}_summary_{timestamp}.txt"
+
+    def handle_request(self, request):
+        if request.method == 'POST':
+            file = request.FILES.get('file')
+            num_words = request.POST.get('num_words', '100')
+            summary_language = request.POST.get('summary_language', 'en')
+            add_prompt = request.POST.get('add_prompt', 'Resume el documento de forma concisa.')
+
+            if not file:
+                return render(request, 'upload_summarize.html', {'error_message': "Faltan parámetros: asegúrate de haber cargado un archivo."})
+
+            file_path = self.save_file(file)
+            result_filename = self.generate_unique_filename(file.name)
+            result_file_path = os.path.join(RESULT_FOLDER, result_filename)
+
+            # Crear el payload directamente en handle_request
+            request_data = {
+                'files': {'file': open(file_path, 'rb')},
+                'file_path': result_file_path,
+                'data': {
+                    'num_words': num_words,
+                    'summary_language': summary_language,
+                    'add_prompt': add_prompt
+                },
+            }
+
+            thread = threading.Thread(target=self.call_api, args=(request_data,))
+            thread.start()
+
+            # Programar eliminación del archivo después de 120 segundos
+            threading.Thread(target=self.remove_file, args=(result_file_path, DELETE_TIME)).start()
+
+            return redirect('progress_summarize', filename=result_filename)
+
+        return render(request, 'upload_summarize.html')
 
 
 # Vistas estáticas y de servicios
@@ -574,3 +626,7 @@ def result_summarize(request, filename):
 
     # Renderiza la plantilla y pasa el contenido del resumen
     return render(request, 'result_summarize.html', {'summary': summary})
+
+
+    api_embedding = API_EMBEDDING()
+    return api_embedding.handle_request(request)

@@ -27,6 +27,7 @@ def translate_file():
         destination_language = request.form['destination_language']
         color_to_exclude = request.form.get('color_to_exclude', None)
         add_prompt = request.form.get('add_prompt', '')
+        use_embedding = request.form.get('use_embedding', 'NO')
 
         # Verificar que todos los parámetros estén presentes
         if not file or not origin_language or not destination_language:
@@ -50,7 +51,8 @@ def translate_file():
             destination_language=destination_language,
             extension=extension,
             color_to_exclude=color_to_exclude,
-            add_prompt=add_prompt
+            add_prompt=add_prompt,
+            use_embedding=use_embedding
         )
 
         # Devolver el archivo traducido

@@ -7,59 +7,74 @@ from fastembed import TextEmbedding
 from embedding_gen_general import crear_db_vectorial as create_db_vectorial_general
 from embedding_gen_translation import crear_db_vectorial as create_db_vectorial_translation
 from embedding_search import find_general_examples, find_translation_examples 
-
+import tempfile
+import shutil
 
 app = Flask(__name__)
 
 @app.route('/create-general-db', methods=['POST'])
 def create_general_db():
     try:
-        # Obtener el JSON completo de la solicitud
-        request_data = request.json
-        print(f"Request JSON: {request_data}")  # Imprime el JSON completo
+        # Obtener el archivo enviado
+        file = request.files.get('file')  # Solo un archivo
+        if not file:
+            return jsonify({'error': 'No file provided'}), 400
 
-        # Obtener el directorio de la solicitud
-        directory = request_data.get('directory')
-
-        # Verificar que el directorio está presente
-        if not directory:
-            return jsonify({'error': 'Directory is required'}), 400
-
-        print(f"Directory: {directory}")  # Agrega esta línea para depuración
+        # Crear un directorio temporal para almacenar el archivo
+        temp_dir = tempfile.mkdtemp(prefix='general_embedding_')
+        temp_file_path = os.path.join(temp_dir, file.filename)
+        
+        # Guardar el archivo en el directorio temporal
+        file.save(temp_file_path)
 
         # Llamar a la función para crear la base de datos vectorial general
-        create_db_vectorial_general(directory)  # Cambia a crear_db_vectorial si eso es lo que quieres
+        create_db_vectorial_general(temp_file_path)
+
+        # Limpiar el archivo temporal después de procesarlo
+        shutil.rmtree(temp_dir)
 
         return jsonify({'message': 'General embedding database created successfully'}), 201
 
+    except KeyError as e:
+        return jsonify({'error': f'Missing key: {str(e)}'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
 
 @app.route('/create-translation-db', methods=['POST'])
 def create_translation_db():
     try:
-        # Obtener el JSON completo de la solicitud
-        request_data = request.json
-        print(f"Request JSON: {request_data}")  # Imprime el JSON completo
+        # Obtener el archivo enviado
+        file = request.files.get('file')  # Solo un archivo
+        if not file:
+            return jsonify({'error': 'No file provided'}), 400
 
-        # Obtener el directorio de la solicitud
-        directory = request_data.get('directory')      
+        # Obtener los parámetros de lenguaje y grupo
+        language = request.form.get('language')
+        grupo = request.form.get('grupo')
 
-        # Verificar que el directorio está presente
-        if not directory:
-            return jsonify({'error': 'Directory is required'}), 400
+        # Verificar que todos los parámetros estén presentes
+        if not language or not grupo:
+            return jsonify({'error': 'Missing required fields (language, grupo)'}), 400
 
-        print(f"Directory: {directory}")  # Agrega esta línea para depuración
+        # Crear un directorio temporal para almacenar el archivo
+        temp_dir = tempfile.mkdtemp(prefix='embedding_')
+        temp_file_path = os.path.join(temp_dir, file.filename)
+        
+        # Guardar el archivo en el directorio temporal
+        file.save(temp_file_path)
 
-        # Llamar a la función para crear la base de datos vectorial general
-        create_db_vectorial_translation(directory)  # Cambia a crear_db_vectorial si eso es lo que quieres
+        # Llamar a la función para procesar el archivo y generar los embeddings
+        create_db_vectorial_translation(temp_file_path, language=language, grupo=grupo)
 
-        return jsonify({'message': 'General embedding database created successfully'}), 201
+        # Limpiar el archivo temporal después de procesarlo
+        shutil.rmtree(temp_dir)
 
+        return jsonify({'message': 'Embeddings generated successfully'}), 201
+
+    except KeyError as e:
+        return jsonify({'error': f'Missing key: {str(e)}'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 
 @app.route('/find-translation-examples', methods=['POST'])
@@ -70,7 +85,7 @@ def find_translation_examples_api():
         query_text = request_data.get('query_text')
         language = request_data.get('language')
         target_language = request_data.get('target_language')
-        k = request_data.get('k', 5)  # Valor por defecto
+        k = request_data.get('k', 1)  # Valor por defecto
 
         if not query_text or not language or not target_language:
             return jsonify({'error': 'Query text, language, and target language are required'}), 400

@@ -99,7 +99,7 @@ def find_general_examples(text, k=4):
     return formatted_output
 
 # Función para buscar ejemplos de traducción
-def find_translation_examples(query_text, language, target_language, k=5):
+def find_translation_examples(query_text, language, target_language, k=1):
     fragments = split_text(query_text)
     all_translation_results = []
     all_distances = []
@@ -109,7 +109,7 @@ def find_translation_examples(query_text, language, target_language, k=5):
         all_distances.extend(embedding_results)
 
     all_distances.sort(key=lambda x: x[1])
-    closest_k_results = all_distances[:10]
+    closest_k_results = all_distances[:k]
 
     conn = get_db_connection()
     cur = conn.cursor()

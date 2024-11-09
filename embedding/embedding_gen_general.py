@@ -1,9 +1,9 @@
 import os
-import glob
 import sqlite3
 import numpy as np
-from fastembed import TextEmbedding  # Importa la clase correcta para fastembed
+from fastembed import TextEmbedding  # Importa la clase de fastembed
 from process_text_reader import read_document, read_docx, read_html, read_pdf, read_pptx, read_txt
+import re
 
 # Define la ruta de la base de datos en el volumen compartido
 DB_PATH = 'embeddings.db'
@@ -29,47 +29,42 @@ def read_document(file_path):
     else:
         raise ValueError(f"Tipo de archivo no soportado: {file_extension}")
 
-def split_text_into_chunks(text, chunk_size=500):
-    words = text.split()
-    chunks = []
-    current_chunk = []
+def split_text(text):
+    fragments = re.split(r'(?<=[.!?])\s+|\n+', text)
+    return [fragment.strip() for fragment in fragments if fragment.strip()]
 
-    for word in words:
-        current_chunk.append(word)
-        if len(' '.join(current_chunk)) >= chunk_size:
-            chunks.append(' '.join(current_chunk))
-            current_chunk = []
-
-    if current_chunk:
-        chunks.append(' '.join(current_chunk))
-
-    return chunks
-
-def generate_embeddings(file_paths, chunk_size=500):
+def generate_embeddings(file_path, language=None, grupo=None):
     # Instancia el modelo de fastembed
     embedding_model = TextEmbedding()
     print("El modelo BAAI/bge-small-en-v1.5 está listo para usarse.")
 
-    all_chunks = []
+    all_fragments = []
     all_file_paths = []
-    
-    for file_path in file_paths:              
-        text, _ = read_document(file_path)
-        chunks = split_text_into_chunks(text, chunk_size)
+    all_languages = []
+    all_ids = []
+    phrase_id_mapping = {}
+                
+    text, _ = read_document(file_path)
+    fragments = split_text(text)
 
-        for chunk in chunks:
-            all_chunks.append(chunk)
-            all_file_paths.append(file_path)
+    phrase_id_counter = 1
+    for fragment in fragments:
+        if fragment not in phrase_id_mapping:
+            phrase_id_mapping[fragment] = phrase_id_counter
+            phrase_id_counter += 1
 
-    # Genera embeddings usando fastembed y convierte el generador en lista
-    embeddings_list = list(embedding_model.embed(all_chunks))
+        all_fragments.append(fragment)
+        all_file_paths.append(file_path)
+        all_languages.append(language)
+        all_ids.append(phrase_id_mapping[fragment])
+
+    # Genera los embeddings y conviértelos a una lista
+    embeddings_list = list(embedding_model.embed(all_fragments))
 
     # Guardar en SQLite
     conn = get_db_connection()
     cur = conn.cursor()
-
-    cur.execute(""" DROP TABLE IF EXISTS document_embedding """)
-
+    
     cur.execute(""" 
     CREATE TABLE IF NOT EXISTS document_embedding (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,7 +74,8 @@ def generate_embeddings(file_paths, chunk_size=500):
     )
     """)
 
-    for text, document, embedding in zip(all_chunks, all_file_paths, embeddings_list):
+    # Insertar embeddings en la base de datos
+    for text, document, embedding in zip(all_fragments, all_file_paths, embeddings_list):
         cur.execute(""" 
         INSERT INTO document_embedding (text, document, embedding)
         VALUES (?, ?, ?) 
@@ -89,15 +85,15 @@ def generate_embeddings(file_paths, chunk_size=500):
     cur.close()
     conn.close()
 
-    print("Embeddings guardados en SQLite.")
+    print(f"Embeddings guardados en SQLite para el archivo: {file_path}")
 
-def crear_db_vectorial(directory, chunk_size=500):
-    file_paths = glob.glob(os.path.join(directory, '*'))
-    print(f'Archivos encontrados: {file_paths}')
-    
-    generate_embeddings(file_paths, chunk_size=chunk_size)
+# Ahora, en vez de recibir una lista de archivos, procesamos un solo archivo:
+def crear_db_vectorial(file_path):
+    """Crea la base de datos vectorial a partir de un único archivo."""
+    print(f"Procesando el archivo: {file_path}")
+    generate_embeddings(file_path)
 
 # Ejemplo de uso
 if __name__ == "__main__":
-    directory_path = 'ruta/a/tu/directorio'
-    crear_db_vectorial(directory_path, chunk_size=500)
+    file_path = 'ruta/a/tu/archivo'
+    crear_db_vectorial(file_path)

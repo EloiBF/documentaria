@@ -46,6 +46,9 @@ urlpatterns = [
     path('upload_summarize/', views.upload_summarize, name='upload_summarize'),
     path('progress_summarize/<str:filename>/', views.progress_summarize, name='progress_summarize'),
     path('result_summarize/<str:filename>/', views.result_summarize, name='result_summarize'),
+
+    # Rutas para embedding
+
 ]
 
 

@@ -1,10 +1,9 @@
 import os
-import glob
-import re
 import sqlite3
 import numpy as np
 from fastembed import TextEmbedding  # Importa la clase de fastembed
 from process_text_reader import read_document, read_docx, read_html, read_pdf, read_pptx, read_txt
+import re
 
 # Define la ruta de la base de datos en el volumen compartido
 DB_PATH = 'embeddings.db'
@@ -34,15 +33,9 @@ def split_text(text):
     fragments = re.split(r'(?<=[.!?])\s+|\n+', text)
     return [fragment.strip() for fragment in fragments if fragment.strip()]
 
-def get_language_from_filename(file_path):
-    """Extrae el idioma del nombre del archivo."""
-    base_name = os.path.basename(file_path)
-    name_without_extension = os.path.splitext(base_name)[0]
-    if '_' in name_without_extension:
-        return name_without_extension.split('_')[-1].lower()
-    return None
 
-def generate_embeddings(file_paths, grupo=None):
+
+def generate_embeddings(file_path, language=None, grupo=None):
     # Instancia el modelo de fastembed
     embedding_model = TextEmbedding()
     print("El modelo BAAI/bge-small-en-v1.5 está listo para usarse.")
@@ -52,23 +45,20 @@ def generate_embeddings(file_paths, grupo=None):
     all_languages = []
     all_ids = []
     phrase_id_mapping = {}
-
-    for file_path in file_paths:
-        language = get_language_from_filename(file_path)
                 
-        text, _ = read_document(file_path)
-        fragments = split_text(text)
+    text, _ = read_document(file_path)
+    fragments = split_text(text)
 
-        phrase_id_counter = 1
-        for fragment in fragments:
-            if fragment not in phrase_id_mapping:
-                phrase_id_mapping[fragment] = phrase_id_counter
-                phrase_id_counter += 1
+    phrase_id_counter = 1
+    for fragment in fragments:
+        if fragment not in phrase_id_mapping:
+            phrase_id_mapping[fragment] = phrase_id_counter
+            phrase_id_counter += 1
 
-            all_fragments.append(fragment)
-            all_file_paths.append(file_path)
-            all_languages.append(language)
-            all_ids.append(phrase_id_mapping[fragment])
+        all_fragments.append(fragment)
+        all_file_paths.append(file_path)
+        all_languages.append(language)
+        all_ids.append(phrase_id_mapping[fragment])
 
     # Genera los embeddings y conviértelos a una lista
     embeddings_list = list(embedding_model.embed(all_fragments))
@@ -76,9 +66,7 @@ def generate_embeddings(file_paths, grupo=None):
     # Guardar en SQLite
     conn = get_db_connection()
     cur = conn.cursor()
-
-    cur.execute(""" DROP TABLE IF EXISTS translation_embedding """)
-
+    
     cur.execute(""" 
     CREATE TABLE IF NOT EXISTS translation_embedding (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,11 +91,10 @@ def generate_embeddings(file_paths, grupo=None):
     cur.close()
     conn.close()
 
-    print("Embeddings guardados en SQLite.")
+    print(f"Embeddings guardados en SQLite para el archivo: {file_path}")
 
-def crear_db_vectorial(directory, grupo=None):
-    """Crea la base de datos vectorial a partir de los documentos en el directorio dado."""
-    file_paths = glob.glob(os.path.join(directory, '*'))
-    print(f'Archivos encontrados: {file_paths}')
-    
-    generate_embeddings(file_paths, grupo=grupo)
+# Ahora, en vez de recibir una lista de archivos, procesamos un solo archivo:
+def crear_db_vectorial(file_path, language=None, grupo=None):
+    """Crea la base de datos vectorial a partir de un único archivo."""
+    print(f"Procesando el archivo: {file_path}")
+    generate_embeddings(file_path, language=language, grupo=grupo)

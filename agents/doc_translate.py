@@ -1,13 +1,41 @@
 from groq import Groq
 import re
 from process_text_editor import Modify_Diccionarios, Modify_Bloques,Validar_Bloques, DOCX_process, PPTX_process, Excel_process, PDF_process, TXT_process, HTML_process
+import requests
+
 
 # Funcions específiques de la traducció de documents. Prompting i model IA.
 
+# Crida a la API per embeddings
+def obtener_ejemplos_api(query_text, origin_language, target_language, k=1):
+    """
+    Llama a la API para obtener ejemplos de traducción.
+    """
+    url = "http://embedding:6000/find-translation-examples"
+    data = {
+        "query_text": query_text,
+        "language": origin_language,
+        "target_language": target_language,
+        "k": k
+    }
+
+    try:
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            return response.json().get("results", [])
+        else:
+            print(f"API call failed with status code {response.status_code}")
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f"Error in API request: {e}")
+        return []
+
 class Aplicar_Modelo:
 
-    #  Función genérica para traducir con IA, con soporte para contexto
-    def modelo_traduccion_contexto(texto, origin_language, destination_language, add_prompt, file_type, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
+    # Función genérica para traducir con IA, con soporte para contexto y ejemplos
+    def modelo_traduccion_contexto(
+        texto, origin_language, destination_language, add_prompt, file_type,
+        model, api_key_file, use_embedding):
         """
         Traduce el texto utilizando el cliente de Groq con el contexto anterior y siguiente.
         """
@@ -27,16 +55,15 @@ class Aplicar_Modelo:
                     Preserve all <ph> and </ph> tags in their original positions within the text.
                     Do not add any comments, annotations, or changes outside the required translation.
                     Ensure the translation is grammatically correct and coherent in {destination_language}, with proper usage of punctuation, symbols, and apostrophes.
-                    All punctuation, symbols, numbers, line breaks, and white spaces should be preserved exactly as they appear in the original text, except where {{destination_language}} grammar rules require changes.
+                    All punctuation, symbols, numbers, line breaks, and white spaces should be preserved exactly as they appear in the original text, except where {destination_language} grammar rules require changes.
                     Translate every word, including those starting with capital letters, unless they are clearly proper nouns that should not be translated.
                     Maintain a similar text length in the translation to match the original as closely as possible.
                     The text is part of a larger document. Use the context provided by the surrounding words to ensure an accurate and natural translation.
                     If you encounter any ambiguities or context-dependent terms, translate them based on the most likely interpretation given the surrounding context.
 
                     Example:
-                    Original in english: "<ph>The cat,</ph><ph> </ph><ph>animal_1</ph> sat on the <ph>object_2</ph>."
+                    Original in English: "<ph>The cat,</ph><ph> </ph><ph>animal_1</ph> sat on the <ph>object_2</ph>."
                     Translation to Spanish: "<ph>El gato,</ph><ph> </ph><ph>animal_1</ph> se sentó en el <ph>object_2</ph>."
-
                 """
             else:
                 raise ValueError(f"Unsupported file type: {file_type}")
@@ -44,13 +71,21 @@ class Aplicar_Modelo:
             # Construye el prompt completo
             prompt = base_prompt
 
+            # Agrega instrucciones adicionales si se proporcionan
+            if add_prompt:
+                prompt += f"\n\nAdditional translation instructions: {add_prompt}"
+
+            # Llama a la API de ejemplos de traducción si use_embedding está activado
+            if use_embedding == True:
+                ejemplos = obtener_ejemplos_api(texto, origin_language, destination_language)
+                prompt += f"\n\nTranslation Examples: {ejemplos}\n"
+
+
+            # Agrega el texto de traducción al prompt
             if origin_language == "auto":
                 prompt += f"Translate the code to {destination_language}.\nCode to translate:\n{texto}"
             else:
                 prompt += f"Translate the code from {origin_language} to {destination_language}.\nCode to translate:\n{texto}"
-
-            if add_prompt:
-                prompt += f"\n\nAdditional translation instructions: {add_prompt}"
 
             # Llama a la API de Groq para traducir el texto
             chat_completion = client.chat.completions.create(
@@ -60,7 +95,7 @@ class Aplicar_Modelo:
 
             traduccion = chat_completion.choices[0].message.content.strip()
 
-            print(prompt)
+            print(prompt)  # Opcional: para depuración
 
             return traduccion
 
@@ -68,7 +103,7 @@ class Aplicar_Modelo:
             raise RuntimeError(f"Error during translation: {e}")
 
     #  Función genérica para traducir con IA, con soporte para contexto
-    def modelo_traduccion_placeholders(texto, texto_traducido, texto_original, origin_language, destination_language, add_prompt, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
+    def modelo_traduccion_placeholders(texto, texto_traducido, texto_original, origin_language, destination_language, add_prompt, model, api_key_file):
         """
         Revisa el texto traducido utilizando el cliente de Groq comparándolo con el texto original.
         """
@@ -115,7 +150,7 @@ class Aplicar_Modelo:
             raise RuntimeError(f"Error during translation revision: {e}")
 
 
-    def aplicar_modelo_IA(bloques, origin_language, destination_language, extension, add_prompt="", numintentos=50):
+    def aplicar_modelo_IA(bloques, origin_language, destination_language, extension, add_prompt, model, api_key_file, numintentos, use_embedding):
         """
         Aplica el modelo de traducción y revisión a los bloques. Verifica los placeholders después de cada paso.
         """
@@ -131,8 +166,8 @@ class Aplicar_Modelo:
             while reintentos < numintentos:
                 try:
                     # Traducimos el bloque actual
-                    traduccion = Aplicar_Modelo.modelo_traduccion_contexto(bloque_extendido, origin_language, destination_language, add_prompt, extension)
-                    revision = Aplicar_Modelo.modelo_traduccion_placeholders(bloque, traduccion, bloque_extendido, origin_language, destination_language, add_prompt)
+                    traduccion = Aplicar_Modelo.modelo_traduccion_contexto(bloque_extendido, origin_language, destination_language, add_prompt, extension, model, api_key_file, use_embedding)
+                    revision = Aplicar_Modelo.modelo_traduccion_placeholders(bloque, traduccion, bloque_extendido, origin_language, destination_language, add_prompt, model, api_key_file)
 
                     # Verificamos que los placeholders se mantengan en la revisión
                     if Validar_Bloques.verificar_placeholders(bloque, revision):
@@ -160,7 +195,7 @@ class Aplicar_Modelo:
         return bloques_traducidos
 
 # Función final que lee el documento y realiza la traducción. Genera el diccionario original, lo ajusta, recibe el traducido, lo ajusta y reemplaza los textos con los valores del traducido final
-def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt):
+def traducir_doc(input_path, output_path, origin_language, destination_language, extension, color_to_exclude, add_prompt="", model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt', numintentos = 20, use_embedding=False):
     
     textos_originales = {}
     
@@ -203,7 +238,7 @@ def traducir_doc(input_path, output_path, origin_language, destination_language,
     bloques = Modify_Diccionarios.separar_texto_bloques(textos_para_traducir)
 
     # Traducción de bloques con el modelo de IA
-    bloques_traducidos = Aplicar_Modelo.aplicar_modelo_IA(bloques, origin_language, destination_language, extension, add_prompt)
+    bloques_traducidos = Aplicar_Modelo.aplicar_modelo_IA(bloques, origin_language, destination_language, extension, add_prompt, model, api_key_file, numintentos, use_embedding)
 
     # Unir bloques traducidos y generar el diccionario de textos traducidos
     textos_traducidos = Modify_Bloques.join_blocks(bloques_traducidos)

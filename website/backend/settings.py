@@ -153,4 +153,4 @@ DELETE_TIME = 120
 
 # Define el directorio para los embeddings
 
-EMBEDDINGS_DIRECTORY = os.path.join(BASE_DIR, 'documents', 'embedding', 'translation')
+EMBEDDING_DIRECTORY = os.path.join(BASE_DIR, 'documents', 'embedding', 'translation')
