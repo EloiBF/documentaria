@@ -1,0 +1,64 @@
+/* login.css */
+
+/* Contenidor per centrar el formulari (Login) */
+.login-container {
+    max-width: 600px;
+    margin: 100px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Contenidor per centrar el formulari (Register) amb més amplada */
+.register-container {
+    max-width: 1000px; /* Augmenta l'amplada per al registre */
+    margin: 100px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Mantenir el mateix estil per a títol i formulari en ambdues pàgines */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Estils per als formularis */
+.login-form, .register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Botó comú */
+button {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Enllaços per registre i login */
+p {
+    text-align: center;
+    margin-top: 20px;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}

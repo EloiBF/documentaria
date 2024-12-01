@@ -60,6 +60,13 @@
                 </div>
                 <a href="#pricing" class="nav-button">Pricing</a>
                 <a href="#contact" class="nav-button">Contacte</a>
+                <!-- Afegim els botons de registre i inici de sessió -->
+                {% if user.is_authenticated %}
+                    <a href="{% url 'logout' %}" class="nav-button">Tancar sessió</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="nav-button">Inicia sessió</a>
+                    <a href="{% url 'register' %}" class="nav-button highlight">Registra't</a>
+                {% endif %}
             </nav>
         </div>
     </header>

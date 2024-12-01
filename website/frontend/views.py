@@ -10,6 +10,23 @@ import json
 import tempfile
 import shutil
 import logging
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+
+# Vista de registre d'usuaris
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "El teu compte s'ha creat amb èxit. Ja pots iniciar sessió!")
+            return redirect('login')  # Redirigeix a la pàgina d'inici de sessió
+    else:
+        form = UserCreationForm()
+    return render(request, 'register.html', {'form': form})
 
 logger = logging.getLogger(__name__)
 
@@ -496,8 +513,34 @@ def check_file_status(request, filename):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+# Vistas de gestión de Usuario
+
+@login_required
+def user_dashboard(request):
+    # Exemple de dades que es poden passar al context
+    context = {
+        'user_stats': {
+            'translations': 12,  # Nombre de traduccions realitzades
+            'edits': 8,          # Nombre d'edicions
+            'transcriptions': 5, # Nombre de transcripcions
+        },
+        'updates': [
+            "Nova funcionalitat: Suport per documents en alemany! 📝",
+            "Millores de rendiment implementades aquesta setmana.",
+            "Recorda revisar la configuració del teu compte per assegurar la privacitat.",
+        ]
+    }
+    return render(request, 'dashboard.html', context)
+
+
+
+
+# Vistas de los servicios
+
 
 # Vistas Generate
+
+@login_required
 def upload_generate(request):
     api_generate = API_GENERATE()
     return api_generate.handle_request(request)
@@ -511,6 +554,8 @@ def result_generate(request, filename):
 
 
 # Vistas Translate
+
+@login_required
 def upload_translate(request):
     api_translate = API_TRANSLATE()
     return api_translate.handle_request(request)
@@ -523,6 +568,8 @@ def result_translate(request, filename):
 
 
 # Vistas Edit
+
+@login_required
 def upload_edit(request):
     api_edit = API_EDIT()  # Suponiendo que ya tienes una clase API_EDIT definida
     return api_edit.handle_request(request)
@@ -535,6 +582,7 @@ def result_edit(request, filename):
 
 
 # Vistas Transcribe
+@login_required
 def upload_transcribe(request):
     api_transcribe = API_TRANSCRIBE()  # Suponiendo que ya tienes una clase API_TRANSCRIBE definida
     return api_transcribe.handle_request(request)
@@ -559,6 +607,7 @@ def result_transcribe(request, filename):
 
 
 # Vistas Analyze
+@login_required
 def upload_analyze(request):
     api_analyze = API_ANALYZE()  # Suponiendo que ya tienes una clase API_ANALYZE definida
     return api_analyze.handle_request(request)
@@ -606,6 +655,7 @@ def result_analyze(request, filename):
 
 
 # Vistas Summarize
+@login_required
 def upload_summarize(request):
     api_summarize = API_SUMMARIZE()  # Suponiendo que ya tienes una clase API_SUMMARIZE definida
     return api_summarize.handle_request(request)

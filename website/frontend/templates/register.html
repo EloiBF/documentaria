@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Registre - DocumentarIA{% endblock %}
+
+{% block content %}
+    <!-- Carregar login.css per a la pàgina de registre -->
+    <link rel="stylesheet" href="{% static 'login.css' %}">
+
+    <div class="register-container">
+        <h2>Registra't</h2>
+        <form class="login-form" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Registrar</button>
+        </form>
+        <p>Ja tens compte? <a href="{% url 'login' %}">Inicia sessió aquí</a></p>
+    </div>
+{% endblock %}

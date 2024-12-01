@@ -15,3 +15,5 @@ fastapi
 uvicorn
 fastembed
 Flask
+langchain
+python-dotenv

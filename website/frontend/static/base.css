@@ -1,12 +1,7 @@
-/* base.css */
-
-
-
-/* Importar la fuente desde Google Fonts */
+/* Importación de fuentes */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans:wght@400;700&family=Roboto:wght@400;700&display=swap');
 
-
-/* Estils generals */
+/* Estilos Generales */
 html, body {
     height: 100%;
     margin: 0;
@@ -17,45 +12,39 @@ html, body {
 body {
     display: flex;
     flex-direction: column;
-    min-height: 100%; /* Assegura que el body ocupi almenys tota l'alçada de la finestra */
+    min-height: 100%;
     font-family: 'Montserrat', sans-serif;
     font-size: 1.2em;
 }
 
 main {
-    flex: 1; /* Permet que el main ocupi l'espai restant disponible */
+    flex: 1;
+    padding-bottom: 50px;
 }
 
+/* Títulos Generales */
+.header-section,
+.header-section h1,
+.header-section h3 {
+    color: var(--text-color-dark);
+    margin-bottom: 10px;
+}
 
-
-/* Estils generals per als títols */
 .header-section {
-    font-size: 2.5rem; /* Mida del text per a un títol principal */
-    margin-bottom: 10px;
-    color: var(--text-color-dark); /* Color destacat per al títol */
-    align-items: center;
+    font-size: 2.5rem;
 }
-
-.header-section h1 {
-    font-size: 2.5rem; /* Mida del text per a un títol principal */
-    margin-bottom: 10px;
-    color: var(--text-color-dark); /* Color destacat per al títol */
-}
-
-
-
-
-
 
 .header-section h3 {
-    font-size: 1.5rem; /* Mida del text per a un subtítol */
+    font-size: 1.5rem;
     margin-bottom: 30px;
-    color: var(--text-color-dark); /* Color per al subtítol */
 }
 
-
-/* Botons */
-button, .submit-button, .download-button, .pricing-card button,  .cta-button {
+/* Botones */
+button,
+.submit-button,
+.download-button,
+.pricing-card button,
+.cta-button {
     background-color: var(--mid-color);
     color: var(--text-color-light);
     border: none;
@@ -63,32 +52,33 @@ button, .submit-button, .download-button, .pricing-card button,  .cta-button {
     border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
-    display: inline-block; /* Cambiado a inline-block para ajustarse al tamaño del texto */
+    display: inline-block;
     margin: 20px auto 0;
-    transition: background-color 0.3s ease; /* Cambiado a background-color para que el hover funcione correctamente */
-    text-decoration: none; /* Asegura que no haya subrayado en los enlaces dentro de los botones */
+    min-width: 120px;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
     font: inherit;
-    min-width: 120px; /* Establece un ancho mínimo para el botón */
-    text-align: center; /* Alinea el texto en el centro */
 }
 
-button:hover, .submit-button:hover, .download-button:hover, .pricing-card button:hover,  .cta-button:hover {
+button:hover,
+.submit-button:hover,
+.download-button:hover,
+.pricing-card button:hover,
+.cta-button:hover {
     background-color: var(--dark-color);
 }
 
-/* Asegúrate de que los enlaces dentro de los botones no tengan subrayado */
-button a, .submit-button a, .download-button a, .pricing-card button a, .cta-button a {
+button a,
+.submit-button a,
+.download-button a,
+.pricing-card button a,
+.cta-button a {
     text-decoration: none;
-    color: inherit; /* Hereda el color del botón */
+    color: inherit;
 }
 
-
-
-
-
-
-
-/* Capçalera */
+/* Header */
 header {
     background-color: var(--background-light);
     color: var(--text-color-dark);
@@ -115,16 +105,18 @@ header h1 a {
     font-size: 24px;
 }
 
-header h1 a span{
+header h1 a span {
     color: var(--mid-color);
 }
 
+/* Navegación */
 nav {
     display: flex;
     align-items: center;
 }
 
-nav a, .dropbtn {
+nav a,
+.dropbtn {
     color: var(--text-color-dark);
     text-decoration: none;
     margin: 0 15px;
@@ -135,7 +127,30 @@ nav a, .dropbtn {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Botó desplegable de la capcelera */
+.nav-button {
+    margin-left: 15px;
+    padding: 10px 15px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-button:hover {
+    background-color: #f0f0f0;
+    color: #000;
+}
+
+.nav-button.highlight {
+    background-color: var(--highlight-color);
+    color: #fff;
+}
+
+.nav-button.highlight:hover {
+    background-color: #409c9c;
+    color: #fff;
+}
+
+/* Dropdown de Header */
 .dropbtn {
     background: none;
     border: 2px solid var(--dark-color);
@@ -176,43 +191,40 @@ nav a, .dropbtn {
     display: block;
 }
 
-/* Peu de pàgina */
+/* Footer */
 footer {
     background-color: var(--light-color);
     color: var(--text-color-dark);
     text-align: center;
     padding: 10px;
     width: 100%;
-    position: relative; /* No fixa el footer, sinó que es posiciona de forma normal al flux del document */
+    position: relative;
     font-size: medium;
+    margin-top: auto;
 }
 
 footer p {
-    margin: 0; /* Elimina el marge per al text del footer */
+    margin: 0;
 }
 
 footer ul {
-    list-style-type: none; /* Elimina els punts de la llista */
-    padding: 0; /* Elimina el padding per defecte */
-    margin: 10px 0 0; /* Ajusta el marge superior per separar la llista del text */
-    display: flex; /* Utilitza flexbox per centrar la llista */
-    justify-content: center; /* Centra la llista horitzontalment */
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0 0;
+    display: flex;
+    justify-content: center;
 }
 
 footer ul li {
-    margin: 0 10px; /* Espai entre els elements de la llista */
+    margin: 0 10px;
 }
 
 footer ul li a {
-    color: var(--text-color-dark); /* Color blanc per als enllaços */
-    text-decoration: underline; /* Elimina el subratllat dels enllaços */
-    transition: color 0.3s ease; /* Suavitza el canvi de color */
+    color: var(--text-color-dark);
+    text-decoration: underline;
+    transition: color 0.3s ease;
 }
 
 footer ul li a:hover {
-    color: var(--mid-color); /* Canvia el color en passar el cursor per sobre */
+    color: var(--mid-color);
 }
-
-
-
-

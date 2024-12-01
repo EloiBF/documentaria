@@ -4,12 +4,18 @@ import numpy as np
 from fastembed import TextEmbedding  # Importa la clase de fastembed
 from process_text_reader import read_document, read_docx, read_html, read_pdf, read_pptx, read_txt
 import re
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from dotenv import load_dotenv
 
-# Define la ruta de la base de datos en el volumen compartido
-DB_PATH = 'embeddings.db'
+# Carregar les variables del fitxer .env
+load_dotenv()
+
+# Ara pots accedir a les teves variables d'entorn
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+EMBEDDING_DB_PATH = os.getenv('EMBEDDING_DB_PATH')
 
 # Conexión a SQLite
-def get_db_connection(db_file=DB_PATH):
+def get_db_connection(db_file=EMBEDDING_DB_PATH):
     conn = sqlite3.connect(db_file)
     return conn
 
@@ -29,9 +35,17 @@ def read_document(file_path):
     else:
         raise ValueError(f"Tipo de archivo no soportado: {file_extension}")
 
-def split_text(text):
-    fragments = re.split(r'(?<=[.!?])\s+|\n+', text)
-    return [fragment.strip() for fragment in fragments if fragment.strip()]
+
+def split_text(text, chunk_size=1000, chunk_overlap=200):
+    """
+    Divide el texto en fragmentos utilizando LangChain.
+    """
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap
+    )
+    chunks = text_splitter.split_text(text)
+    return chunks
 
 def generate_embeddings(file_path, language=None, grupo=None):
     # Instancia el modelo de fastembed
@@ -65,27 +79,30 @@ def generate_embeddings(file_path, language=None, grupo=None):
     conn = get_db_connection()
     cur = conn.cursor()
     
+    # Crear la taula amb la nova columna filename si no existeix
     cur.execute(""" 
     CREATE TABLE IF NOT EXISTS document_embedding (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT,
         document TEXT,
-        embedding BLOB
+        embedding BLOB,
+        filename TEXT
     )
     """)
 
     # Insertar embeddings en la base de datos
     for text, document, embedding in zip(all_fragments, all_file_paths, embeddings_list):
         cur.execute(""" 
-        INSERT INTO document_embedding (text, document, embedding)
-        VALUES (?, ?, ?) 
-        """, (text, os.path.basename(document), np.array(embedding).tobytes()))
+        INSERT INTO document_embedding (text, document, embedding, filename)
+        VALUES (?, ?, ?, ?) 
+        """, (text, os.path.basename(document), np.array(embedding).tobytes(), os.path.basename(file_path)))
 
     conn.commit()
     cur.close()
     conn.close()
 
     print(f"Embeddings guardados en SQLite para el archivo: {file_path}")
+
 
 # Ahora, en vez de recibir una lista de archivos, procesamos un solo archivo:
 def crear_db_vectorial(file_path):

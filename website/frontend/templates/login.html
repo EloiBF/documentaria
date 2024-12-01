@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Inicia Sessió - DocumentarIA{% endblock %}
+
+{% block content %}
+    <!-- Carregar login.css per a la pàgina de login -->
+    <link rel="stylesheet" href="{% static 'login.css' %}">
+
+    <div class="login-container">
+        <h2>Inicia Sessió</h2>
+        <form class="login-form" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Iniciar Sessió</button>
+        </form>
+        <p>Encara no tens compte? <a href="{% url 'register' %}">Registra't aquí</a></p>
+    </div>
+{% endblock %}

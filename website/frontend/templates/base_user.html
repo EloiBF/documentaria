@@ -1,0 +1,83 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Variables i estil general -->
+    <link rel="stylesheet" href="{% static 'variables.css' %}">
+    <link rel="stylesheet" href="{% static 'base.css' %}">
+    <link rel="stylesheet" href="{% static 'user.css' %}"> <!-- Estils específics per a usuaris -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">  <!-- Icones -->
+
+    <title>{% block title %}DocumentarIA: Pàgina d'Usuari{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="{% url 'user_dashboard' %}">Documentar<span class="highlight">IA</span></a></h1>
+            <nav>
+                <a href="{% url 'logout' %}" class="nav-button">Tancar sessió</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Barra lateral fixa -->
+        <aside class="sidebar">
+            <ul>
+                <li class="{% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">
+                    <a href="{% url 'user_dashboard' %}">
+                        <i class="fas fa-home"></i> Inici
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'upload_translate' %}active{% endif %}">
+                    <a href="{% url 'upload_translate' %}">
+                        <i class="fas fa-language"></i> Traducció
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'upload_edit' %}active{% endif %}">
+                    <a href="{% url 'upload_edit' %}">
+                        <i class="fas fa-edit"></i> Edició de documents
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'upload_transcribe' %}active{% endif %}">
+                    <a href="{% url 'upload_transcribe' %}">
+                        <i class="fas fa-microphone"></i> Transcripció de veu
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'upload_summarize' %}active{% endif %}">
+                    <a href="{% url 'upload_summarize' %}">
+                        <i class="fas fa-file-alt"></i> Resum de documents
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'upload_generate' %}active{% endif %}">
+                    <a href="{% url 'upload_generate' %}">
+                        <i class="fas fa-file"></i> Generar Fitxers
+                    </a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'upload_analyze' %}active{% endif %}">
+                    <a href="{% url 'upload_analyze' %}">
+                        <i class="fas fa-chart-bar"></i> Prompt Analytics
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Contingut principal -->
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 DocumentarIA: Traductor de Documents. Tots els drets reservats.</p>
+        <ul>
+            <li><a href="{% url 'privacy_policy' %}">Política de Privadesa</a></li>
+            <li><a href="{% url 'terms_and_conditions' %}">Termes i Condicions</a></li>
+        </ul>
+    </footer>
+</body>
+</html>

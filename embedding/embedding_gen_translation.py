@@ -4,12 +4,17 @@ import numpy as np
 from fastembed import TextEmbedding  # Importa la clase de fastembed
 from process_text_reader import read_document, read_docx, read_html, read_pdf, read_pptx, read_txt
 import re
+from dotenv import load_dotenv
 
-# Define la ruta de la base de datos en el volumen compartido
-DB_PATH = 'embeddings.db'
+# Carregar les variables del fitxer .env
+load_dotenv()
+
+# Ara pots accedir a les teves variables d'entorn
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+EMBEDDING_DB_PATH = os.getenv('EMBEDDING_DB_PATH')
 
 # Conexión a SQLite
-def get_db_connection(db_file=DB_PATH):
+def get_db_connection(db_file=EMBEDDING_DB_PATH):
     conn = sqlite3.connect(db_file)
     return conn
 

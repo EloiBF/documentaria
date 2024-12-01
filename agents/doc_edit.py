@@ -9,7 +9,7 @@ from process_text_editor import Modify_Diccionarios, Modify_Bloques, DOCX_proces
 class Aplicar_Modelo:
 
     #  Función genérica para traducir con IA, con soporte para contexto
-    def modelo_edición(texto, add_prompt, model='llama-3.1-70b-versatile', api_key_file='API_KEY.txt'):
+    def modelo_edición(texto, add_prompt, model='mixtral-8x7b-32768', api_key_file='API_KEY.txt'):
         """
         Revisa el texto traducido utilizando el cliente de Groq comparándolo con el texto original.
         """

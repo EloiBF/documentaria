@@ -1,9 +1,8 @@
-
 /* Títol */
 .header-section {
     display: flex;
     flex-direction: column;
-    text-align:left ;    
+    text-align: left;    
     padding: 20px;
     margin: 0 auto;
 }
@@ -21,77 +20,88 @@
     gap: 15px; /* Espaciado entre los elementos dentro del formulario */
 }
 
-/* Additional Options */
+/* Estil per a les opcions addicionals */
 .form-options {
     display: flex;
+    flex-direction: column;
     gap: 20px;
-    margin-bottom: 10px;
+    padding: 20px;
+    width: 100%;
 }
 
-/* Alineación y estilo de los botones de radio */
+/* Estil de cada grup de preguntes (botons de radio) */
 .form-group {
     display: flex;
-    flex-direction: column;
-    gap: 8px; /* Espacio entre el radio button y las etiquetas */
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
 }
 
 .form-group label {
     margin-left: 5px; /* Espaciado entre el botón de radio y la etiqueta */
 }
 
-/* Estilo de los radio buttons */
 .form-group input[type="radio"] {
     margin-right: 10px; /* Espaciado entre los radio buttons y las etiquetas */
 }
 
-textarea#add_prompt {
+/* Estil per als camps de text (textarea) */
+textarea#add_prompt, textarea {
     height: 100px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    padding: 10px;
+    width: 100%; /* Asegura que ocupe todo el ancho */
+    box-sizing: border-box; /* Incluye padding y border en el ancho total */
 }
 
-/* Alineación y estilo del enlace */
+/* Estil per al select */
+select {
+    height: 50px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Estil per als enllaços */
 .example-link-container {
-    margin-top: 10px; /* Espacio entre las opciones y el enlace */
+    margin-top: 10px;
 }
 
 .example-link {
     font-size: 14px;
-    color: #007BFF; /* Color azul para el enlace */
+    color: #007BFF; /* Color blau per al enllaç */
     text-decoration: none;
-    display: inline-block; /* Asegura que se quede en la misma línea */
+    display: inline-block; /* S'assegura que es quedi en la mateixa línia */
 }
 
-/* Efecto de hover sobre el enlace */
 .example-link:hover {
-    color: #0056b3; /* Azul más oscuro al pasar el cursor */
-    text-decoration: underline; /* Subrayado al pasar el cursor */
+    color: #0056b3;
+    text-decoration: underline; /* Subratllat al passar el cursor */
 }
-
-
 
 /* Contenidor de càrrega de fitxers */
-/* Ocultar el input de tipo file */
 #file-input {
-    display: none; /* Oculta el input de tipo archivo */
+    display: none; /* Oculta el input de tipus file */
 }
 
-/* Mantener visible el área de carga */
 .upload-container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
     display: flex;
-    flex-direction: column; /* Asegura que los elementos estén en columna */
-    gap: 20px; /* Espaciado entre cada elemento del formulario */
+    flex-direction: column;
+    gap: 20px;
 }
 
 .upload-area {
-    display: flex; /* Activa el uso de flexbox */
-    flex-direction: column; /* Alinea los elementos en columna */
-    justify-content: center; /* Centra verticalmente */
-    align-items: center; /* Centra horizontalmente */
-    text-align: center; /* Centra el texto dentro del área */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     border: 2px dashed var(--border-color);
     padding: 20px;
     border-radius: 8px;
@@ -99,98 +109,36 @@ textarea#add_prompt {
     cursor: pointer;
 }
 
-/* Personalizar la etiqueta del área de carga */
+.upload-area:hover {
+    background-color: var(--light-mid-color); /* Canvia el color en hover */
+}
+
+.upload-area.file-loaded {
+    border-color: var(--green-ok-dark);
+    background-color: var(--green-ok-light);
+}
+
 .upload-label {
     color: var(--text-color-dark);
     padding: 20px;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    width: 100%; /* Que ocupe todo el ancho del área de carga */
-    text-align: center; /* Asegura que el texto en la etiqueta esté centrado */
+    width: 100%;
+    text-align: center;
 }
 
-/* Hover effect for the label */
-.upload-area:hover {
-    background-color: var(--light-mid-color); /* Cambia el color cuando el usuario pase el cursor */
-}
-
-/* Cambiar el estilo cuando el archivo esté cargado */
-.upload-area.file-loaded {
-    border-color: var(--green-ok-dark);
-    background-color: var(--green-ok-light);
-}
-
-/* Mostrar información del archivo seleccionado */
+/* Mostrar informació del fitxer seleccionat */
 .file-info {
     margin: 0;
     font-size: 1em;
     color: var(--text-color-dark);
-    text-align: center; /* Asegura que la información del archivo esté centrada */
+    text-align: center;
 }
 
-
-/* Estil per al missatge d'error, si cal */
+/* Estil per al missatge d'error */
 .error-message {
-    display: none; /* Amaga per defecte */
+    display: none;
     color: red;
     margin-top: 10px;
-}
-
-
-.form-container {
-    display: flex;
-    flex-direction: column; /* Asegura que los elementos estén en columna */
-    gap: 20px; /* Espaciado entre cada elemento del formulario */
-}
-
-
-
-
-
-
-
-/* Estilo para cada grupo de preguntas */
-.form-options {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    width: 100%; /* Asegura que ocupe todo el ancho disponible */
-}
-
-.form-group {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    width: 100%; /* Asegura que ocupe todo el ancho disponible */
-}
-
-/* Estilo para cada grupo de entrada (textarea y select) */
-.input-group {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch; /* Cambiado de flex-start a stretch */
-    gap: 10px;
-    width: 100%;
-}
-
-/* Ajustes para los elementos de entrada */
-textarea {
-    height: 50px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 10px;
-    width: 100%; /* Asegura que ocupe todo el ancho del contenedor */
-    box-sizing: border-box; /* Incluye padding y border en el ancho total */
-}
-
-/* Ajustes específicos para el select */
-select {
-    height: 50px;
-    width: 100%; /* Asegura que ocupe todo el ancho del contenedor */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box; /* Incluye padding y border en el ancho total */
 }

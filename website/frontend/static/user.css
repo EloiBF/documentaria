@@ -1,0 +1,245 @@
+
+/* Estructura general */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%; /* Garantir que el body ocupi tota la finestra */
+    margin-left: 50px;
+    transition: margin-left 0.3s ease;
+}
+
+/* Pàgina principal */
+html, body {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+
+
+
+
+
+/* Barra lateral */
+.sidebar {
+    width: 250px;
+    background-color: var(--background-light);
+    padding: 20px;
+    position: fixed; /* Manté la barra lateral fixa a l'esquerra */
+    height: 100vh; /* Ocupa tota l'altura de la finestra */
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    top: 110px; /* Comença just sota de la barra de navegació */
+    left: 0;
+    z-index: 10; /* Per sobre del contingut principal */
+    transition: width 0.3s ease; /* Transició suau per al plegat */
+}
+
+.sidebar.collapsed {
+    width: 60px; /* Ancho reducido cuando está plegada */
+    padding: 10px 0; /* Menos padding para el modo plegado */
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar ul li a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-color-dark);
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar ul li a i {
+    margin-right: 10px;
+    font-size: 20px;
+    transition: margin-right 0.3s ease;
+}
+
+.sidebar.collapsed ul li a i {
+    margin-right: 0; /* Elimina el espaciado cuando está plegada */
+}
+
+/* Estilo per al enllaç actiu */
+.sidebar ul li.active a {
+    background-color: var(--mid-color);
+    color: var(--text-color-light);
+    font-weight: bold;
+}
+
+/* Estilo per al hover en els enllaços que no estan actius */
+.sidebar ul li:not(.active) a:hover {
+    background-color: var(--light-color);
+    color: var(--text-color-dark);
+}
+
+/* Botón para plegar la barra lateral */
+.sidebar-toggle {
+    position: absolute;
+    top: 20px;
+    right: -20px;
+    width: 30px;
+    height: 30px;
+    background-color: var(--mid-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    transform: scale(1.1);
+}
+
+/* Estils pel contingut principal */
+.main-container {
+    display: flex;
+    margin-left: 250px; /* Espai per a la barra lateral */
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 20px;
+    transition: margin-left 0.3s ease; /* Transició suau per a la movida */
+}
+
+.main-container.sidebar-collapsed {
+    margin-left: 60px; /* Reduïm l'espai quan la barra lateral està plegada */
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Estil per al resum d'activitat */
+.dashboard {
+    padding: 20px;
+    background-color: #f9f9f9;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    color: #333;
+}
+
+.dashboard-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+/* Estil per a les estadístiques */
+.dashboard-overview {
+    margin-bottom: 30px;
+}
+
+.dashboard-overview h2 {
+    margin-bottom: 15px;
+    color: #444;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    background-color: #fff;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item h3 {
+    font-size: 1.2rem;
+    color: #555;
+}
+
+.stat-item .stat-number {
+    font-size: 2rem;
+    color: #0078d4;
+}
+
+/* Estil per als serveis */
+.dashboard-services {
+    margin-bottom: 30px;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.service-card {
+    background-color: #fff;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: #333;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.service-card h3 {
+    font-size: 1.2rem;
+    color: #0078d4;
+}
+
+.service-card p {
+    font-size: 1rem;
+    color: #555;
+}
+
+/* Notícies i actualitzacions */
+.dashboard-updates {
+    margin-bottom: 30px;
+}
+
+.dashboard-updates h2 {
+    margin-bottom: 15px;
+    color: #444;
+}
+
+.dashboard-updates ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dashboard-updates ul li {
+    background-color: #fff;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #555;
+}
+

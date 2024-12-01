@@ -1,0 +1,43 @@
+{% extends 'base_user.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<main class="dashboard">
+    <header class="dashboard-header">
+        <h1>Benvingut/da, {{ user.first_name }}!</h1>
+        <p>Aquí tens una vista ràpida de la teva activitat i serveis disponibles.</p>
+    </header>
+
+    <section class="dashboard-overview">
+        <h2>Resum de la teva Activitat</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h3>Traduccions</h3>
+                <p><span class="stat-number">12</span> documents processats</p>
+            </div>
+            <div class="stat-item">
+                <h3>Edicions</h3>
+                <p><span class="stat-number">8</span> documents editats</p>
+            </div>
+            <div class="stat-item">
+                <h3>Transcripcions</h3>
+                <p><span class="stat-number">5</span> transcripcions completades</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="dashboard-services">
+    </section>
+
+    <section class="dashboard-updates">
+        <h2>Notícies i Actualitzacions</h2>
+        <ul>
+            <li>Nova funcionalitat: Suport per documents en alemany! 📝</li>
+            <li>Millores de rendiment implementades aquesta setmana.</li>
+            <li>Recorda revisar la configuració del teu compte per assegurar la privacitat.</li>
+        </ul>
+    </section>
+</main>
+{% endblock %}

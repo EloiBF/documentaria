@@ -149,34 +149,105 @@ class DocxProcessor:
         return re.sub(r'\[.*?\]', '', content).strip()
 
 
+
+from pptx import Presentation
+from pptx.dml.color import RGBColor
+import re
+from pptx.util import Inches
+
 class PptxProcessor:
     def __init__(self):
         self.prs = Presentation()
 
     def create_presentation(self, content, output_path='output.pptx'):
         self._process_content(content)
-        
-        # Eliminar diapositivas vacías antes de guardar
-        self._remove_empty_slides()
-        
         self.prs.save(output_path)
         return output_path
 
     def _process_content(self, content):
         slides = content.split("[PAGEBREAK]")
+        current_table = None
         for slide_content in slides:
-            self._create_slide(slide_content.strip())
+            # Si encontramos [TABLE], procesamos una tabla
+            if "[TABLE]" in slide_content:
+                current_table = []
+                slide_content = slide_content.replace("[TABLE]", "").strip()  # Eliminar la marca [TABLE]
+            elif "[/TABLE]" in slide_content:
+                if current_table:
+                    self._create_table(current_table)  # Crear la tabla
+                current_table = None
+                slide_content = slide_content.replace("[/TABLE]", "").strip()  # Eliminar la marca [/TABLE]
+            
+            # Procesar el contenido de la diapositiva (con o sin tabla)
+            self._create_slide(slide_content.strip(), current_table)
 
-    def _create_slide(self, content):
-        slide = self.prs.slides.add_slide(self.prs.slide_layouts[5])
-        text_frame = slide.shapes.add_textbox(Inches(1), Inches(1), Inches(8), Inches(5)).text_frame
-        text_frame.word_wrap = True  # Habilitar el ajuste de texto
+    def _create_table(self, table_data):
+        """ Crear la tabla en la diapositiva actual """
+        if not table_data:
+            return
 
+        # Dividir cada fila de la taula
+        rows = [row.split(";") for row in table_data]  # Separar les cel·les per ';'
+
+        # Crear la taula a la diapositiva actual
+        slide = self.prs.slides[-1]  # Agafem la diapositiva actual, que és la darrera afegida
+        table = slide.shapes.add_table(len(rows), len(rows[0]), Inches(1), Inches(1.5), Inches(8), Inches(5)).table
+
+        # Establir el disseny de la taula (es pot personalitzar més)
+        table.style = 'Table Grid'
+
+        # Omplir les cel·les amb les dades
+        for i, row in enumerate(rows):
+            for j, cell in enumerate(row):
+                table.cell(i, j).text = cell.strip()
+
+    def _create_slide(self, content, current_table=None):
+        # Depurar el contenido recibido para entender el problema
+        print(f"Contenido recibido para la diapositiva: '{content}'")
+
+        # Comprobar si el contenido está vacío
+        if not content.strip():  # Si el contenido está vacío o solo tiene espacios
+            print("Advertencia: El contenido está vacío. Se creará una diapositiva vacía.")
+            # Si el contenido está vacío, podemos decidir no hacer nada o crear una diapositiva vacía
+            slide = self.prs.slides.add_slide(self.prs.slide_layouts[5])  # Crear diapositiva vacía
+            return  # Salir de la función sin procesar más
+
+        # Crear una diapositiva en blanco (layout 5)
+        slide = self.prs.slides.add_slide(self.prs.slide_layouts[5])  # Layout en blanco
+
+        # Dividir el contenido en líneas
         lines = content.splitlines()
-        for line in lines:
+
+        # Limpiar las etiquetas [H1] y [/H1] del primer renglón (título)
+        title_text = self._remove_bracketed_text(lines[0])  # El primer renglón limpio de etiquetas
+
+        # Colocar el primer renglón como título en el cuadro de título predefinido
+        title = slide.shapes.title  # Acceder al cuadro de título
+        if title and title_text:
+            # Asignar el primer renglón como el título
+            title.text = title_text  # El primer renglón limpio se pone como el título
+
+        # Procesar el resto del contenido (si lo hay)
+        if len(lines) > 1:
+            # Resto del contenido se coloca en un cuadro de texto normal
+            self._create_text(slide, "\n".join(lines[1:]), current_table)
+
+    def _remove_bracketed_text(self, content):
+        """Eliminar las etiquetas [H1] y [/H1], así como cualquier otra etiqueta similar."""
+        # Usamos expresiones regulares para eliminar cualquier etiqueta con formato [TAG] o [/TAG]
+        return re.sub(r'\[.*?\]', '', content).strip()  # Eliminar cualquier etiqueta y limpiar los espacios
+
+    def _create_text(self, slide, content, current_table=None):
+        # Crear un cuadro de texto para el contenido restante debajo del título
+        text_frame = slide.shapes.add_textbox(Inches(1), Inches(1.5), Inches(8), Inches(5)).text_frame
+        text_frame.word_wrap = True  # Habilitar ajuste de texto
+
+        # Procesar el contenido del texto
+        for line in content.splitlines():
             self._process_line(text_frame, line)
 
     def _process_line(self, text_frame, text):
+        """ Procesar cada línea de texto y aplicar formato según las etiquetas """
         p = text_frame.add_paragraph()
         formats = {
             'BOLD': False,
@@ -184,7 +255,7 @@ class PptxProcessor:
             'COLOR': None
         }
 
-        pattern = r'\[(.*?)\]'
+        pattern = r'\[(.*?)\]'  # Buscar las etiquetas como [BOLD], [COLOR], etc.
         matches = list(re.finditer(pattern, text))
         last_end = 0
 
@@ -210,16 +281,6 @@ class PptxProcessor:
                 formats['BOLD'] = True
             elif tag == 'ITALIC':
                 formats['ITALIC'] = True
-            elif tag == 'H1':
-                p = text_frame.add_paragraph()
-                p.text = ""
-                p.font.size = Pt(24)
-                p.font.bold = True
-            elif tag == 'H2':
-                p = text_frame.add_paragraph()
-                p.text = ""
-                p.font.size = Pt(20)
-                p.font.bold = True
 
             last_end = end
 
@@ -234,50 +295,52 @@ class PptxProcessor:
                 run.font.color.rgb = formats['COLOR']
 
     def _get_color(self, color_name):
+        """ Convertir el nombre o el código hexadecimal de un color a RGB """
         color_mapping = {
-            'red': PPTXRGBColor(255, 0, 0),
-            'green': PPTXRGBColor(0, 255, 0),
-            'blue': PPTXRGBColor(0, 0, 255),
-            'yellow': PPTXRGBColor(255, 255, 0),
-            'orange': PPTXRGBColor(255, 165, 0),
-            'purple': PPTXRGBColor(128, 0, 128),
-            'black': PPTXRGBColor(0, 0, 0),
-            'white': PPTXRGBColor(255, 255, 255),
-            'grey': PPTXRGBColor(128, 128, 128)
+            'red': RGBColor(255, 0, 0),
+            'green': RGBColor(0, 255, 0),
+            'blue': RGBColor(0, 0, 255),
+            'yellow': RGBColor(255, 255, 0),
+            'orange': RGBColor(255, 165, 0),
+            'purple': RGBColor(128, 0, 128),
+            'black': RGBColor(0, 0, 0),
+            'white': RGBColor(255, 255, 255),
+            'grey': RGBColor(128, 128, 128)
         }
 
+        # Verificar si el color es un valor hexadecimal
         if re.match(r'^[0-9A-Fa-f]{6}$', color_name):
             r = int(color_name[0:2], 16)
             g = int(color_name[2:4], 16)
             b = int(color_name[4:6], 16)
-            return PPTXRGBColor(r, g, b)
+            return RGBColor(r, g, b)
 
-        return color_mapping.get(color_name.lower(), PPTXRGBColor(0, 0, 0))
+        # Si el color es un nombre, lo buscamos en el mapa
+        return color_mapping.get(color_name.lower(), RGBColor(0, 0, 0))
 
-    def _remove_empty_slides(self):
-        # Crear una nueva presentación
-        new_prs = Presentation()
+    def _create_table_on_slide(self, slide, table_data):
+        """ Crear una tabla en la diapositiva """
+        rows = [row.split(";") for row in table_data]  # Usamos ';' para separar las celdas
+        table = slide.shapes.add_table(len(rows), len(rows[0]), Inches(1), Inches(1.5), Inches(8), Inches(5)).table
 
-        # Copiar solo las diapositivas no vacías a la nueva presentación
-        for slide in self.prs.slides:
-            if any(shape.has_text_frame and shape.text_frame.text.strip() for shape in slide.shapes):
-                # Si la diapositiva no está vacía, agregarla a la nueva presentación
-                slide_layout = new_prs.slide_layouts[slide.slide_layout]
-                new_slide = new_prs.slides.add_slide(slide_layout)
-                for shape in slide.shapes:
-                    if shape.has_text_frame:
-                        new_shape = new_slide.shapes.add_textbox(Inches(1), Inches(1), Inches(8), Inches(5))
-                        new_shape.text_frame.clear()
-                        new_shape.text_frame.text = shape.text_frame.text
+        # Configurar el estilo de la tabla (puedes personalizarlo más)
+        table.style = 'Table Grid'
 
-        # Reemplazar la presentación original por la nueva
-        self.prs = new_prs
+        # Rellenar las celdas con los datos
+        for i, row in enumerate(rows):
+            for j, cell in enumerate(row):
+                table.cell(i, j).text = cell.strip()
 
+    def _clean_document(self):
+        for paragraph in self.prs.paragraphs:
+            paragraph.text = self._remove_bracketed_text(paragraph.text)
 
 
 
 
-def generate_index(prompt, file_type, api_key_file='API_KEY.txt', model='llama-3.1-70b-versatile'):
+
+
+def generate_index(prompt, file_type, api_key_file='API_KEY.txt', model='mixtral-8x7b-32768'):
     try:
         with open(api_key_file, 'r') as file:
             api_key = file.read().strip()
@@ -286,14 +349,17 @@ def generate_index(prompt, file_type, api_key_file='API_KEY.txt', model='llama-3
 
         outline_prompt = f"""
         Generate a structured outline for a {file_type} document based on the following prompt:
+        - Provide an initial sentence with the summary of the format and lenght of text.
         - Provide a list of sections or pages, each with a title, subtitle (if applicable), and a brief summary of what will be included.
         - Structure must be as this example, splitting pages with //:
+        GENERAL PROMPT: Create text for a pptx document with no more than 20 words for each slide.
         PAGE1: TITLE: Exemple de títol CONTENT: Briefing in one sentence
         //
         PAGE2: TITLE: Exemple de títol2 CONTENT: Briefing in one sentence
         //
 
         Your response must be only the index, no explanation or comments.
+        
         Always introduce CONTENT: for every page, do not skip the word CONTENT:
         Here is the prompt for the document outline:
         {prompt}
@@ -343,7 +409,7 @@ def parse_index(index):
     return parsed_pages
 
 
-def generate_content(index_prompt,index, file_type, api_key_file='API_KEY.txt', model='llama-3.1-70b-versatile'):
+def generate_content(index_prompt, index, file_type, api_key_file='API_KEY.txt', model='llama-3.1-70b-versatile'):
     try:
         with open(api_key_file, 'r') as file:
             api_key = file.read().strip()
@@ -364,7 +430,7 @@ def generate_content(index_prompt,index, file_type, api_key_file='API_KEY.txt', 
 
         full_prompt = f"""
         Generate structured content for a {file_type} document based on the following prompt:
-        - Use the formatting codes provided below where appropriate. Always add start and end codes.
+        - Use the formatting codes provided below ONLY WHERE APPROPIATE. Always add start and end codes.
         Here are the formatting codes and their meanings:
         {formatting_codes_str}
         - For page or slide breaks, simply use [PAGEBREAK].
@@ -394,6 +460,7 @@ def generate_content(index_prompt,index, file_type, api_key_file='API_KEY.txt', 
           [/TABLE]
         Do not add any comment rather than the content asked, also do not repeat the prompt or any instruction.
         Always write content in the same language as given instructions.
+        Ensure text lenght is appropiate for the type of document and instructions given. 
 
         The structure or index of the full document is {index}
         From this index you only have to create content for this page (consider full index as contextual):
@@ -412,10 +479,10 @@ def generate_content(index_prompt,index, file_type, api_key_file='API_KEY.txt', 
 
 
 
-def generate_and_create_file(prompt, file_type, output):
+def generate_and_create_file(prompt, file_type, output, model='mixtral-8x7b-32768'):
     try:
         # Primero, generar el índice con los títulos y resúmenes de las páginas
-        index = generate_index(prompt, file_type)  # Suponemos que 'generate_index' genera el índice
+        index = generate_index(prompt, file_type, model=model)  # Suponemos que 'generate_index' genera el índice
 
         print(index)
 
@@ -427,7 +494,7 @@ def generate_and_create_file(prompt, file_type, output):
         # Para cada página en el índice, generamos el contenido
         for page_info in parsed_index:
             page_prompt = page_info["CONTENT"]  # Usamos el contenido de cada página como el prompt
-            page_content = generate_content(page_prompt, index, file_type)  # Generamos el contenido para esta página
+            page_content = generate_content(page_prompt, index, file_type, model=model)  # Generamos el contenido para esta página
             
             # Verificamos el contenido generado
             if not page_content:

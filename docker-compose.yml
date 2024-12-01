@@ -15,12 +15,15 @@ services:
     volumes:
       - ./agents:/agents  
     command: python app.py runserver 0.0.0.0:5000
+    env_file: 
+      - .env
 
   embedding:
     build: ./embedding
     ports:
       - "6000:6000"
     volumes:
-      - ./embedding:/embedding  
+      - ./shared-db:/shared-db  # Volumen compartido para la base de datos
     command: python app.py runserver 0.0.0.0:6000
-
+    env_file: 
+      - .env

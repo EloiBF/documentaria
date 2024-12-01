@@ -3,11 +3,17 @@ import sqlite3
 import numpy as np
 import re
 from fastembed import TextEmbedding  # Importa la clase de fastembed
+from dotenv import load_dotenv
 
-DB_PATH = 'embeddings.db'  # Ajusta la ruta según la estructura de tu proyecto
+# Carregar les variables del fitxer .env
+load_dotenv()
+
+# Ara pots accedir a les teves variables d'entorn
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+EMBEDDING_DB_PATH = os.getenv('EMBEDDING_DB_PATH')
 
 # Conexión a SQLite
-def get_db_connection(db_file=DB_PATH):
+def get_db_connection(db_file=EMBEDDING_DB_PATH):
     conn = sqlite3.connect(db_file)
     return conn
 
@@ -94,7 +100,7 @@ def find_general_examples(text, k=4):
     formatted_output = ""
     for i, (row, distance) in enumerate(closest_k_results, 1):
         example_text = row[1]
-        formatted_output += f"Ejemplo {i}: {example_text}\n\n"
+        formatted_output += f"{example_text}\n\n"
     
     return formatted_output
 
